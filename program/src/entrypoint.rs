@@ -269,8 +269,6 @@ fn _fill_order<'a>(
                 sysvar_instructions
             )?;
 
-        msg!("Previous instruction id {:?}", ed25519_instr.program_id);
-
         if !solana_program::ed25519_program::check_id(&ed25519_instr.program_id) {
             msg!("Previous instruction should be for ed25519_program");
             return Err(ProgramError::InvalidAccountData);
@@ -376,8 +374,6 @@ fn _fill_order<'a>(
 
     let buy_token_amount = (sell_token_amount * order.buy_amount) / order.sell_amount;
 
-    msg!("Transfering from order wallet to buyer wallet");
-
     let tfer_inst = spl_token::instruction::transfer(
         &spl_token::id(),
         order_wallet_accinfo.key,
@@ -396,8 +392,6 @@ fn _fill_order<'a>(
         ],
         &[&[b"OrderWalletAuthority", &seller.key.to_bytes(), &[bump_seed]]],
     )?;
-
-    msg!("Transferring from buyer wallet to seller wallet");
 
     let tfer_inst = spl_token::instruction::transfer(
         &spl_token::id(),

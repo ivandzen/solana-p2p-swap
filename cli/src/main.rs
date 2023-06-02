@@ -381,10 +381,7 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
         ).unwrap());
 
         if order.is_private {
-            println!("Order is private");
             instructions.push(context.new_ed25519_signature_instruction(b"Newmessage"));
-
-            println!("{:?}", instructions);
         }
 
         let accounts = {
