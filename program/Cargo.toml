@@ -1,0 +1,24 @@
+[package]
+resolver = "2"
+name = "p2p-swap"
+version = "0.1.0-dev"
+description = "P2P Swap"
+edition = "2021"
+
+[dependencies]
+arrayref = "0.3.6"
+winnow="=0.4.1"
+toml_datetime = "=0.6.1"
+solana-program = { version = "=1.14.17", default_features = false }
+spl-token = { version = "=3.5.0", default_features = false, features = ["no-entrypoint"] }
+spl-associated-token-account = { version = "=1.1.2", default_features = false, features = ["no-entrypoint"] }
+solana-sdk = { version = "~1.14", optional = true}
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[features]
+no-entrypoint = ["solana-sdk"]
