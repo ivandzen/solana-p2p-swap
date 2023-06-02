@@ -1866,7 +1866,9 @@ dependencies = [
 name = "p2p-swap-cli"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "clap 2.34.0",
+ "ed25519-dalek",
  "log",
  "p2p-swap",
  "rand 0.8.5",

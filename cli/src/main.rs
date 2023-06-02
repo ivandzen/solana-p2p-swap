@@ -1,5 +1,14 @@
+use solana_sdk::ed25519_instruction::{
+    DATA_START,
+    PUBKEY_SERIALIZED_SIZE,
+    SIGNATURE_SERIALIZED_SIZE,
+    SIGNATURE_OFFSETS_SERIALIZED_SIZE,
+    SIGNATURE_OFFSETS_START,
+};
 use {
+    bytemuck::{ bytes_of, Pod, Zeroable },
     clap::{ App, Arg, ArgMatches, SubCommand },
+    ed25519_dalek,
     p2p_swap::{
         SwapSPLOrder,
         get_order_wallet_address,
@@ -60,6 +69,19 @@ fn parse_bool<T>(value: T) -> Result<bool, String>
     }
 }
 
+#[derive(Default, Debug, Copy, Clone, Zeroable, Pod)]
+#[repr(C)]
+pub struct Ed25519SignatureOffsets {
+    signature_offset: u16,             // offset to ed25519 signature of 64 bytes
+    signature_instruction_index: u16,  // instruction index to find signature
+    public_key_offset: u16,            // offset to public key of 32 bytes
+    public_key_instruction_index: u16, // instruction index to find public key
+    message_data_offset: u16,          // offset to start of message data
+    message_data_size: u16,            // size of message data
+    message_instruction_index: u16,    // index of instruction data to get message data
+}
+
+
 struct AppContext {
     client: RpcClient,
     p2p_swap: Pubkey,
@@ -112,6 +134,59 @@ impl AppContext {
         transaction.try_sign(&[self.signer.as_ref().clone()], blockhash)
             .map_err(|err| format!("Failed to sign: {:?}", err))?;
         self.client.send_transaction(&transaction).map_err(|err| format!("Failed to send transaction: {:?}", err))
+    }
+
+    pub fn new_ed25519_signature_instruction(&self, message: &[u8]) -> Instruction {
+        let signature = self.signer.sign_message(message);
+        let pubkey = self.signer.pubkey().to_bytes();
+
+        assert_eq!(pubkey.len(), PUBKEY_SERIALIZED_SIZE);
+        assert_eq!(signature.as_ref().len(), SIGNATURE_SERIALIZED_SIZE);
+
+        let mut instruction_data = Vec::with_capacity(
+            DATA_START
+                .saturating_add(SIGNATURE_SERIALIZED_SIZE)
+                .saturating_add(PUBKEY_SERIALIZED_SIZE)
+                .saturating_add(message.len()),
+        );
+
+        let num_signatures: u8 = 1;
+        let public_key_offset = DATA_START;
+        let signature_offset = public_key_offset.saturating_add(PUBKEY_SERIALIZED_SIZE);
+        let message_data_offset = signature_offset.saturating_add(SIGNATURE_SERIALIZED_SIZE);
+
+        // add padding byte so that offset structure is aligned
+        instruction_data.extend_from_slice(bytes_of(&[num_signatures, 0]));
+
+        let offsets = Ed25519SignatureOffsets {
+            signature_offset: signature_offset as u16,
+            signature_instruction_index: u16::MAX,
+            public_key_offset: public_key_offset as u16,
+            public_key_instruction_index: u16::MAX,
+            message_data_offset: message_data_offset as u16,
+            message_data_size: message.len() as u16,
+            message_instruction_index: u16::MAX,
+        };
+
+        instruction_data.extend_from_slice(bytes_of(&offsets));
+
+        debug_assert_eq!(instruction_data.len(), public_key_offset);
+
+        instruction_data.extend_from_slice(&pubkey);
+
+        debug_assert_eq!(instruction_data.len(), signature_offset);
+
+        instruction_data.extend_from_slice(&signature.as_ref());
+
+        debug_assert_eq!(instruction_data.len(), message_data_offset);
+
+        instruction_data.extend_from_slice(message);
+
+        Instruction {
+            program_id: solana_sdk::ed25519_program::id(),
+            accounts: vec![],
+            data: instruction_data,
+        }
     }
 }
 
@@ -294,8 +369,8 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
             );
 
         let mut instructions = Vec::new();
-        let buy_token_amount = (sell_token_amount * order.buy_amount) / order.sell_amount;
 
+        let buy_token_amount = (sell_token_amount * order.buy_amount) / order.sell_amount;
         instructions.push(spl_token::instruction::approve(
             &spl_token::id(),
             &buyer_buy_token_wallet,
@@ -305,24 +380,46 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
             buy_token_amount,
         ).unwrap());
 
+        if order.is_private {
+            println!("Order is private");
+            instructions.push(context.new_ed25519_signature_instruction(b"Newmessage"));
+
+            println!("{:?}", instructions);
+        }
+
+        let accounts = {
+            let mut accounts = vec![
+                AccountMeta::new_readonly(order.seller.clone(), false), // seller
+                AccountMeta::new(context.signer.pubkey(), true),        // buyer
+                AccountMeta::new(order_address.clone(), false),         // order
+            ];
+
+            if order.is_private {
+                accounts.push(AccountMeta::new_readonly(solana_sdk::sysvar::instructions::id(), false));
+            }
+
+            accounts.append(
+                &mut vec![
+                    AccountMeta::new_readonly(order_wallet_authority.clone(), false), // order wallet authority
+                    AccountMeta::new_readonly(order_wallet.mint.clone(), false),   // sell token mint
+                    AccountMeta::new(order.order_wallet.clone(), false),    // order wallet
+                    AccountMeta::new_readonly(order.price_mint, false),     // buy token mint
+                    AccountMeta::new(buyer_buy_token_wallet, false),        // buyer buy token wallet
+                    AccountMeta::new(seller_buy_token_wallet, false),       // seller buy token wallet
+                    AccountMeta::new(buyer_sell_token_wallet, false),       // buyer sell token wallet
+                    AccountMeta::new_readonly(spl_token::id(), false),      // token program
+                ]
+            );
+
+            accounts
+        };
+
         let mut data: Vec<u8> = vec![P2PSwapInstructions::FillOrder as u8];
         let mut sell_token_amount = sell_token_amount.to_le_bytes().to_vec();
         data.append(&mut sell_token_amount);
         instructions.push(Instruction {
             program_id: context.p2p_swap.clone(),
-            accounts: vec![
-                AccountMeta::new_readonly(order.seller.clone(), false), // seller
-                AccountMeta::new(context.signer.pubkey(), true),        // buyer
-                AccountMeta::new(order_address.clone(), false),         // order
-                AccountMeta::new_readonly(order_wallet_authority.clone(), false), // order wallet authority
-                AccountMeta::new_readonly(order_wallet.mint.clone(), false),   // sell token mint
-                AccountMeta::new(order.order_wallet.clone(), false),    // order wallet
-                AccountMeta::new_readonly(order.price_mint, false),     // buy token mint
-                AccountMeta::new(buyer_buy_token_wallet, false),        // buyer buy token wallet
-                AccountMeta::new(seller_buy_token_wallet, false),       // seller buy token wallet
-                AccountMeta::new(buyer_sell_token_wallet, false),       // buyer sell token wallet
-                AccountMeta::new_readonly(spl_token::id(), false),      // token program
-            ],
+            accounts,
             data,
         });
 

@@ -16,3 +16,5 @@ clap = "2.33.3"
 log = "0.4.17"
 rand = "0.8.5"
 p2p-swap = { path = "../program/", features=["no-entrypoint"] }
+ed25519-dalek = "1.0.1"
+bytemuck = "1.13.1"

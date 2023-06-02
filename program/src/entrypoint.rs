@@ -1,3 +1,4 @@
+use solana_program::sysvar;
 use {
     crate::{
         SwapSPLOrder,
@@ -244,7 +245,6 @@ fn _fill_order<'a>(
     program_id: &'a Pubkey,
     accounts: &'a [AccountInfo<'a>],
     sell_token_amount: u64,
-    unlock_key: Option<&[u8]>,
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
@@ -254,8 +254,35 @@ fn _fill_order<'a>(
     let mut order = SwapSPLOrder::unpack(&order_account.data.borrow())?;
 
     if order.is_private {
-        msg!("Private order should be filled with corresponding instruction");
-        return Err(ProgramError::InvalidAccountData);
+        let sysvar_instructions = next_account_info(account_info_iter)?; // 4 -sysvar instruction
+        if !sysvar::instructions::check_id(sysvar_instructions.key) {
+            msg!(
+                "Sysvar instructions account not match. Expected: {:?}",
+                sysvar::instructions::id(),
+            );
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        let ed25519_instr =
+            sysvar::instructions::get_instruction_relative(
+                -1,
+                sysvar_instructions
+            )?;
+
+        msg!("Previous instruction id {:?}", ed25519_instr.program_id);
+
+        if !solana_program::ed25519_program::check_id(&ed25519_instr.program_id) {
+            msg!("Previous instruction should be for ed25519_program");
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        let ed25519_data = array_ref![&ed25519_instr.data, 0, 120];
+        let (_, unlock_signer, _, _) = array_refs![ed25519_data, 16, 32, 64, 8];
+        let unlock_signer = Pubkey::new_from_array(*unlock_signer);
+        if unlock_signer != order.seller {
+            msg!("Unlock key is invalid");
+            return Err(ProgramError::InvalidAccountData);
+        }
     }
 
     if order.seller != *seller.key {
@@ -274,7 +301,7 @@ fn _fill_order<'a>(
     }
 
     let (expected_order_wallet_authority, bump_seed) = get_order_wallet_authority(program_id, seller.key);
-    let order_wallet_authority = next_account_info(account_info_iter)?; // 4 - order wallet authority
+    let order_wallet_authority = next_account_info(account_info_iter)?; // 5 - order wallet authority
     if expected_order_wallet_authority != *order_wallet_authority.key {
         msg!(
             "Order wallet authority not match. Excpected {:?}",
@@ -283,13 +310,13 @@ fn _fill_order<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let sell_token = next_account_info(account_info_iter)?; // 5 - sell token mint
+    let sell_token = next_account_info(account_info_iter)?; // 6 - sell token mint
 
     let expected_order_wallet = get_order_wallet_address(
         sell_token.key,
         order_wallet_authority.key
     );
-    let order_wallet_accinfo = next_account_info(account_info_iter)?; // 6 - order wallet
+    let order_wallet_accinfo = next_account_info(account_info_iter)?; // 7 - order wallet
     if expected_order_wallet != *order_wallet_accinfo.key || order.order_wallet != *order_wallet_accinfo.key {
         msg!("Order wallet not match. Expected: {:?}", order.order_wallet);
         return Err(ProgramError::InvalidAccountData);
@@ -302,7 +329,7 @@ fn _fill_order<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let buy_token = next_account_info(account_info_iter)?; // 7 - buy token mint
+    let buy_token = next_account_info(account_info_iter)?; // 8 - buy token mint
     if order.price_mint != *buy_token.key {
         msg!("Buy token not match. Expected: {:?}", order.price_mint);
         return Err(ProgramError::InvalidAccountData);
@@ -313,7 +340,7 @@ fn _fill_order<'a>(
             buyer.key,
             buy_token.key
         );
-    let buyer_buy_token_wallet = next_account_info(account_info_iter)?; // 8 - buyer buy token wallet
+    let buyer_buy_token_wallet = next_account_info(account_info_iter)?; // 9 - buyer buy token wallet
     if buyer_buy_token_wallet_address != *buyer_buy_token_wallet.key {
         msg!("Buyer buy token wallet not match. Expected: {:?}", buyer_buy_token_wallet_address);
         return Err(ProgramError::InvalidAccountData);
@@ -324,7 +351,7 @@ fn _fill_order<'a>(
             seller.key,
             buy_token.key
         );
-    let seller_buy_token_wallet = next_account_info(account_info_iter)?; // 9 - seller buy token wallet
+    let seller_buy_token_wallet = next_account_info(account_info_iter)?; // 10 - seller buy token wallet
     if seller_buy_token_wallet_address != *seller_buy_token_wallet.key {
         msg!("Seller buy token wallet not match. Expected: {:?}", seller_buy_token_wallet_address);
         return Err(ProgramError::InvalidAccountData);
@@ -335,13 +362,13 @@ fn _fill_order<'a>(
             buyer.key,
             sell_token.key
         );
-    let buyer_sell_token_wallet = next_account_info(account_info_iter)?; // 10 - buyer sell token wallet
+    let buyer_sell_token_wallet = next_account_info(account_info_iter)?; // 11 - buyer sell token wallet
     if buyer_sell_token_wallet_address != *buyer_sell_token_wallet.key {
         msg!("Buyer sell token wallet not match. Expected: {:?}", buyer_sell_token_wallet_address);
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let token_program = next_account_info(account_info_iter)?; // 11 - token program
+    let token_program = next_account_info(account_info_iter)?; // 12 - token program
     if !spl_token::check_id(token_program.key) {
         msg!("Token program not match: {:?}", token_program.key);
         return Err(ProgramError::InvalidAccountData);
@@ -411,30 +438,15 @@ fn fill_order<'a>(
         return Err(ProgramError::InvalidInstructionData);
     };
 
-    _fill_order(program_id, accounts, sell_token_amount, None)
+    _fill_order(program_id, accounts, sell_token_amount)
 }
 
 fn fill_private_order<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
-    instruction_data: &[u8],
+    _program_id: &'a Pubkey,
+    _accounts: &'a [AccountInfo<'a>],
+    _instruction_data: &[u8],
 ) -> ProgramResult {
-    let (sell_token_amount, unlock_key) = if instruction_data.len() == 40 {
-        let instruction_data = array_ref![instruction_data, 0, 40];
-        let (sell_token_amount, unlock_key) = array_refs![instruction_data, 8, 32];
-        (
-            u64::from_le_bytes(*sell_token_amount),
-            unlock_key,
-        )
-    } else {
-        msg!(
-            "Invalid data - expected 40 bytes - {:?}",
-            instruction_data,
-        );
-        return Err(ProgramError::InvalidInstructionData);
-    };
-
-    _fill_order(program_id, accounts, sell_token_amount, Some(unlock_key))
+    todo!()
 }
 
 fn process_instruction<'a>(
