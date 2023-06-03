@@ -182,15 +182,11 @@ impl AppContext {
 
         instruction_data.extend_from_slice(&message);
 
-        let instr = Instruction {
+        Instruction {
             program_id: solana_sdk::ed25519_program::id(),
             accounts: vec![],
             data: instruction_data,
-        };
-
-        println!("{:?}", instr);
-
-        instr
+        }
     }
 }
 
@@ -438,8 +434,6 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
             accounts,
             data,
         });
-
-        println!("{:?}", instructions);
 
         let signature = context.send_transaction(&instructions).unwrap();
         print!("transaction: {:?}", signature);
