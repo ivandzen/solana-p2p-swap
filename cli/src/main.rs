@@ -136,9 +136,9 @@ impl AppContext {
         self.client.send_transaction(&transaction).map_err(|err| format!("Failed to send transaction: {:?}", err))
     }
 
-    pub fn new_ed25519_signature_instruction(&self, order_seed: u64, seller: &Pubkey, signature: Signature) -> Instruction {
+    pub fn new_ed25519_signature_instruction(&self, order: &Pubkey, seller: &Pubkey, signature: Signature) -> Instruction {
         let pubkey = seller.to_bytes();
-        let message = order_seed.to_le_bytes();
+        let message = order.to_bytes();
 
         assert_eq!(pubkey.len(), PUBKEY_SERIALIZED_SIZE);
         assert_eq!(signature.as_ref().len(), SIGNATURE_SERIALIZED_SIZE);
@@ -316,7 +316,7 @@ fn process_create_order(context: &AppContext, args: &Option<&ArgMatches>) {
         println!("Order seed: {:x?}", order_seed);
         println!("Transaction: {:?}", signature);
         if is_private {
-            let unlock_signature = context.signer.try_sign_message(&order_seed_arr).unwrap();
+            let unlock_signature = context.signer.try_sign_message(&order_account.to_bytes()).unwrap();
             println!("Order is private. Unlock signature: {:?}", unlock_signature.to_string());
         }
 
@@ -390,7 +390,13 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
         if order.is_private {
             if let Some(unlock_signature) = args.value_of("unlock_signature") {
                 let unlock_signature = Signature::from_str(unlock_signature).unwrap();
-                instructions.push(context.new_ed25519_signature_instruction(1000, &order.seller, unlock_signature));
+                instructions.push(
+                    context.new_ed25519_signature_instruction(
+                        &order_address,
+                        &order.seller,
+                        unlock_signature
+                    )
+                );
             } else {
                 println!("unlock_signature not specified");
                 exit(1);
