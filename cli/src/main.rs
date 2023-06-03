@@ -30,7 +30,7 @@ use {
         transaction::Transaction,
     },
     spl_token::state::Account as SPLAccount,
-    std::process::exit,
+    std::{ process::exit, str::FromStr },
     log::{warn},
 };
 
@@ -136,9 +136,9 @@ impl AppContext {
         self.client.send_transaction(&transaction).map_err(|err| format!("Failed to send transaction: {:?}", err))
     }
 
-    pub fn new_ed25519_signature_instruction(&self, message: &[u8]) -> Instruction {
-        let signature = self.signer.sign_message(message);
-        let pubkey = self.signer.pubkey().to_bytes();
+    pub fn new_ed25519_signature_instruction(&self, order_seed: u64, seller: &Pubkey, signature: Signature) -> Instruction {
+        let pubkey = seller.to_bytes();
+        let message = order_seed.to_le_bytes();
 
         assert_eq!(pubkey.len(), PUBKEY_SERIALIZED_SIZE);
         assert_eq!(signature.as_ref().len(), SIGNATURE_SERIALIZED_SIZE);
@@ -180,7 +180,7 @@ impl AppContext {
 
         debug_assert_eq!(instruction_data.len(), message_data_offset);
 
-        instruction_data.extend_from_slice(message);
+        instruction_data.extend_from_slice(&message);
 
         Instruction {
             program_id: solana_sdk::ed25519_program::id(),
@@ -228,8 +228,6 @@ fn process_create_order(context: &AppContext, args: &Option<&ArgMatches>) {
         let order_wallet_authority =
             get_order_wallet_authority(&context.p2p_swap, &context.signer.pubkey()).0;
 
-        println!("Order wallet authority: {:?}", order_wallet_authority);
-
         let order_wallet = get_order_wallet_address(
             &sell_token,
             &order_wallet_authority,
@@ -238,7 +236,6 @@ fn process_create_order(context: &AppContext, args: &Option<&ArgMatches>) {
         let mut instructions = Vec::new();
 
         if context.client.get_account(&order_wallet).ok() == None {
-            println!("Creating order wallet");
             instructions.push(
                 spl_associated_token_account::instruction::create_associated_token_account(
                     &context.signer.pubkey(),
@@ -249,7 +246,6 @@ fn process_create_order(context: &AppContext, args: &Option<&ArgMatches>) {
             )
         }
 
-        println!("Creating approve instruction");
         instructions.push(spl_token::instruction::approve(
             &spl_token::id(),
             &signer_wallet,
@@ -264,14 +260,14 @@ fn process_create_order(context: &AppContext, args: &Option<&ArgMatches>) {
         let mut sell_amount = sell_amount.to_le_bytes().to_vec();
         let mut buy_amount = buy_amount.to_le_bytes().to_vec();
         let mut min_sell_amount = sell_minimum.to_le_bytes().to_vec();
-        let mut order_seed = order_seed.to_le_bytes().to_vec();
+        let order_seed_arr = order_seed.to_le_bytes().to_vec();
 
         if is_private {
             let mut data: Vec<u8> = vec![P2PSwapInstructions::CreatePrivateOrder as u8];
             data.append(&mut sell_amount);
             data.append(&mut buy_amount);
             data.append(&mut min_sell_amount);
-            data.append(&mut order_seed);
+            data.append(&mut order_seed_arr.clone());
             instructions.push(Instruction {
                 program_id: context.p2p_swap.clone(),
                 accounts: vec![
@@ -292,7 +288,7 @@ fn process_create_order(context: &AppContext, args: &Option<&ArgMatches>) {
             data.append(&mut sell_amount);
             data.append(&mut buy_amount);
             data.append(&mut min_sell_amount);
-            data.append(&mut order_seed);
+            data.append(&mut order_seed_arr.clone());
             instructions.push(Instruction {
                 program_id: context.p2p_swap.clone(),
                 accounts: vec![
@@ -311,7 +307,14 @@ fn process_create_order(context: &AppContext, args: &Option<&ArgMatches>) {
         }
 
         let signature = context.send_transaction(&instructions).unwrap();
-        print!("transaction: {:?}", signature);
+
+        println!("\n\nNew order created: {:?}", order_account);
+        println!("Order seed: {:x?}", order_seed);
+        println!("Transaction: {:?}", signature);
+        if is_private {
+            let unlock_signature = context.signer.try_sign_message(&order_seed_arr).unwrap();
+            println!("Order is private. Unlock signature: {:?}", unlock_signature.to_string());
+        }
 
     } else {
         warn!("No args provided to create-order");
@@ -381,7 +384,13 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
         ).unwrap());
 
         if order.is_private {
-            instructions.push(context.new_ed25519_signature_instruction(b"Newmessage"));
+            if let Some(unlock_signature) = args.value_of("unlock_signature") {
+                let unlock_signature = Signature::from_str(unlock_signature).unwrap();
+                instructions.push(context.new_ed25519_signature_instruction(1000, &order.seller, unlock_signature));
+            } else {
+                println!("unlock_signature not specified");
+                exit(1);
+            }
         }
 
         let accounts = {
@@ -568,6 +577,14 @@ fn main() {
                         .required(true)
                         .validator(is_valid_u64)
                         .help("Amount of order token to buy")
+                )
+                .arg(
+                    Arg::with_name("unlock_signature")
+                        .long("unlock-signature")
+                        .value_name("UNLOCK_SIGNATURE")
+                        .takes_value(true)
+                        .required(false)
+                        .help("base58 encoded signature")
                 )
         )
         .get_matches();
