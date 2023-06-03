@@ -274,11 +274,18 @@ fn _fill_order<'a>(
             return Err(ProgramError::InvalidAccountData);
         }
 
-        let ed25519_data = array_ref![&ed25519_instr.data, 0, 120];
-        let (_, unlock_signer, _, _) = array_refs![ed25519_data, 16, 32, 64, 8];
+        let ed25519_data = array_ref![&ed25519_instr.data, 0, 144];
+        let (_, unlock_signer, _, unlock_order) = array_refs![ed25519_data, 16, 32, 64, 32];
+
         let unlock_signer = Pubkey::new_from_array(*unlock_signer);
         if unlock_signer != order.seller {
-            msg!("Unlock key is invalid");
+            msg!("ed25519 instruction is invalid: wrong seller");
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        let unlock_order = Pubkey::new_from_array(*unlock_order);
+        if unlock_order != *order_account.key {
+            msg!("ed25519 instruction is invalid: wrong order");
             return Err(ProgramError::InvalidAccountData);
         }
     }
