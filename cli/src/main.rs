@@ -191,20 +191,19 @@ impl AppContext {
 }
 
 fn find_free_order_account(context: &AppContext) -> (Pubkey, u64) {
-    loop {
-        let order_seed = rand::random::<u64>();
+    let latest_slot = context.client.get_slot().unwrap();
+    let (pubkey, _) = get_order_address(
+        &context.p2p_swap,
+        &context.signer.pubkey(),
+        latest_slot,
+    );
 
-        let (pubkey, _) = get_order_address(
-            &context.p2p_swap,
-            &context.signer.pubkey(),
-            order_seed,
-        );
-
-        if let Err(_) = context.client.get_account(&pubkey) {
-            // account absent
-            return (pubkey, order_seed)
-        }
+    if let Err(_) = context.client.get_account(&pubkey) {
+        // account absent
+        return (pubkey, latest_slot)
     }
+
+    panic!("Unable to generate new order address");
 }
 
 fn process_create_order(context: &AppContext, args: &Option<&ArgMatches>) {
@@ -271,6 +270,7 @@ fn process_create_order(context: &AppContext, args: &Option<&ArgMatches>) {
             instructions.push(Instruction {
                 program_id: context.p2p_swap.clone(),
                 accounts: vec![
+                    AccountMeta::new_readonly(solana_sdk::sysvar::clock::id(), false),
                     AccountMeta::new(context.signer.pubkey(), true),
                     AccountMeta::new(signer_wallet, false),
                     AccountMeta::new_readonly(sell_token.clone(), false),
@@ -292,6 +292,7 @@ fn process_create_order(context: &AppContext, args: &Option<&ArgMatches>) {
             instructions.push(Instruction {
                 program_id: context.p2p_swap.clone(),
                 accounts: vec![
+                    AccountMeta::new_readonly(solana_sdk::sysvar::clock::id(), false),
                     AccountMeta::new(context.signer.pubkey(), true),
                     AccountMeta::new(signer_wallet, false),
                     AccountMeta::new_readonly(sell_token.clone(), false),

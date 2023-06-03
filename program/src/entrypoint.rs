@@ -1,3 +1,4 @@
+use solana_program::clock::Slot;
 use solana_program::sysvar;
 use {
     crate::{
@@ -26,6 +27,8 @@ use {
 };
 
 entrypoint!(process_instruction);
+
+const MAX_SLOT_DIFFERENCE: Slot = 40;
 
 pub fn create_account<'a>(
     system_account: &AccountInfo<'a>,
@@ -107,6 +110,23 @@ fn _create_order<'a>(
         );
         return Err(ProgramError::InvalidInstructionData);
     };
+
+    let clock = next_account_info(account_info_iter)?; // 1 - clock account
+    if !sysvar::clock::check_id(clock.key) {
+        msg!("Clock not match");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let clock = sysvar::clock::Clock::from_account_info(clock)?;
+    let newest_slot = clock.slot;
+    if order_seed > newest_slot || newest_slot - order_seed > MAX_SLOT_DIFFERENCE {
+        msg!(
+            "order seed slot {:?} is too far from current {:?}. Please, generate new order account with latest slot number as seed",
+            order_seed,
+            newest_slot,
+        );
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     let seller = next_account_info(account_info_iter)?; // 1 - seller Pubkey
 
