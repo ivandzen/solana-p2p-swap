@@ -54,7 +54,6 @@ CLI returns account address of new order and resulting transaction.
 ./p2p-swap-cli -u devnet -p AzVuKVf8qQjHBTyjEUZbr6zRvinZvjpuFZWMXPd76Fzx get-order 6dfxGdK649xeCmtNXcvBFYbovyYsCogJLD6SGx27m6Cf
 
 Order 6dfxGdK649xeCmtNXcvBFYbovyYsCogJLD6SGx27m6Cf
-Data:
 SwapSPLOrder { 
   seller: GAm8jdsCJ8mLJQz36CvbDoUb8ksscC8XDjrJnJs5V6JW, 
   sell_amount: 1000000000, 

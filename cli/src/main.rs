@@ -2,13 +2,10 @@ use solana_sdk::ed25519_instruction::{
     DATA_START,
     PUBKEY_SERIALIZED_SIZE,
     SIGNATURE_SERIALIZED_SIZE,
-    SIGNATURE_OFFSETS_SERIALIZED_SIZE,
-    SIGNATURE_OFFSETS_START,
 };
 use {
     bytemuck::{ bytes_of, Pod, Zeroable },
     clap::{ App, Arg, ArgMatches, SubCommand },
-    ed25519_dalek,
     p2p_swap::{
         SwapSPLOrder,
         get_order_wallet_address,
@@ -334,9 +331,8 @@ fn process_get_order(context: &AppContext, args: &Option<&ArgMatches>) {
     if let Some(args) = args {
         let order_address = Pubkey::try_from(args.value_of("order_address").unwrap()).unwrap();
         let order = get_order(context, &order_address).unwrap();
-        println!("Order {:?}", order_address);
-        println!("Data:");
-        println!("{:?}", order);
+        println!("\n\nOrder {:?}", order_address);
+        println!("{:#?}", order);
     }
 }
 
@@ -436,7 +432,7 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
         });
 
         let signature = context.send_transaction(&instructions).unwrap();
-        print!("transaction: {:?}", signature);
+        println!("transaction: {:?}", signature);
     }
 }
 
