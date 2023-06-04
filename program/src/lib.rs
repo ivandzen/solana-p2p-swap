@@ -150,7 +150,6 @@ pub enum P2PSwapInstructions {
     CreatePrivateOrder = 2,
     CloseOrder = 3,
     FillOrder = 4,
-    FillPrivateOrder = 5,
 }
 
 impl P2PSwapInstructions {
@@ -160,7 +159,6 @@ impl P2PSwapInstructions {
             2 => P2PSwapInstructions::CreatePrivateOrder,
             3 => P2PSwapInstructions::CloseOrder,
             4 => P2PSwapInstructions::FillOrder,
-            5 => P2PSwapInstructions::FillPrivateOrder,
             _ => P2PSwapInstructions::Undefined,
         }
     }

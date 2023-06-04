@@ -113,16 +113,16 @@ fn _create_order<'a>(
         return Err(ProgramError::Custom(P2PSwapError::CreationSlotToFar as u32));
     }
 
-    let seller = next_account_info(account_info_iter)?; // 1 - seller Pubkey
+    let seller = next_account_info(account_info_iter)?; // 2 - seller Pubkey
 
-    let seller_token_account_info = next_account_info(account_info_iter)?; // 2 - seller token account
+    let seller_token_account_info = next_account_info(account_info_iter)?; // 3 - seller token account
     let seller_token_account = SPLAccount::unpack(&seller_token_account_info.data.borrow())?;
     if seller_token_account.owner != *seller.key {
         msg!("Token account owner not match. Expected {:?}", seller.key,);
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let sell_token_mint = next_account_info(account_info_iter)?; // 3 - selling token mint
+    let sell_token_mint = next_account_info(account_info_iter)?; // 4 - selling token mint
     if seller_token_account.mint != *sell_token_mint.key {
         msg!(
             "Token mint not match. Expected {:?}",
@@ -132,7 +132,7 @@ fn _create_order<'a>(
     }
 
     let (expected_order_wallet_authority, bump_seed) = get_order_wallet_authority(program_id, seller.key);
-    let order_wallet_authority = next_account_info(account_info_iter)?; // 4 - order wallet authority
+    let order_wallet_authority = next_account_info(account_info_iter)?; // 5 - order wallet authority
     if expected_order_wallet_authority != *order_wallet_authority.key {
         msg!(
             "Order wallet authority not match. Expected {:?}",
@@ -141,9 +141,9 @@ fn _create_order<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let buy_token_mint = next_account_info(account_info_iter)?; // 5 - buy token mint
+    let buy_token_mint = next_account_info(account_info_iter)?; // 6 - buy token mint
 
-    let order_wallet = next_account_info(account_info_iter)?; // 6 - order wallet address
+    let order_wallet = next_account_info(account_info_iter)?; // 7 - order wallet address
     let expected_order_wallet = get_order_wallet_address(
         sell_token_mint.key,
         order_wallet_authority.key,
@@ -157,7 +157,7 @@ fn _create_order<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let token_program = next_account_info(account_info_iter)?; // 7 - token_program
+    let token_program = next_account_info(account_info_iter)?; // 8 - token_program
     spl_token::check_program_account(token_program.key)?;
 
     invoke_signed(
@@ -177,7 +177,7 @@ fn _create_order<'a>(
         &[&[b"OrderWalletAuthority", &seller.key.to_bytes(), &[bump_seed]]],
     )?;
 
-    let order_account = next_account_info(account_info_iter)?; // 8 - order account
+    let order_account = next_account_info(account_info_iter)?; // 9 - order account
     let (expected_order_account, bump_seed) =
         get_order_address(program_id, seller.key, creation_slot);
     if expected_order_account != *order_account.key {
@@ -188,7 +188,7 @@ fn _create_order<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let system_account = next_account_info(account_info_iter)?; // 9 - system account
+    let system_account = next_account_info(account_info_iter)?; // 10 - system account
     if !system_program::check_id(system_account.key) {
         msg!("System program not match. Got {:?}", system_account.key,);
         return Err(ProgramError::InvalidAccountData);
@@ -241,11 +241,22 @@ fn close_order<'a>(
     todo!()
 }
 
-fn _fill_order<'a>(
+fn fill_order<'a>(
     program_id: &'a Pubkey,
     accounts: &'a [AccountInfo<'a>],
-    sell_token_amount: u64,
+    instruction_data: &[u8],
 ) -> ProgramResult {
+    let sell_token_amount = if instruction_data.len() == 8 {
+        let sell_token_amount = array_ref![instruction_data, 0, 8];
+        u64::from_le_bytes(*sell_token_amount)
+    } else {
+        msg!(
+            "Invalid data - expected 8 bytes - {:?}",
+            instruction_data,
+        );
+        return Err(ProgramError::InvalidInstructionData);
+    };
+
     let account_info_iter = &mut accounts.iter();
 
     let seller = next_account_info(account_info_iter)?; // 1 - seller pubkey
@@ -423,33 +434,6 @@ fn _fill_order<'a>(
     SwapSPLOrder::pack(order, order_account.data.borrow_mut().deref_mut())
 }
 
-fn fill_order<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
-    instruction_data: &[u8],
-) -> ProgramResult {
-    let sell_token_amount = if instruction_data.len() == 8 {
-        let sell_token_amount = array_ref![instruction_data, 0, 8];
-        u64::from_le_bytes(*sell_token_amount)
-    } else {
-        msg!(
-            "Invalid data - expected 8 bytes - {:?}",
-            instruction_data,
-        );
-        return Err(ProgramError::InvalidInstructionData);
-    };
-
-    _fill_order(program_id, accounts, sell_token_amount)
-}
-
-fn fill_private_order<'a>(
-    _program_id: &'a Pubkey,
-    _accounts: &'a [AccountInfo<'a>],
-    _instruction_data: &[u8],
-) -> ProgramResult {
-    todo!()
-}
-
 fn process_instruction<'a>(
     program_id: &'a Pubkey,
     accounts: &'a [AccountInfo<'a>],
@@ -471,6 +455,5 @@ fn process_instruction<'a>(
         P2PSwapInstructions::CreatePrivateOrder => create_private_order(program_id, accounts, instruction),
         P2PSwapInstructions::CloseOrder => close_order(program_id, accounts, instruction),
         P2PSwapInstructions::FillOrder => fill_order(program_id, accounts, instruction),
-        P2PSwapInstructions::FillPrivateOrder => fill_private_order(program_id, accounts, instruction),
     }
 }
