@@ -5,6 +5,7 @@ use {
         get_order_address,
         get_order_wallet_authority,
         P2PSwapInstructions,
+        P2PSwapError,
     },
     arrayref::{array_ref, array_refs},
     solana_program::{
@@ -44,7 +45,7 @@ fn create_order_account<'a>(
 
     if order_account.lamports() > 0 {
         msg!("Order {:?} already exists", order_account.key);
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::Custom(P2PSwapError::OrderExists as u32));
     } else {
         invoke_signed(
             &system_instruction::create_account(
@@ -109,7 +110,7 @@ fn _create_order<'a>(
             creation_slot,
             newest_slot,
         );
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::Custom(P2PSwapError::CreationSlotToFar as u32));
     }
 
     let seller = next_account_info(account_info_iter)?; // 1 - seller Pubkey
@@ -150,7 +151,7 @@ fn _create_order<'a>(
 
     if expected_order_wallet != *order_wallet.key {
         msg!(
-            "Locked walled not match. Expected {:?}",
+            "Order walled not match. Expected {:?}",
             expected_order_wallet,
         );
         return Err(ProgramError::InvalidAccountData);
@@ -270,7 +271,7 @@ fn _fill_order<'a>(
 
         if !solana_program::ed25519_program::check_id(&ed25519_instr.program_id) {
             msg!("Previous instruction should be for ed25519_program");
-            return Err(ProgramError::InvalidAccountData);
+            return Err(ProgramError::Custom(P2PSwapError::UnlockInstructionNotFound as u32));
         }
 
         let ed25519_data = array_ref![&ed25519_instr.data, 0, 144];
@@ -279,13 +280,13 @@ fn _fill_order<'a>(
         let unlock_signer = Pubkey::new_from_array(*unlock_signer);
         if unlock_signer != order.seller {
             msg!("ed25519 instruction is invalid: wrong seller");
-            return Err(ProgramError::InvalidAccountData);
+            return Err(ProgramError::Custom(P2PSwapError::UnlockInstructionInvalid as u32));
         }
 
         let unlock_order = Pubkey::new_from_array(*unlock_order);
         if unlock_order != *order_account.key {
             msg!("ed25519 instruction is invalid: wrong order");
-            return Err(ProgramError::InvalidAccountData);
+            return Err(ProgramError::Custom(P2PSwapError::UnlockInstructionInvalid as u32));
         }
     }
 
@@ -296,12 +297,12 @@ fn _fill_order<'a>(
 
     if order.min_sell_amount > sell_token_amount {
         msg!("Buy amount is below minimum");
-        return Err(ProgramError::Custom(1));
+        return Err(ProgramError::Custom(P2PSwapError::BuyAmountBelowMinimum as u32));
     }
 
     if order.remains_to_fill < sell_token_amount {
         msg!("Order has not enough tokens");
-        return Err(ProgramError::Custom(1));
+        return Err(ProgramError::Custom(P2PSwapError::NotEnoughTokensInOrder as u32));
     }
 
     let (expected_order_wallet_authority, bump_seed) = get_order_wallet_authority(program_id, seller.key);

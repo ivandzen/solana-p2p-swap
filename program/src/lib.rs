@@ -165,3 +165,12 @@ impl P2PSwapInstructions {
         }
     }
 }
+
+enum P2PSwapError {
+    OrderExists = 1,
+    CreationSlotToFar = 2,
+    UnlockInstructionNotFound = 3,
+    UnlockInstructionInvalid = 4,
+    BuyAmountBelowMinimum = 5,
+    NotEnoughTokensInOrder = 6,
+}

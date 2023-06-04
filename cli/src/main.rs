@@ -310,7 +310,6 @@ fn process_create_order(context: &AppContext, args: &Option<&ArgMatches>) {
         let signature = context.send_transaction(&instructions).unwrap();
 
         println!("\n\nNew order created: {:?}", order_account);
-        println!("Order seed: {:x?}", order_seed);
         println!("Transaction: {:?}", signature);
         if is_private {
             let unlock_signature = context.signer.try_sign_message(&order_account.to_bytes()).unwrap();
