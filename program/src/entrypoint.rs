@@ -1,5 +1,3 @@
-use solana_program::clock::Slot;
-use solana_program::sysvar;
 use {
     crate::{
         SwapSPLOrder,
@@ -11,16 +9,17 @@ use {
     arrayref::{array_ref, array_refs},
     solana_program::{
         account_info::{next_account_info, AccountInfo},
+        clock::Slot,
         entrypoint,
         entrypoint::ProgramResult,
         msg,
-        program::{invoke, invoke_signed},
+        program::invoke_signed,
         program_error::ProgramError,
         program_pack::Pack,
         pubkey::Pubkey,
         rent::Rent,
         system_instruction, system_program,
-        sysvar::Sysvar,
+        sysvar::{self, Sysvar},
     },
     spl_token::state::Account as SPLAccount,
     std::ops::DerefMut,
@@ -28,59 +27,44 @@ use {
 
 entrypoint!(process_instruction);
 
+// Latest slot number is used as seed to generate order accounts
+// This constant prevents seed to bee too far in past
 const MAX_SLOT_DIFFERENCE: Slot = 40;
 
-pub fn create_account<'a>(
+fn create_order_account<'a>(
     system_account: &AccountInfo<'a>,
     program_id: &Pubkey,
-    payer: &AccountInfo<'a>,
-    new_account: &AccountInfo<'a>,
-    signers_seeds: &[&[u8]],
-    space: usize,
+    seller: &AccountInfo<'a>,
+    order_account: &AccountInfo<'a>,
+    creation_slot: u64,
+    bump_seed: u8,
 ) -> Result<(), ProgramError> {
     let rent = Rent::get()?;
-    let minimum_balance = rent.minimum_balance(space).max(1);
+    let minimum_balance = rent.minimum_balance(SwapSPLOrder::LEN).max(1);
 
-    if new_account.lamports() > 0 {
-        let add_lamports = minimum_balance.saturating_sub(new_account.lamports());
-
-        if add_lamports > 0 {
-            invoke(
-                &system_instruction::transfer(payer.key, new_account.key, add_lamports),
-                &[
-                    (*payer).clone(),
-                    new_account.clone(),
-                    system_account.clone(),
-                ],
-            )?;
-        }
-
-        invoke_signed(
-            &system_instruction::allocate(new_account.key, space as u64),
-            &[new_account.clone(), system_account.clone()],
-            &[signers_seeds],
-        )?;
-
-        invoke_signed(
-            &system_instruction::assign(new_account.key, program_id),
-            &[new_account.clone(), system_account.clone()],
-            &[signers_seeds],
-        )
+    if order_account.lamports() > 0 {
+        msg!("Order {:?} already exists", order_account.key);
+        return Err(ProgramError::InvalidAccountData);
     } else {
         invoke_signed(
             &system_instruction::create_account(
-                payer.key,
-                new_account.key,
+                seller.key,
+                order_account.key,
                 minimum_balance,
-                space as u64,
+                SwapSPLOrder::LEN as u64,
                 program_id,
             ),
             &[
-                (*payer).clone(),
-                new_account.clone(),
+                (*seller).clone(),
+                order_account.clone(),
                 system_account.clone(),
             ],
-            &[signers_seeds],
+            &[&[
+                b"OrderAccount",
+                &seller.key.to_bytes(),
+                &creation_slot.to_le_bytes(),
+                &[bump_seed],
+            ]],
         )
     }
 }
@@ -93,15 +77,15 @@ fn _create_order<'a>(
 ) -> ProgramResult {
     let account_info_iter = &mut accounts.iter();
 
-    let (sell_amount, buy_amount, min_sell_amount, order_seed) = if instruction_data.len() == 32 {
+    let (sell_amount, buy_amount, min_sell_amount, creation_slot) = if instruction_data.len() == 32 {
         let instruction_data = array_ref![instruction_data, 0, 32];
-        let (sell_amount, buy_amount, min_sell_amount, order_seed)
+        let (sell_amount, buy_amount, min_sell_amount, creation_slot)
             = array_refs![instruction_data, 8, 8, 8, 8];
         (
             u64::from_le_bytes(*sell_amount),
             u64::from_le_bytes(*buy_amount),
             u64::from_le_bytes(*min_sell_amount),
-            u64::from_le_bytes(*order_seed),
+            u64::from_le_bytes(*creation_slot),
         )
     } else {
         msg!(
@@ -119,10 +103,10 @@ fn _create_order<'a>(
 
     let clock = sysvar::clock::Clock::from_account_info(clock)?;
     let newest_slot = clock.slot;
-    if order_seed > newest_slot || newest_slot - order_seed > MAX_SLOT_DIFFERENCE {
+    if creation_slot > newest_slot || newest_slot - creation_slot > MAX_SLOT_DIFFERENCE {
         msg!(
-            "order seed slot {:?} is too far from current {:?}. Please, generate new order account with latest slot number as seed",
-            order_seed,
+            "creation slot {:?} is too far from current {:?}. Please, generate new order account with latest slot number as seed",
+            creation_slot,
             newest_slot,
         );
         return Err(ProgramError::InvalidAccountData);
@@ -194,7 +178,7 @@ fn _create_order<'a>(
 
     let order_account = next_account_info(account_info_iter)?; // 8 - order account
     let (expected_order_account, bump_seed) =
-        get_order_address(program_id, seller.key, order_seed);
+        get_order_address(program_id, seller.key, creation_slot);
     if expected_order_account != *order_account.key {
         msg!(
             "Order account not match. Expected {:?}",
@@ -209,18 +193,13 @@ fn _create_order<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    create_account(
+    create_order_account(
         system_account,
         program_id,
         seller,
         order_account,
-        &[
-            b"OrderAccount",
-            &seller.key.to_bytes(),
-            &order_seed.to_le_bytes(),
-            &[bump_seed],
-        ],
-        SwapSPLOrder::LEN,
+        creation_slot,
+        bump_seed,
     )?;
 
     let order = SwapSPLOrder {
