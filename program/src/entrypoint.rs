@@ -23,6 +23,7 @@ use {
         sysvar::{self, Sysvar},
     },
     spl_token::state::Account as SPLAccount,
+    spl_associated_token_account::get_associated_token_address,
     std::ops::DerefMut,
 };
 
@@ -233,12 +234,144 @@ fn create_private_order<'a>(
     _create_order(program_id, accounts, instruction_data, true)
 }
 
-fn close_order<'a>(
-    _program_id: &'a Pubkey,
-    _accounts: &'a [AccountInfo<'a>],
-    _instruction_data: &[u8],
+fn revoke_order<'a>(
+    program_id: &'a Pubkey,
+    accounts: &'a [AccountInfo<'a>],
+    instruction_data: &[u8],
 ) -> ProgramResult {
-    todo!()
+    let account_info_iter = &mut accounts.iter();
+
+    let caller = next_account_info(account_info_iter)?; // 0 - caller
+    if !caller.is_signer {
+        msg!("Caller must be signer");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let seller = next_account_info(account_info_iter)?; // 1 - seller
+    let order_account = next_account_info(account_info_iter)?; // 2 - order
+    let mut order = SwapSPLOrder::unpack(&order_account.data.borrow())?;
+    if order.seller != *seller.key {
+        msg!(
+                "Seller not match. Expected: {:?}",
+                order.seller,
+            );
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let order_wallet_account = next_account_info(account_info_iter)?; // 3 - order wallet
+    let order_wallet = SPLAccount::unpack(&order_wallet_account.data.borrow())?;
+
+    let order_wallet_authority = next_account_info(account_info_iter)?; // 4 - order wallet authority
+    let (expected_order_wallet_authority, bump_seed) = get_order_wallet_authority(program_id, &order.seller);
+    if expected_order_wallet_authority != *order_wallet_authority.key {
+        msg!(
+                "Order wallet authority not match. Expected: {:?}",
+                expected_order_wallet_authority,
+            );
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let expected_order_wallet = get_order_wallet_address(&order_wallet.mint, order_wallet_authority.key);
+    if expected_order_wallet != *order_wallet_account.key {
+        msg!(
+                "Order wallet not match. Expected: {:?}",
+                expected_order_wallet,
+            );
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let revoke_amount = if *caller.key != *seller.key {
+        if order.remains_to_fill > order.min_sell_amount {
+            // order still have enough tokens on the balance to make transactions
+            // it can be closed only by owner (seller)
+            msg!("Only seller can revoke unfinished orders");
+            return Err(ProgramError::InvalidAccountData);
+        }
+        // order should be revoked entirely
+        order.remains_to_fill
+    } else {
+        if instruction_data.len() != 8 {
+            msg!("Instruction data expected to be 8 bytes long");
+            return Err(ProgramError::InvalidInstructionData);
+        }
+
+        let instruction_data = array_ref![instruction_data, 0, 8];
+        u64::from_le_bytes(*instruction_data)
+    };
+
+    if revoke_amount > order.remains_to_fill {
+        msg!("Unable to revoke {:?} tokens", revoke_amount);
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    let revoke_amount = if revoke_amount == 0 {
+        // this case only reached if caller == seller
+        order.remains_to_fill
+    } else {
+        revoke_amount
+    };
+
+    let seller_wallet = next_account_info(account_info_iter)?; // 5 - seller wallet address
+    let expected_seller_wallet = get_associated_token_address(seller.key, &order_wallet.mint);
+    if expected_seller_wallet != *seller_wallet.key {
+        msg!(
+            "Seller wallet not match. Expected {:?}",
+            expected_seller_wallet,
+        );
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    let token_program = next_account_info(account_info_iter)?; // 6 - token program
+    if !spl_token::check_id(token_program.key) {
+        msg!(
+            "Token program not match. Expected {:?}",
+            spl_token::id(),
+        );
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    let remains_to_fill_after = order.remains_to_fill
+        .checked_sub(revoke_amount)
+        .ok_or(ProgramError::InvalidInstructionData)?;
+
+    let tfer_inst = spl_token::instruction::transfer(
+        &spl_token::id(),
+        order_wallet_account.key,
+        seller_wallet.key,
+        order_wallet_authority.key,
+        &[],
+        revoke_amount,
+    )?;
+
+    invoke_signed(
+        &tfer_inst,
+        &[
+            order_wallet_account.clone(),
+            seller_wallet.clone(),
+            order_wallet_authority.clone(),
+        ],
+        &[&[b"OrderWalletAuthority", &seller.key.to_bytes(), &[bump_seed]]],
+    )?;
+
+    if remains_to_fill_after == 0 {
+        let tfer = system_instruction::transfer(
+            order_account.key,
+            caller.key,
+            order_account.lamports()
+        );
+
+        invoke_signed(
+            &tfer,
+            &[
+                order_account.clone(),
+                caller.clone(),
+            ],
+            &[&[b"OrderWalletAuthority", &seller.key.to_bytes(), &[bump_seed]]],
+        )
+    } else {
+        order.remains_to_fill = remains_to_fill_after;
+        SwapSPLOrder::pack(order, &mut order_account.data.borrow_mut())
+    }
 }
 
 fn fill_order<'a>(
@@ -352,7 +485,7 @@ fn fill_order<'a>(
     }
 
     let buyer_buy_token_wallet_address =
-        spl_associated_token_account::get_associated_token_address(
+        get_associated_token_address(
             buyer.key,
             buy_token.key
         );
@@ -363,7 +496,7 @@ fn fill_order<'a>(
     }
 
     let seller_buy_token_wallet_address =
-        spl_associated_token_account::get_associated_token_address(
+        get_associated_token_address(
             seller.key,
             buy_token.key
         );
@@ -374,7 +507,7 @@ fn fill_order<'a>(
     }
 
     let buyer_sell_token_wallet_address =
-        spl_associated_token_account::get_associated_token_address(
+        get_associated_token_address(
             buyer.key,
             sell_token.key
         );
@@ -453,7 +586,7 @@ fn process_instruction<'a>(
         }
         P2PSwapInstructions::CreatePublicOrder => create_public_order(program_id, accounts, instruction),
         P2PSwapInstructions::CreatePrivateOrder => create_private_order(program_id, accounts, instruction),
-        P2PSwapInstructions::CloseOrder => close_order(program_id, accounts, instruction),
+        P2PSwapInstructions::RevokeOrder => revoke_order(program_id, accounts, instruction),
         P2PSwapInstructions::FillOrder => fill_order(program_id, accounts, instruction),
     }
 }

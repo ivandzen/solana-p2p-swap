@@ -148,7 +148,7 @@ pub enum P2PSwapInstructions {
     Undefined = 0,
     CreatePublicOrder = 1,
     CreatePrivateOrder = 2,
-    CloseOrder = 3,
+    RevokeOrder = 3,
     FillOrder = 4,
 }
 
@@ -157,7 +157,7 @@ impl P2PSwapInstructions {
         match value {
             1 => P2PSwapInstructions::CreatePublicOrder,
             2 => P2PSwapInstructions::CreatePrivateOrder,
-            3 => P2PSwapInstructions::CloseOrder,
+            3 => P2PSwapInstructions::RevokeOrder,
             4 => P2PSwapInstructions::FillOrder,
             _ => P2PSwapInstructions::Undefined,
         }
