@@ -205,6 +205,7 @@ fn _create_order<'a>(
     )?;
 
     let order = SwapSPLOrder {
+        creation_slot,
         seller: seller.key.clone(),
         sell_amount,
         order_wallet: order_wallet.key.clone(),
@@ -234,23 +235,13 @@ fn create_private_order<'a>(
     _create_order(program_id, accounts, instruction_data, true)
 }
 
-fn revoke_order<'a>(
-    program_id: &'a Pubkey,
-    accounts: &'a [AccountInfo<'a>],
-    instruction_data: &[u8],
-) -> ProgramResult {
-    let account_info_iter = &mut accounts.iter();
-
-    let caller = next_account_info(account_info_iter)?; // 0 - caller
-    if !caller.is_signer {
-        msg!("Caller must be signer");
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    let seller = next_account_info(account_info_iter)?; // 1 - seller
-    let order_account = next_account_info(account_info_iter)?; // 2 - order
-    let mut order = SwapSPLOrder::unpack(&order_account.data.borrow())?;
-    if order.seller != *seller.key {
+fn check_and_get_order(
+    program_id: &Pubkey,
+    seller_account: &AccountInfo,
+    order_account: &AccountInfo
+) -> Result<SwapSPLOrder, ProgramError> {
+    let order = SwapSPLOrder::unpack(&order_account.data.borrow())?;
+    if order.seller != *seller_account.key {
         msg!(
                 "Seller not match. Expected: {:?}",
                 order.seller,
@@ -258,10 +249,32 @@ fn revoke_order<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let order_wallet_account = next_account_info(account_info_iter)?; // 3 - order wallet
+    let (expected_order_account, _) = get_order_address(
+        program_id,
+        &order.seller,
+        order.creation_slot
+    );
+
+    if expected_order_account == *order_account.key {
+        msg!(
+                "Order not match. Expected: {:?}",
+                expected_order_account,
+            );
+
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    Ok(order)
+}
+
+fn check_and_get_order_wallet(
+    program_id: &Pubkey,
+    order: &SwapSPLOrder,
+    order_wallet_authority: &AccountInfo,
+    order_wallet_account: &AccountInfo,
+) -> Result<(SPLAccount, u8), ProgramError> {
     let order_wallet = SPLAccount::unpack(&order_wallet_account.data.borrow())?;
 
-    let order_wallet_authority = next_account_info(account_info_iter)?; // 4 - order wallet authority
     let (expected_order_wallet_authority, bump_seed) = get_order_wallet_authority(program_id, &order.seller);
     if expected_order_wallet_authority != *order_wallet_authority.key {
         msg!(
@@ -279,6 +292,36 @@ fn revoke_order<'a>(
             );
         return Err(ProgramError::InvalidAccountData);
     }
+
+    Ok((order_wallet, bump_seed))
+}
+
+fn revoke_order<'a>(
+    program_id: &'a Pubkey,
+    accounts: &'a [AccountInfo<'a>],
+    instruction_data: &[u8],
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+
+    let caller = next_account_info(account_info_iter)?; // 0 - caller
+    if !caller.is_signer {
+        msg!("Caller must be signer");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let seller = next_account_info(account_info_iter)?; // 1 - seller
+    let order_account = next_account_info(account_info_iter)?; // 2 - order
+    let mut order = check_and_get_order(program_id, seller, order_account)?;
+
+    let order_wallet_authority = next_account_info(account_info_iter)?; // 3 - order wallet authority
+    let order_wallet_account = next_account_info(account_info_iter)?; // 4 - order wallet
+
+    let (order_wallet, bump_seed) = check_and_get_order_wallet(
+        program_id,
+        &order,
+        order_wallet_authority,
+        order_wallet_account,
+    )?;
 
     let revoke_amount = if *caller.key != *seller.key {
         if order.remains_to_fill > order.min_sell_amount {
