@@ -117,3 +117,28 @@ buy-order G7SrtmckBJPhpkzGuedsyJyqMRLakYCvrix4hDLM5EFC 200000000 \
 --unlock-signature 3du66wakH9CbJBusDeNNRiPJRU71SrqemzrBn2KXc1V8NcXgKSJM5m2H6XrqhjwGDeWdXehxxdRFYqGk1onao7L8
 
 transaction: 5neAqCK8WQtNtUQ3ovvBLHPLUedAmHiRhtXL7rAMwDrpdqv3GwBnGa2HfYP43tfizf2fmhwcFFgBsPiNNZu9yVyi
+```
+
+## Order revocation example
+Existing order can be revoked:
+- By order owner (seller)-  in any time and in any amount. In that case, tokens locked inside order will be returned to
+order owner same as lamports stored in order account.
+- By any user - only if remaining amount of tokens locked inside order is lower than minimal buy amount. In that case,
+tokens locked inside order will be returned to order owner (seller) and lamport stored inside order account will be
+returned to caller.
+
+Order revocation is performed using **RevokeOrder** instruction. Instruction data must  contain additional 8 
+bytes treating as amount of tokens to revoke from order (u64 lower ending formatted) . This additional data completely 
+ignored in case if revoke instruction is invoked by a user not owning this order. In case, if revoke instruction is 
+called by order owner, revoke amount can be set to 0 - in that case order will be revoked fully.
+
+**NOTE:** private orders can be revoked by anyone with same conditions: unlock signature is not required to revoke 
+private order.
+
+Example of revocation command:
+
+```bash
+./p2p-swap-cli -u devnet -p AzVuKVf8qQjHBTyjEUZbr6zRvinZvjpuFZWMXPd76Fzx revoke-order 41YkvBHxmnYfWAkmS8FCVq157yZzbqc3uNYd1Xkawife
+
+Revoke finished. Txn: 22cLx3kWdBUzFnqg4NKi2NWHTCPK2nsbYHm2pXsTEi7RqieoTcnJTPtvPkUkppDzjLKS4a7pPpc6LphsigH6XvUo
+```

@@ -497,11 +497,9 @@ fn process_revoke_order(context: &AppContext, args: &Option<&ArgMatches>) {
             data,
         });
 
-        println!("Transaction: {:#?}", instructions);
-
         let signature = context.send_transaction(&instructions).unwrap();
 
-        println!("Revoke finished: {:?}", signature);
+        println!("\n\nRevoke finished. Txn: {:?}", signature);
     }
 }
 
