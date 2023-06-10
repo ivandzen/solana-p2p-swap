@@ -336,6 +336,17 @@ fn process_get_order(context: &AppContext, args: &Option<&ArgMatches>) {
     }
 }
 
+fn get_order_token_mint(context: &AppContext, order: &SwapSPLOrder) -> Result<Pubkey, String> {
+    let order_wallet = context.client
+        .get_account(&order.order_wallet)
+        .map_err(|_| format!("Failed to read order wallet {:?}", order.order_wallet))?;
+
+    let order_wallet = SPLAccount::unpack(&order_wallet.data)
+        .map_err(|_| format!("Failed to upack order wallet from account {:?}", order.order_wallet))?;
+
+    Ok(order_wallet.mint)
+}
+
 fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
     if let Some(args) = args {
         let sell_token_amount = args.value_of("sell_token_amount").unwrap().parse::<u64>().unwrap();
@@ -346,8 +357,8 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
         let order_wallet_authority =
             get_order_wallet_authority(&context.p2p_swap, &context.signer.pubkey()).0;
 
-        let order_wallet = context.client.get_account(&order.order_wallet).unwrap();
-        let order_wallet = SPLAccount::unpack(&order_wallet.data).unwrap();
+        let order_token_mint =
+            get_order_token_mint(context, &order).unwrap();
 
         let buyer_buy_token_wallet =
             spl_associated_token_account::get_associated_token_address(
@@ -364,7 +375,7 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
         let buyer_sell_token_wallet =
             spl_associated_token_account::get_associated_token_address(
                 &context.signer.pubkey(),
-                &order_wallet.mint,
+                &order_token_mint,
             );
 
         let mut instructions = Vec::new();
@@ -409,7 +420,7 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
             accounts.append(
                 &mut vec![
                     AccountMeta::new_readonly(order_wallet_authority.clone(), false), // order wallet authority
-                    AccountMeta::new_readonly(order_wallet.mint.clone(), false),   // sell token mint
+                    AccountMeta::new_readonly(order_token_mint.clone(), false),   // sell token mint
                     AccountMeta::new(order.order_wallet.clone(), false),    // order wallet
                     AccountMeta::new_readonly(order.price_mint, false),     // buy token mint
                     AccountMeta::new(buyer_buy_token_wallet, false),        // buyer buy token wallet
@@ -433,6 +444,45 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
 
         let signature = context.send_transaction(&instructions).unwrap();
         println!("transaction: {:?}", signature);
+    }
+}
+
+fn process_revoke_order(context: &AppContext, args: &Option<&ArgMatches>) {
+    if let Some(args) = args {
+        let order_address = Pubkey::from_str(args.value_of("order_address").unwrap()).unwrap();
+        let revoke_amount = u64::from_str(args.value_of("revoke_amount").unwrap_or("0")).unwrap();
+
+        let order = get_order(context, &order_address).unwrap();
+        let (order_wallet_authority, _)
+            = get_order_wallet_authority(&context.p2p_swap, &order.seller);
+
+        let order_token_mint = get_order_token_mint(&context, &order).unwrap();
+        let order_wallet = get_order_wallet_address(&order_token_mint, &order_wallet_authority);
+
+        let seller_wallet_address =
+            spl_associated_token_account::
+            get_associated_token_address(&order.seller, &order_token_mint);
+
+        let accounts = vec![
+            AccountMeta::new(context.signer.pubkey().clone(), true),
+            AccountMeta::new_readonly(order.seller, false),
+            AccountMeta::new(order_address, false),
+            AccountMeta::new_readonly(order_wallet_authority, false),
+            AccountMeta::new(order_wallet, false),
+            AccountMeta::new(seller_wallet_address, false),
+            AccountMeta::new_readonly(spl_token::id(), false),
+        ];
+
+        let mut instructions = Vec::new();
+        instructions.push(Instruction {
+            program_id: context.p2p_swap.clone(),
+            accounts,
+            data: revoke_amount.to_le_bytes().to_vec(),
+        });
+
+        let signature = context.send_transaction(&instructions).unwrap();
+
+        println!("Revoke finished: {:?}", signature);
     }
 }
 
@@ -589,6 +639,29 @@ fn main() {
                         .help("base58 encoded signature")
                 )
         )
+        .subcommand(
+            SubCommand::with_name("revoke-order")
+                .about("Revokes given order buy parts or whole at once")
+                .arg(
+                    Arg::with_name("order_address")
+                        .index(1)
+                        .value_name("ORDER_ADDRESS")
+                        .takes_value(true)
+                        .required(true)
+                        .validator(is_valid_pubkey)
+                        .help("base58 address of order (account)")
+                )
+                .arg(
+                    Arg::with_name("revoke_amount")
+                        .index(2)
+                        .value_name("AMOUNT")
+                        .takes_value(true)
+                        .required(false)
+                        .default_value("0")
+                        .validator(is_valid_u64)
+                        .help("Amount of tokens to revoke (only seller can specify this parameter)")
+                )
+        )
         .get_matches();
 
     let context = AppContext::parse(&matches).unwrap();
@@ -598,6 +671,7 @@ fn main() {
         "create-order" => process_create_order(&context, &args),
         "get-order" => process_get_order(&context, &args),
         "buy-order" => process_buy_order(&context, &args),
+        "revoke-order" => process_revoke_order(&context, &args),
         _ => {
             warn!("Unknown subcommand '{:?}'", subcommand);
             exit(1)
