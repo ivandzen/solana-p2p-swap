@@ -463,22 +463,41 @@ fn process_revoke_order(context: &AppContext, args: &Option<&ArgMatches>) {
             spl_associated_token_account::
             get_associated_token_address(&order.seller, &order_token_mint);
 
-        let accounts = vec![
-            AccountMeta::new(context.signer.pubkey().clone(), true),
-            AccountMeta::new_readonly(order.seller, false),
-            AccountMeta::new(order_address, false),
-            AccountMeta::new_readonly(order_wallet_authority, false),
-            AccountMeta::new(order_wallet, false),
-            AccountMeta::new(seller_wallet_address, false),
-            AccountMeta::new_readonly(spl_token::id(), false),
-        ];
+        let accounts = if context.signer.pubkey() == order.seller {
+            vec![
+                AccountMeta::new(context.signer.pubkey().clone(), true),
+                AccountMeta::new(order.seller, true),
+                AccountMeta::new(order_address, false),
+                AccountMeta::new_readonly(order_wallet_authority, false),
+                AccountMeta::new(order_wallet, false),
+                AccountMeta::new(seller_wallet_address, false),
+                AccountMeta::new_readonly(spl_token::id(), false),
+                AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            ]
+        } else {
+            vec![
+                AccountMeta::new(context.signer.pubkey().clone(), true),
+                AccountMeta::new_readonly(order.seller, false),
+                AccountMeta::new(order_address, false),
+                AccountMeta::new_readonly(order_wallet_authority, false),
+                AccountMeta::new(order_wallet, false),
+                AccountMeta::new(seller_wallet_address, false),
+                AccountMeta::new_readonly(spl_token::id(), false),
+                AccountMeta::new_readonly(solana_sdk::system_program::id(), false),
+            ]
+        };
 
         let mut instructions = Vec::new();
+        let mut data: Vec<u8> = vec![P2PSwapInstructions::RevokeOrder as u8];
+        let mut revoke_amount = revoke_amount.to_le_bytes().to_vec();
+        data.append(&mut revoke_amount);
         instructions.push(Instruction {
             program_id: context.p2p_swap.clone(),
             accounts,
-            data: revoke_amount.to_le_bytes().to_vec(),
+            data,
         });
+
+        println!("Transaction: {:#?}", instructions);
 
         let signature = context.send_transaction(&instructions).unwrap();
 

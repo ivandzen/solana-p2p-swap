@@ -16,6 +16,7 @@ use {
         msg,
         program::invoke_signed,
         program_error::ProgramError,
+        program_memory::sol_memset,
         program_pack::Pack,
         pubkey::Pubkey,
         rent::Rent,
@@ -239,7 +240,7 @@ fn check_and_get_order(
     program_id: &Pubkey,
     seller_account: &AccountInfo,
     order_account: &AccountInfo
-) -> Result<SwapSPLOrder, ProgramError> {
+) -> Result<(SwapSPLOrder, u8), ProgramError> {
     let order = SwapSPLOrder::unpack(&order_account.data.borrow())?;
     if order.seller != *seller_account.key {
         msg!(
@@ -249,13 +250,13 @@ fn check_and_get_order(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let (expected_order_account, _) = get_order_address(
+    let (expected_order_account, bump_seed) = get_order_address(
         program_id,
         &order.seller,
         order.creation_slot
     );
 
-    if expected_order_account == *order_account.key {
+    if expected_order_account != *order_account.key {
         msg!(
                 "Order not match. Expected: {:?}",
                 expected_order_account,
@@ -264,7 +265,7 @@ fn check_and_get_order(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    Ok(order)
+    Ok((order, bump_seed))
 }
 
 fn check_and_get_order_wallet(
@@ -311,7 +312,7 @@ fn revoke_order<'a>(
 
     let seller = next_account_info(account_info_iter)?; // 1 - seller
     let order_account = next_account_info(account_info_iter)?; // 2 - order
-    let mut order = check_and_get_order(program_id, seller, order_account)?;
+    let (mut order, _) = check_and_get_order(program_id, seller, order_account)?;
 
     let order_wallet_authority = next_account_info(account_info_iter)?; // 3 - order wallet authority
     let order_wallet_account = next_account_info(account_info_iter)?; // 4 - order wallet
@@ -361,7 +362,7 @@ fn revoke_order<'a>(
             "Seller wallet not match. Expected {:?}",
             expected_seller_wallet,
         );
-        return Err(ProgramError::InvalidInstructionData);
+        return Err(ProgramError::InvalidAccountData);
     }
 
     let token_program = next_account_info(account_info_iter)?; // 6 - token program
@@ -370,7 +371,7 @@ fn revoke_order<'a>(
             "Token program not match. Expected {:?}",
             spl_token::id(),
         );
-        return Err(ProgramError::InvalidInstructionData);
+        return Err(ProgramError::InvalidAccountData);
     }
 
     let remains_to_fill_after = order.remains_to_fill
@@ -393,24 +394,20 @@ fn revoke_order<'a>(
             seller_wallet.clone(),
             order_wallet_authority.clone(),
         ],
-        &[&[b"OrderWalletAuthority", &seller.key.to_bytes(), &[bump_seed]]],
+        &[&[b"OrderWalletAuthority", &caller.key.to_bytes(), &[bump_seed]]],
     )?;
 
     if remains_to_fill_after == 0 {
-        let tfer = system_instruction::transfer(
-            order_account.key,
-            caller.key,
-            order_account.lamports()
-        );
+        let caller_starting_lamports = caller.lamports();
+        **caller.lamports.borrow_mut() = caller_starting_lamports
+            .checked_add(order_account.lamports())
+            .ok_or(ProgramError::InvalidInstructionData)?;
 
-        invoke_signed(
-            &tfer,
-            &[
-                order_account.clone(),
-                caller.clone(),
-            ],
-            &[&[b"OrderWalletAuthority", &seller.key.to_bytes(), &[bump_seed]]],
-        )
+        **order_account.lamports.borrow_mut() = 0;
+
+        sol_memset(*order_account.data.borrow_mut(), 0, SwapSPLOrder::LEN);
+
+        Ok(())
     } else {
         order.remains_to_fill = remains_to_fill_after;
         SwapSPLOrder::pack(order, &mut order_account.data.borrow_mut())
