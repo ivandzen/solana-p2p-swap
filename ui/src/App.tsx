@@ -205,12 +205,6 @@ function SellTab() {
     )
 }
 
-function OrdersTab() {
-    return (
-        <h1>Orders</h1>
-    )
-}
-
 const MainWidget: FC = () => {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
@@ -233,15 +227,13 @@ const MainWidget: FC = () => {
     return  (
         <div className="tab">
             <WalletMultiButton/>
-            <div className="button">
+            <div className="tabheader">
                 <ModeButton name="Buy" onClick={buyClick} activeName={activeTab}/>
                 <ModeButton name="Sell" onClick={sellClick} activeName={activeTab}/>
-                <ModeButton name="Orders" onClick={ordersClick} activeName={activeTab}/>
             </div>
 
             <ModeTab name="Buy" activeName={activeTab}><BuyTab/></ModeTab>
             <ModeTab name="Sell" activeName={activeTab}><SellTab/></ModeTab>
-            <ModeTab name="Orders" activeName={activeTab}><OrdersTab/></ModeTab>
         </div>   
     );
 }

@@ -18,6 +18,12 @@ html, body {
     background-color: #f1f1f1;
   }
 
+.tabheader {
+    width: 100%;
+    padding: 14px 16px;
+    display: flex;
+}
+
   /* Style the buttons that are used to open the tab content */
   .tabbutton {
     background-color: inherit;
@@ -28,7 +34,16 @@ html, body {
     padding: 14px 16px;
     transition: 0.3s;
     min-width: 200px;
+      width: 50%;
   }
+
+  .tabledata {
+      width: 50%
+  }
+
+.tableheader {
+    width: 50%;
+}
   
   /* Change background color of buttons on hover */
   .tabbutton:hover {
@@ -44,6 +59,7 @@ html, body {
     cursor: pointer;
     padding: 14px 16px;
     min-width: 200px;
+      width: 50%;
   }
 
   /* Style the tab content */
