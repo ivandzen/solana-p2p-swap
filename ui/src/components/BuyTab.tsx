@@ -3,7 +3,7 @@ import {PublicKey} from "@solana/web3.js";
 import {OrderDescription} from "./OrderDescription";
 import React, {useEffect, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
-import {getOrderDescription} from "../p2p-swap"
+import {getOrderDescription, OrderDescriptionData} from "../p2p-swap"
 
 function publicKeyChecker(value: string): boolean {
     try {
@@ -18,7 +18,7 @@ function BuyTab() {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const [orderAddress, handleOrderAddressChange] = useState(urlParams.get('order_address'));
-    const [orderDescription, setOrderDescription] = useState(null);
+    const [orderDescription, setOrderDescription] = useState<OrderDescriptionData|null>(null);
     const connectionContext = useConnection();
     useEffect(() => {
         async function updateOrderDescription(
@@ -27,14 +27,18 @@ function BuyTab() {
         ) {
             let orderDescription
                 = await getOrderDescription(connectionContext.connection, orderAddress);
-            setOrderDescription(orderDescription);
+
+            if (orderDescription)
+                setOrderDescription(orderDescription);
+            else
+                setOrderDescription(null);
         }
 
-        try {
+        if (orderAddress)
             updateOrderDescription(connectionContext, new PublicKey(orderAddress));
-        } catch (e) {
-            console.log("update order description: ERROR " + e);
-        }
+        else
+            setOrderDescription(null);
+
     }, [connectionContext, orderAddress]);
 
     return (

@@ -1,7 +1,7 @@
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { UnsafeBurnerWalletAdapter } from '@solana/wallet-adapter-wallets';
+import { PhantomWalletAdapter, BraveWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 import type {FC, ReactNode} from 'react';
 import React, { useMemo, useState } from 'react';
@@ -25,19 +25,8 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
     const wallets = useMemo(
         () => [
-            /**
-             * Wallets that implement either of these standards will be available automatically.
-             *
-             *   - Solana Mobile Stack Mobile Wallet Adapter Protocol
-             *     (https://github.com/solana-mobile/mobile-wallet-adapter)
-             *   - Solana Wallet Standard
-             *     (https://github.com/solana-labs/wallet-standard)
-             *
-             * If you wish to support a wallet that supports neither of those standards,
-             * instantiate its legacy wallet adapter here. Common legacy adapters can be found
-             * in the npm package `@solana/wallet-adapter-wallets`.
-             */
-            new UnsafeBurnerWalletAdapter(),
+            new PhantomWalletAdapter(),
+            new BraveWalletAdapter(),
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [network]
@@ -52,7 +41,13 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
     );
 };
 
-function ModeButton({ name, onClick, activeName }) {
+function ModeButton(
+    { name, onClick, activeName }:
+        {
+            name: string,
+            onClick: (event:any)=>void,
+            activeName: string|null,
+        }) {
     return (
       <button className={name === activeName ? "tabbutton-active" : "tabbutton"} onClick={onClick}>
         {name}
@@ -60,7 +55,13 @@ function ModeButton({ name, onClick, activeName }) {
     );
 }
 
-function ModeTab({name, activeName, children}) {
+function ModeTab(
+    {name, activeName, children}:
+        {
+            name: string,
+            activeName: string|null,
+            children: any
+        }) {
     return (
         <div id={name} className={activeName === name ? "tabcontent-active":"tabcontent"}>
             {children}

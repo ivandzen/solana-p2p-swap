@@ -3,13 +3,13 @@ import React, {ChangeEvent, FC, useState} from "react";
 interface ValueEditAttributes {
     name: string,
     onChange?: (value: string) => void;
-    valueChecker: (value: string) => boolean;
+    valueChecker?: (value: string) => boolean;
     size?: number;
     readonly?: boolean;
     value?: string
 }
 
-const ValueEdit: FC = (attribs: ValueEditAttributes) => {
+const ValueEdit: FC<ValueEditAttributes> = (attribs: ValueEditAttributes) => {
     let [value, setValue] = useState(attribs.value ? attribs.value : "");
     let [inputStyle, setInputStyle] = useState(attribs.readonly ? "input-readonly" : "input");
     let checkValue = (event: ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +31,7 @@ const ValueEdit: FC = (attribs: ValueEditAttributes) => {
             <input
                 className={inputStyle}
                 onChange={checkValue}
-                size={attribs.size ? attribs.size : "43"}
+                size={attribs.size ? attribs.size : 43}
                 readOnly={attribs.readonly ? attribs.readonly : false}
                 value={value}
             />

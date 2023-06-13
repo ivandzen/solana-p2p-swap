@@ -1,4 +1,5 @@
 import {Connection, PublicKey} from "@solana/web3.js"
+import {getAssociatedTokenAddressSync} from "@solana/spl-token"
 
 interface OrderDescriptionData {
     creationSlot: bigint,
@@ -15,20 +16,16 @@ async function getOrderDescription(
     connection: Connection,
     orderAddress: PublicKey
 ): Promise<OrderDescriptionData | null> {
-    const orderData = await connection.getParsedAccountInfo(orderAddress);
+    const orderData = await connection.getAccountInfo(orderAddress);
     if (!orderData) {
         return null;
     }
 
-    if (!orderData.value) {
+    let data = orderData.data;
+    if (data.length != 137) {
         return null;
     }
 
-    if (!orderData.value.data) {
-        return null;
-    }
-
-    let data = orderData.value.data;
     let view = new DataView(data.slice(0, 137).buffer, 0);
     let creationSlot = view.getBigUint64(0, true);
     let seller = new PublicKey(data.slice(8, 40));
@@ -51,6 +48,46 @@ async function getOrderDescription(
         "remainsToFill": remainsToFill,
         "isPrivate": isPrivate
     };
+}
+
+function int64ToBytes(value: bigint): ArrayBuffer {
+    const arrayBuffer = new ArrayBuffer(8);
+    const dataView = new DataView(arrayBuffer);
+    dataView.setBigUint64(0, value, true);
+    return arrayBuffer;
+}
+
+function getOrderWalletAuthority(programId: PublicKey, seller: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync(
+        [Buffer.from("OrderWalletAuthority"), seller.toBytes()],
+        programId
+    )
+}
+
+function getOrderWalletAddress(sellTokenMint: PublicKey, authority: PublicKey): PublicKey {
+    return getAssociatedTokenAddressSync(sellTokenMint, authority, true);
+}
+
+function getOrderAddress(programId: PublicKey, seller: PublicKey, creationSlot: bigint): [PublicKey, number] {
+    let prefix = Buffer.from("OrderAccount", "utf-8");
+    let sellerBytes = seller.toBytes();
+    let creationSlotBytes = Buffer.from(int64ToBytes(creationSlot));
+    return PublicKey.findProgramAddressSync(
+        [prefix, sellerBytes, creationSlotBytes],
+        programId
+    );
+}
+
+function checkOrder(
+    programId: PublicKey,
+    order: &OrderDescriptionData,
+    seller: PublicKey|null = null
+): boolean {
+    if (seller && order.seller !== seller) {
+        return false
+    }
+
+    return false;
 }
 
 export { type OrderDescriptionData, getOrderDescription }

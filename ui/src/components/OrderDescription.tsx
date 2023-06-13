@@ -1,7 +1,8 @@
 import {ValueEdit} from "./ValueEdit";
 import React from "react";
+import {OrderDescriptionData} from "../p2p-swap";
 
-function OrderDescription({description}) {
+function OrderDescription({description}: {description: OrderDescriptionData|null}) {
     if (!description) {
         return (
             <h1>Order not found</h1>
