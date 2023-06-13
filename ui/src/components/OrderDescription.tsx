@@ -1,18 +1,5 @@
 import {ValueEdit} from "./ValueEdit";
 import React from "react";
-import {PublicKey} from "@solana/web3.js";
-
-interface OrderDescriptionData {
-    creationSlot: bigint,
-    seller: PublicKey,
-    sellAmount: bigint,
-    orderWallet: PublicKey,
-    priceMint: PublicKey,
-    buyAmount: bigint,
-    minSellAmount: bigint,
-    remainsToFill: bigint,
-    isPrivate: boolean,
-}
 
 function OrderDescription({description}) {
     if (!description) {
@@ -72,4 +59,4 @@ function OrderDescription({description}) {
     )
 }
 
-export { type OrderDescriptionData, OrderDescription }
+export { OrderDescription }
