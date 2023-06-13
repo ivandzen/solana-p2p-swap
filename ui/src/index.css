@@ -12,6 +12,25 @@ html, body {
     align-items: center;
 }
 
+.value-edit {
+    font-family: monospace;
+    display: flex;
+    justify-content: space-between;
+}
+
+.value-edit .input {
+    background: #fffffff;
+}
+
+.value-edit .input-readonly {
+    border-color: transparent;
+    background: transparent;
+}
+
+.value-edit .input-failed {
+    background: #f10000;
+}
+
 .tab {
     overflow: hidden;
     border: 1px solid #ccc;

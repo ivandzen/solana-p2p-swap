@@ -1,10 +1,12 @@
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { ConnectionContextState, ConnectionProvider, WalletProvider, useConnection } from '@solana/wallet-adapter-react';
+import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { UnsafeBurnerWalletAdapter } from '@solana/wallet-adapter-wallets';
-import { PublicKey, clusterApiUrl } from '@solana/web3.js';
-import type { FC, ReactNode } from 'react';
-import React, { useEffect, useMemo, useState } from 'react';
+import { clusterApiUrl } from '@solana/web3.js';
+import type {FC, ReactNode} from 'react';
+import React, { useMemo, useState } from 'react';
+import { BuyTab } from "./components/BuyTab"
+import { SellTab } from "./components/SellTab";
 
 export const App: FC = () => {
     return (
@@ -50,133 +52,6 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
     );
 };
 
-interface OrderDescriptionData {
-    creationSlot: bigint,
-    seller: PublicKey,
-    sellAmount: bigint,
-    orderWallet: PublicKey,
-    priceMint: PublicKey,
-    buyAmount: bigint,
-    minSellAmount: bigint,
-    remainsToFill: bigint,
-    isPrivate: boolean,
-}
-
-function OrderDescription({description}) {
-    if (!description) {
-        return (
-            <h1>Order not found</h1>
-        )
-    }
-
-    return (
-        <>
-            <table>
-                <tr>
-                    <th>Creation slot:</th>
-                    <td>{description.creationSlot.toString()}</td>
-                </tr>
-                <tr>
-                    <th>Seller:</th>
-                    <td>{description.seller.toBase58()}</td>
-                </tr>
-                <tr>
-                    <th>Sell amount:</th>
-                    <td>{description.sellAmount.toString()}</td>
-                </tr>
-                <tr>
-                    <th>Order wallet:</th>
-                    <td>{description.orderWallet.toBase58()}</td>
-                </tr>
-                <tr>
-                    <th>Price mint:</th>
-                    <td>{description.priceMint.toBase58()}</td>
-                </tr>
-                <tr>
-                    <th>Buy amount:</th>
-                    <td>{description.buyAmount.toString()}</td>
-                </tr>
-                <tr>
-                    <th>Min sell amount:</th>
-                    <td>{description.minSellAmount.toString()}</td>
-                </tr>
-                <tr>
-                    <th>Remains to fill:</th>
-                    <td>{description.remainsToFill.toString()}</td>
-                </tr>
-                <tr>
-                    <th>Is private:</th>
-                    <td>{description.isPrivate.toString()}</td>
-                </tr>
-            </table>
-        </>
-    )
-}
-
-const OrderAddressEdit: FC = () => {
-    const connectionContext = useConnection();
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const [orderAddress, handleOrderAddressChange] = useState(urlParams.get('order_address'));
-    const [orderDescription, setOrderDescription] = useState(null);
-
-    const orderInfo = useEffect(() => {
-        async function getOrderInfo(
-            connectionContext: ConnectionContextState, 
-            orderAddress: PublicKey
-        ) {
-            const orderData = await connectionContext.connection.getParsedAccountInfo(orderAddress);
-            if (!orderData) {
-                return;
-            }
-
-            if (!orderData.value) {
-                return;
-            }
-
-            let value = orderData.value;
-            let view = new DataView(value.data.slice(0, 137).buffer, 0);
-            let creationSlot = view.getBigUint64(0, true);
-            let seller = new PublicKey(orderData.value.data.slice(8, 40));
-            let sellAmount = view.getBigUint64(40, true);
-            let orderWallet = new PublicKey(orderData.value.data.slice(48, 80));
-            let priceMint = new PublicKey(orderData.value.data.slice(80, 112));
-            let buyAmount = view.getBigUint64(112, true);
-            let minSellAmount = view.getBigUint64(120, true);
-            let remainsToFill = view.getBigUint64(128, true);
-            let isPrivate = view.getUint8(136) == 0 ? false : true;
-
-            let orderDescription = {
-                "creationSlot": creationSlot, 
-                "seller": seller, 
-                "sellAmount": sellAmount, 
-                "orderWallet": orderWallet, 
-                "priceMint": priceMint, 
-                "buyAmount": buyAmount, 
-                "minSellAmount": minSellAmount, 
-                "remainsToFill": remainsToFill, 
-                "isPrivate": isPrivate
-            };
-
-            setOrderDescription(orderDescription);
-        }
-
-        getOrderInfo(connectionContext, new PublicKey(orderAddress));
-    }, [connectionContext, orderAddress]);
-
-    return (
-        <div>
-            <table>
-                <tr>
-                    <th>Order address:</th>
-                    <td><input value={orderAddress} onChange={handleOrderAddressChange}/></td>
-                </tr>
-            </table>
-            <OrderDescription description={orderDescription}/>
-        </div>
-    );
-}
-
 function ModeButton({ name, onClick, activeName }) {
     return (
       <button className={name === activeName ? "tabbutton-active" : "tabbutton"} onClick={onClick}>
@@ -193,18 +68,6 @@ function ModeTab({name, activeName, children}) {
     )
 }
 
-function BuyTab() {
-    return (
-        <OrderAddressEdit/>
-    )
-}
-
-function SellTab() {
-    return (
-        <h1>Sell</h1>
-    )
-}
-
 const MainWidget: FC = () => {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
@@ -218,10 +81,6 @@ const MainWidget: FC = () => {
 
     const sellClick = () => {
         setActiveTab("Sell");
-    };
-
-    const ordersClick = () => {
-        setActiveTab("Orders");
     };
 
     return  (
