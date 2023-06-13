@@ -1,5 +1,10 @@
 import {Connection, PublicKey} from "@solana/web3.js"
-import {getAssociatedTokenAddressSync, getAccount} from "@solana/spl-token"
+import {
+    getAssociatedTokenAddressSync,
+    getAccount as getSPLAccount,
+    Mint as TokenMint,
+    getMint as getTokenMint,
+} from "@solana/spl-token"
 
 interface OrderDescriptionData {
     creationSlot: bigint,
@@ -11,6 +16,8 @@ interface OrderDescriptionData {
     minSellAmount: bigint,
     remainsToFill: bigint,
     isPrivate: boolean,
+    sellToken: TokenMint,
+    buyToken: TokenMint,
 }
 
 async function getOrderDescription(
@@ -38,6 +45,10 @@ async function getOrderDescription(
     let remainsToFill = view.getBigUint64(128, true);
     let isPrivate = view.getUint8(136) == 0 ? false : true;
 
+    let orderWalletAccount = await getSPLAccount(connection, orderWallet);
+    let sellToken = await getTokenMint(connection, orderWalletAccount.mint);
+    let buyToken = await getTokenMint(connection, priceMint);
+
     return {
         "creationSlot": creationSlot,
         "seller": seller,
@@ -47,7 +58,9 @@ async function getOrderDescription(
         "buyAmount": buyAmount,
         "minSellAmount": minSellAmount,
         "remainsToFill": remainsToFill,
-        "isPrivate": isPrivate
+        "isPrivate": isPrivate,
+        "sellToken": sellToken,
+        "buyToken": buyToken,
     };
 }
 
@@ -84,7 +97,6 @@ function getOrderAddress(
 }
 
 async function checkOrder(
-    connection: Connection,
     programId: PublicKey,
     order: &OrderDescriptionData,
     orderAddress: PublicKey|null,
@@ -103,9 +115,8 @@ async function checkOrder(
         }
     }
 
-    let wallet = await getAccount(connection, order.orderWallet);
     let [authority, _] = getOrderWalletAuthority(programId, order.seller);
-    let expectedOrderWallet = getOrderWalletAddress(wallet.mint, authority);
+    let expectedOrderWallet = getOrderWalletAddress(order.sellToken.address, authority);
     if (!expectedOrderWallet.equals(order.orderWallet)) {
         return "Order wallet not match";
     }
@@ -132,7 +143,7 @@ async function getOrderDescriptionChecked(
     programId: PublicKey,
 ): Promise<OrderDescriptionData> {
     let order = await getOrderDescription(connection, orderAddress);
-    let checkErr = await checkOrder(connection, programId, order, orderAddress);
+    let checkErr = await checkOrder(programId, order, orderAddress);
     if (checkErr) {
         throw checkErr;
     }

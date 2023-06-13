@@ -41,7 +41,7 @@ const ValueEdit: FC<ValueEditAttributes> = (attribs: ValueEditAttributes) => {
 
     return (
         <div className="value-edit">
-            <label><b>{attribs.name}</b></label>
+            <label className="label"><b>{attribs.name}</b></label>
             <input
                 className={inputStyle}
                 onChange={checkValue}
