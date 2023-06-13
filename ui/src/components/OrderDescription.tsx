@@ -2,10 +2,10 @@ import {ValueEdit} from "./ValueEdit";
 import React from "react";
 import {OrderDescriptionData} from "../p2p-swap";
 
-function OrderDescription({description}: {description: OrderDescriptionData|null}) {
-    if (!description) {
+function OrderDescription({description}: {description: OrderDescriptionData|string}) {
+    if (typeof (description) === 'string') {
         return (
-            <h1>Order not found</h1>
+            <h1>{description}</h1>
         )
     }
 

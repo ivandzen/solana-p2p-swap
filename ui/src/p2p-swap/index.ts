@@ -1,5 +1,5 @@
 import {Connection, PublicKey} from "@solana/web3.js"
-import {getAssociatedTokenAddressSync} from "@solana/spl-token"
+import {getAssociatedTokenAddressSync, getAccount} from "@solana/spl-token"
 
 interface OrderDescriptionData {
     creationSlot: bigint,
@@ -12,18 +12,19 @@ interface OrderDescriptionData {
     remainsToFill: bigint,
     isPrivate: boolean,
 }
+
 async function getOrderDescription(
     connection: Connection,
     orderAddress: PublicKey
-): Promise<OrderDescriptionData | null> {
+): Promise<OrderDescriptionData> {
     const orderData = await connection.getAccountInfo(orderAddress);
     if (!orderData) {
-        return null;
+        throw "Order not found";
     }
 
     let data = orderData.data;
     if (data.length != 137) {
-        return null;
+        throw "Account is not p2p order";
     }
 
     let view = new DataView(data.slice(0, 137).buffer, 0);
@@ -68,7 +69,11 @@ function getOrderWalletAddress(sellTokenMint: PublicKey, authority: PublicKey): 
     return getAssociatedTokenAddressSync(sellTokenMint, authority, true);
 }
 
-function getOrderAddress(programId: PublicKey, seller: PublicKey, creationSlot: bigint): [PublicKey, number] {
+function getOrderAddress(
+    programId: PublicKey,
+    seller: PublicKey,
+    creationSlot: bigint
+): [PublicKey, number] {
     let prefix = Buffer.from("OrderAccount", "utf-8");
     let sellerBytes = seller.toBytes();
     let creationSlotBytes = Buffer.from(int64ToBytes(creationSlot));
@@ -78,16 +83,67 @@ function getOrderAddress(programId: PublicKey, seller: PublicKey, creationSlot: 
     );
 }
 
-function checkOrder(
+async function checkOrder(
+    connection: Connection,
     programId: PublicKey,
     order: &OrderDescriptionData,
+    orderAddress: PublicKey|null,
     seller: PublicKey|null = null
-): boolean {
-    if (seller && order.seller !== seller) {
-        return false
+): Promise<string|null> {
+    if (seller) {
+        if (order.seller != seller) {
+            return "Seller not match";
+        }
     }
 
-    return false;
+    if (orderAddress) {
+        let [expectedOrderAddress, _] = getOrderAddress(programId, order.seller, order.creationSlot);
+        if (!expectedOrderAddress.equals(orderAddress)) {
+            return `Order address not match. Expected: ${expectedOrderAddress}`;
+        }
+    }
+
+    let wallet = await getAccount(connection, order.orderWallet);
+    let [authority, _] = getOrderWalletAuthority(programId, order.seller);
+    let expectedOrderWallet = getOrderWalletAddress(wallet.mint, authority);
+    if (!expectedOrderWallet.equals(order.orderWallet)) {
+        return "Order wallet not match";
+    }
+
+    return null;
 }
 
-export { type OrderDescriptionData, getOrderDescription }
+function publicKeyChecker(value: string|null|undefined): boolean {
+    if (!value) {
+        return false;
+    }
+
+    try {
+        new PublicKey(value);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function getOrderDescriptionChecked(
+    connection: Connection,
+    orderAddress: PublicKey,
+    programId: PublicKey,
+): Promise<OrderDescriptionData> {
+    let order = await getOrderDescription(connection, orderAddress);
+    let checkErr = await checkOrder(connection, programId, order, orderAddress);
+    if (checkErr) {
+        throw checkErr;
+    }
+
+    return order;
+}
+
+export {
+    type OrderDescriptionData,
+    getOrderDescription,
+    getOrderDescriptionChecked,
+    publicKeyChecker,
+    checkOrder,
+}

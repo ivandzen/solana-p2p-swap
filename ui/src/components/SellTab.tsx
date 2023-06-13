@@ -1,19 +1,30 @@
 import React, {useState} from "react";
 import {ValueEdit} from "./ValueEdit";
+import {publicKeyChecker} from "../p2p-swap";
 
 function SellTab() {
-    const [sellToken, onSellTokenChange] = useState("");
-    const [sellAmount, onSellAmountChange] = useState("0");
-    const [sellMinimum, onSellMinimumChange] = useState("0");
-    const [buyToken, onBuyTokenChange] = useState("");
-    const [buyAmount, onBuyAmountChange] = useState("0");
+    const [sellToken, onSellTokenChange] = useState<string|null>(null);
+    const [sellAmount, onSellAmountChange] = useState<string|null>("0");
+    const [sellMinimum, onSellMinimumChange] = useState<string|null>("0");
+    const [buyToken, onBuyTokenChange] = useState<string|null>(null);
+    const [buyAmount, onBuyAmountChange] = useState<string|null>("0");
     return (
         <div>
-            <ValueEdit name={"Sell Token:"} value={sellToken} onChange={onSellTokenChange}/>
-            <ValueEdit name={"Sell Amount:"} value={sellAmount.toString()} onChange={onSellAmountChange}/>
-            <ValueEdit name={"Sell Minimum:"} value={sellMinimum.toString()} onChange={onSellMinimumChange}/>
-            <ValueEdit name={"Buy Token:"} value={buyToken} onChange={onBuyTokenChange}/>
-            <ValueEdit name={"Buy Amount:"} value={buyAmount.toString()} onChange={onBuyAmountChange}/>
+            <ValueEdit
+                name={"Sell Token:"}
+                value={sellToken}
+                onChange={onSellTokenChange}
+                valueChecker={publicKeyChecker}
+            />
+            <ValueEdit name={"Sell Amount:"} value={sellAmount ? sellAmount.toString() : null} onChange={onSellAmountChange}/>
+            <ValueEdit name={"Sell Minimum:"} value={sellMinimum ? sellMinimum.toString() : null} onChange={onSellMinimumChange}/>
+            <ValueEdit
+                name={"Buy Token:"}
+                value={buyToken}
+                onChange={onBuyTokenChange}
+                valueChecker={publicKeyChecker}
+            />
+            <ValueEdit name={"Buy Amount:"} value={buyAmount ? buyAmount.toString() : null} onChange={onBuyAmountChange}/>
         </div>
     )
 }
