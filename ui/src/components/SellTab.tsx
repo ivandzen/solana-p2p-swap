@@ -3,10 +3,10 @@ import {ValueEdit} from "./ValueEdit";
 
 function SellTab() {
     const [sellToken, onSellTokenChange] = useState("");
-    const [sellAmount, onSellAmountChange] = useState(0);
-    const [sellMinimum, onSellMinimumChange] = useState(0);
+    const [sellAmount, onSellAmountChange] = useState("0");
+    const [sellMinimum, onSellMinimumChange] = useState("0");
     const [buyToken, onBuyTokenChange] = useState("");
-    const [buyAmount, onBuyAmountChange] = useState(0);
+    const [buyAmount, onBuyAmountChange] = useState("0");
     return (
         <div>
             <ValueEdit name={"Sell Token:"} value={sellToken} onChange={onSellTokenChange}/>
