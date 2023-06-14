@@ -10,6 +10,7 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
+    font-family: Arial;
 }
 
 .value-edit {
@@ -27,15 +28,23 @@ html, body {
 .value-edit .input {
     background: #fffffff;
     margin-bottom: 6px;
+    border-color: #fa9a65;
+    border-radius: 10px;
+    border-width: 4px;
 }
 
 .value-edit .input-readonly {
     border-color: transparent;
     background: transparent;
+    margin-bottom: 6px;
 }
 
 .value-edit .input-failed {
-    background: #f10000;
+    background: #c10000;
+    border-color: #f10000;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    border-width: 4px;
 }
 
 .tab {
@@ -54,14 +63,13 @@ html, body {
   /* Style the buttons that are used to open the tab content */
 .tabbutton {
     border-radius: 10px;
-    background-color: #d0d0d0;
+    background-color: #9e1ffa;
     float: left;
-    border: none;
-    outline: none;
+    border-style: dashed;
+    border-color: #fa911f;
     cursor: pointer;
     padding: 14px 16px;
     transition: 0.3s;
-    min-width: 200px;
     width: 45%;
 }
 
@@ -75,33 +83,30 @@ html, body {
   
   /* Change background color of buttons on hover */
   .tabbutton:hover {
-    background-color: #ddd;
+    background-color: #c51ffa;
   }
   
 /* Create an active/current tablink class */
 .tabbutton-active {
     border-radius: 10px;
-    background-color: #a0a0e0;
+    background-color: #fa6e1f;
     float: left;
     border: none;
     outline: none;
     cursor: pointer;
     padding: 14px 16px;
-    min-width: 200px;
     width: 45%;
 }
 
-  /* Style the tab content */
-  .tabcontent {
-    display: none;
-    padding: 6px 12px;
-    border: 1px solid #ccc;
-    border-top: none;
-  }
-
-  .tabcontent-active {
+/* Style the tab content */
+.tabcontent {
     display: block;
+    background: #9e1ffa;
+    border-radius: 12px;
     padding: 6px 12px;
-    border: 1px solid #ccc;
     border-top: none;
-  }
+}
+
+.tabcontent .inactive {
+    display: none;
+}

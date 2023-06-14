@@ -25,7 +25,7 @@ function ModeTab(
             children: any
         }) {
     return (
-        <div id={name} className={activeName === name ? "tabcontent-active":"tabcontent"}>
+        <div id={name} className={activeName === name ? "" : "inactive"}>
             {children}
         </div>
     )
@@ -47,7 +47,7 @@ const MainWidget: FC = () => {
     };
 
     return  (
-        <div className="tab">
+        <div className="tabcontent">
             <WalletMultiButton/>
             <div className="tabheader">
                 <ModeButton name="Buy" onClick={buyClick} activeName={activeTab}/>
