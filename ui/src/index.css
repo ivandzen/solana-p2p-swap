@@ -6,11 +6,24 @@ html, body {
 }
 
 #app {
-    min-height: 100vh;
+
     display: flex;
     justify-content: center;
     align-items: center;
     font-family: Arial;
+}
+
+.mainwindow {
+    display: flex;
+    flex-direction: column;
+    align-content: space-between;
+    justify-content: space-between;
+}
+
+.walletbutton {
+    align-content: center;
+    display: flex;
+    justify-content: right;
 }
 
 .value-edit {
@@ -48,10 +61,13 @@ html, body {
 }
 
 .tab {
-    overflow: hidden;
-    border: 1px solid #ccc;
-    background-color: #f1f1f1;
-  }
+    background-color: transparent;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
 
 .tabheader {
     width: 100%;
@@ -100,6 +116,7 @@ html, body {
 
 /* Style the tab content */
 .tabcontent {
+    min-height: 100%;
     display: block;
     background: #9e1ffa;
     border-radius: 12px;

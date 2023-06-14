@@ -47,15 +47,22 @@ const MainWidget: FC = () => {
     };
 
     return  (
-        <div className="tabcontent">
-            <WalletMultiButton/>
-            <div className="tabheader">
-                <ModeButton name="Buy" onClick={buyClick} activeName={activeTab}/>
-                <ModeButton name="Sell" onClick={sellClick} activeName={activeTab}/>
+        <div className="mainwindow">
+            <div className="walletbutton">
+                <WalletMultiButton/>
+            </div>
+            <div className ="tab">
+                <div className="tabcontent">
+                    <div className="tabheader">
+                        <ModeButton name="Buy" onClick={buyClick} activeName={activeTab}/>
+                        <ModeButton name="Sell" onClick={sellClick} activeName={activeTab}/>
+                    </div>
+
+                    <ModeTab name="Buy" activeName={activeTab}><BuyTab/></ModeTab>
+                    <ModeTab name="Sell" activeName={activeTab}><SellTab/></ModeTab>
+                </div>
             </div>
 
-            <ModeTab name="Buy" activeName={activeTab}><BuyTab/></ModeTab>
-            <ModeTab name="Sell" activeName={activeTab}><SellTab/></ModeTab>
         </div>
     );
 }
