@@ -1,6 +1,7 @@
 import React, {useState} from "react";
 import {ValueEdit} from "./ValueEdit";
 import {publicKeyChecker} from "../p2p-swap";
+import {Button} from "./Button";
 
 function SellTab() {
     const [sellToken, onSellTokenChange] = useState<string|null>(null);
@@ -25,6 +26,7 @@ function SellTab() {
                 valueChecker={publicKeyChecker}
             />
             <ValueEdit name={"Buy Amount:"} value={buyAmount ? buyAmount.toString() : null} onChange={onBuyAmountChange}/>
+            <Button name={"Sell"} className="tabbutton-active" onClick={()=>{}}/>
         </div>
     )
 }

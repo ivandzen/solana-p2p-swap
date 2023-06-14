@@ -1,6 +1,6 @@
 import React, {ChangeEvent, FC, useState} from "react";
 
-interface ValueEditAttributes {
+interface ValueEditProps {
     name: string,
     onChange?: (value: string|null) => void;
     valueChecker?: (value: string|null|undefined) => boolean;
@@ -9,7 +9,7 @@ interface ValueEditAttributes {
     value?: string|null
 }
 
-const ValueEdit: FC<ValueEditAttributes> = (attribs: ValueEditAttributes) => {
+const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
     let [value, setValue] = useState(attribs.value ? attribs.value : '');
     let initialStyle = 'input';
     if (attribs.readonly)
@@ -53,4 +53,4 @@ const ValueEdit: FC<ValueEditAttributes> = (attribs: ValueEditAttributes) => {
     );
 }
 
-export { ValueEdit };
+export { ValueEdit, type ValueEditProps };

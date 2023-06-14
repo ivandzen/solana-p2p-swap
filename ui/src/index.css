@@ -31,16 +31,16 @@ html, body {
     font-family: monospace;
     display: flex;
     justify-content: right;
-    margin-bottom: 6px;
+    margin: 4px;
 }
 
 .value-edit .label {
-    margin-bottom: 6px;
+    margin: 4px;
 }
 
 .value-edit .input {
     background: #fffffff;
-    margin-bottom: 6px;
+    margin: 4px;
     border-color: #fa9a65;
     border-radius: 10px;
     border-width: 4px;
@@ -49,14 +49,15 @@ html, body {
 .value-edit .input-readonly {
     border-color: transparent;
     background: transparent;
-    margin-bottom: 6px;
+    margin: 4px;
+    margin-top: 3px;
 }
 
 .value-edit .input-failed {
     background: #c10000;
     border-color: #f10000;
     border-radius: 10px;
-    margin-bottom: 6px;
+    margin: 4px;
     border-width: 4px;
 }
 
@@ -84,9 +85,9 @@ html, body {
     border-style: dashed;
     border-color: #fa911f;
     cursor: pointer;
-    padding: 14px 16px;
+    padding: 4px 6px;
     transition: 0.3s;
-    width: 45%;
+    width: 100%;
 }
 
   .tabledata {
@@ -110,8 +111,8 @@ html, body {
     border: none;
     outline: none;
     cursor: pointer;
-    padding: 14px 16px;
-    width: 45%;
+    padding: 4px 6px;
+    width: 100%;
 }
 
 /* Style the tab content */
@@ -126,4 +127,12 @@ html, body {
 
 .tabcontent .inactive {
     display: none;
+}
+
+.button-edit-box {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    justify-content: space-between;
+    align-items: center;
 }
