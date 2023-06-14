@@ -10,6 +10,9 @@ function OrderDescription({description}: {description: OrderDescriptionData|stri
         )
     }
 
+    const onBuyClicked = () => {
+    }
+
     return (
         <div className="tabcontent">
             <ValueEdit
@@ -62,7 +65,7 @@ function OrderDescription({description}: {description: OrderDescriptionData|stri
                 buttonProps={{
                     name: "Buy",
                     className: "tabbutton-active",
-                    onClick: ()=>{},
+                    onClick: onBuyClicked,
                 }}
                 valeEditProps={{
                     name: "Amount:",

@@ -4,9 +4,8 @@ import {OrderDescription} from "./OrderDescription";
 import React, {useEffect, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
 import {getOrderDescriptionChecked, OrderDescriptionData, publicKeyChecker} from "../p2p-swap"
-import {ButtonEditBox} from "./ButtonEditBox";
+import {P2P_SWAP_DEVNET} from "../p2p-swap";
 
-const P2P_SWAP_DEVNET = new PublicKey("AzVuKVf8qQjHBTyjEUZbr6zRvinZvjpuFZWMXPd76Fzx");
 
 function BuyTab() {
     const queryString = window.location.search;

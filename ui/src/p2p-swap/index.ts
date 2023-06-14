@@ -1,9 +1,16 @@
-import {Connection, PublicKey} from "@solana/web3.js"
+import {
+    Connection,
+    PublicKey,
+    SystemProgram,
+    SYSVAR_CLOCK_PUBKEY,
+    Transaction,
+    TransactionInstruction
+} from "@solana/web3.js"
 import {
     getAssociatedTokenAddressSync,
     getAccount as getSPLAccount,
     Mint as TokenMint,
-    getMint as getTokenMint,
+    getMint as getTokenMint, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createApproveInstruction,
 } from "@solana/spl-token"
 
 interface OrderDescriptionData {
@@ -68,6 +75,13 @@ function int64ToBytes(value: bigint): ArrayBuffer {
     const arrayBuffer = new ArrayBuffer(8);
     const dataView = new DataView(arrayBuffer);
     dataView.setBigUint64(0, value, true);
+    return arrayBuffer;
+}
+
+function int8ToBytes(value: number): ArrayBuffer {
+    const arrayBuffer = new ArrayBuffer(1);
+    const dataView = new DataView(arrayBuffer);
+    dataView.setInt8(0, value);
     return arrayBuffer;
 }
 
@@ -151,10 +165,127 @@ async function getOrderDescriptionChecked(
     return order;
 }
 
+enum P2PSwapInstructions {
+    Undefined = 0,
+    CreatePublicOrder = 1,
+    CreatePrivateOrder = 2,
+    RevokeOrder = 3,
+    FillOrder = 4,
+}
+
+interface CreateOrderProps {
+    programId: PublicKey,
+    sellAmount: bigint,
+    buyAmount: bigint,
+    minSellAmount: bigint,
+    creationSlot: bigint,
+    signer: PublicKey,
+    sellToken: PublicKey,
+    buyToken: PublicKey,
+    isPrivate: boolean,
+    orderWalletAuthority?: PublicKey,
+    orderWallet?: PublicKey,
+    orderAddress?: PublicKey,
+}
+
+function createOrderInstruction(props: CreateOrderProps): TransactionInstruction {
+    let signerWallet = getAssociatedTokenAddressSync(props.sellToken, props.signer, false);
+    let [orderWalletAuthority] =
+        props.orderWalletAuthority
+        ? [props.orderWalletAuthority]
+        : getOrderWalletAuthority(props.programId, props.signer);
+
+    let orderWallet =
+        props.orderWallet
+        ? props.orderWallet
+        : getOrderWalletAddress(props.sellToken, orderWalletAuthority);
+
+    let [orderAccount] =
+        props.orderAddress
+        ? [props.orderAddress]
+        : getOrderAddress(props.programId, props.signer, props.creationSlot);
+
+    let keys = [
+        { pubkey: SYSVAR_CLOCK_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: props.signer, isSigner: true, isWritable: true },
+        { pubkey: signerWallet, isSigner: false, isWritable: true },
+        { pubkey: props.sellToken, isSigner: false, isWritable: false },
+        { pubkey: orderWalletAuthority, isSigner: false, isWritable: false },
+        { pubkey: props.buyToken, isSigner: false, isWritable: false },
+        { pubkey: orderWallet, isSigner: false, isWritable: true },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+        { pubkey: orderAccount, isSigner: false, isWritable: true },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ];
+
+    let data = Buffer.concat([
+        Buffer.from(int8ToBytes(
+            props.isPrivate
+            ? P2PSwapInstructions.CreatePrivateOrder
+            : P2PSwapInstructions.CreatePublicOrder
+        )),
+        Buffer.from(int64ToBytes(props.sellAmount)),
+        Buffer.from(int64ToBytes(props.buyAmount)),
+        Buffer.from(int64ToBytes(props.minSellAmount)),
+        Buffer.from(int64ToBytes(props.creationSlot)),
+    ]);
+
+    return new TransactionInstruction({
+        keys: keys,
+        programId: props.programId,
+        data: data
+    });
+}
+
+async function createOrderTransaction(
+    connection: Connection,
+    props: CreateOrderProps,
+): Promise<[Transaction, PublicKey]> {
+    let [orderWalletAuthority] = getOrderWalletAuthority(props.programId, props.signer);
+    let orderWallet = getOrderWalletAddress(props.sellToken, orderWalletAuthority);
+    let [orderAccount] = getOrderAddress(props.programId, props.signer, props.creationSlot);
+    let createWalletInstruction: TransactionInstruction|null = null;
+
+    if (!await connection.getAccountInfo(orderWallet)) {
+        // order wallet does not exist
+        createWalletInstruction =
+            createAssociatedTokenAccountInstruction(
+                props.signer,
+                orderWallet,
+                orderWalletAuthority,
+                props.sellToken
+            );
+    }
+
+    const { blockhash } = await connection.getLatestBlockhash();
+    let transaction = new Transaction({ recentBlockhash: blockhash, feePayer: props.signer });
+    if (createWalletInstruction) {
+        transaction.add(createWalletInstruction);
+    }
+
+    let sellerWallet = getAssociatedTokenAddressSync(props.sellToken, props.signer, false);
+    transaction.add(
+        createApproveInstruction(
+            sellerWallet,
+            props.programId,
+            props.signer,
+            props.sellAmount
+        ));
+
+    transaction.add(createOrderInstruction(props));
+
+    return [transaction, orderAccount];
+}
+
+const P2P_SWAP_DEVNET = new PublicKey("AzVuKVf8qQjHBTyjEUZbr6zRvinZvjpuFZWMXPd76Fzx");
+
 export {
     type OrderDescriptionData,
     getOrderDescription,
     getOrderDescriptionChecked,
     publicKeyChecker,
     checkOrder,
+    createOrderInstruction,
+    createOrderTransaction,
+    P2P_SWAP_DEVNET,
 }
