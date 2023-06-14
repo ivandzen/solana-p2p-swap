@@ -36,29 +36,34 @@ html, body {
 
 .value-edit .label {
     margin: 4px;
-}
-
-.value-edit .input {
-    background: #fffffff;
-    margin: 4px;
-    border-color: #fa9a65;
-    border-radius: 10px;
-    border-width: 4px;
+    color: #f1f1f1;
 }
 
 .value-edit .input-readonly {
     border-color: transparent;
     background: transparent;
+    color: #b967de;
     margin: 4px;
     margin-top: 3px;
+    transition-duration: 0.5s;
+}
+
+.value-edit .input {
+    border-color: transparent;
+    background: #b967de;
+    margin: 12px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 4px 4px #da49d2;
+    transition-duration: 0.5s;
 }
 
 .value-edit .input-failed {
-    background: #c10000;
-    border-color: #f10000;
+    background: #3a1344;
     border-radius: 10px;
-    margin: 4px;
-    border-width: 4px;
+    margin: 12px;
+    transition-duration: 0.5s;
+    color: #f10000;
+    box-shadow: 0px 0px 4px 4px #f10000;
 }
 
 .tab {
@@ -72,7 +77,7 @@ html, body {
 
 .tabheader {
     width: 100%;
-    padding: 14px 16px;
+    padding: 12px 12px;
     display: flex;
     justify-content: space-between;
 }
@@ -80,14 +85,16 @@ html, body {
   /* Style the buttons that are used to open the tab content */
 .tabbutton {
     border-radius: 10px;
-    background-color: #9e1ffa;
+    background-color: transparent;
     float: left;
-    border-style: dashed;
-    border-color: #fa911f;
+    border-style: inset;
+    border-color: transparent;
     cursor: pointer;
-    padding: 4px 6px;
-    transition: 0.3s;
+    padding: 6px 6px;
     width: 100%;
+    margin: 8px;
+    transition-duration: 0.5s;
+    box-shadow: 0px 0px 4px 4px #da49d2;
 }
 
   .tabledata {
@@ -106,23 +113,33 @@ html, body {
 /* Create an active/current tablink class */
 .tabbutton-active {
     border-radius: 10px;
-    background-color: #fa6e1f;
+    background-color: #da49d2;
     float: left;
     border: none;
     outline: none;
     cursor: pointer;
-    padding: 4px 6px;
+    padding: 6px 6px;
     width: 100%;
+    transition-duration: 0.5s;
+    margin: 8px;
+    box-shadow: 0px 0px 2px 2px #da49d2;
+}
+
+.tabbutton-active:hover {
+    background-color: #e5a2e2;
+    box-shadow: 0px 0px 5px 5px #e5a2e2;
 }
 
 /* Style the tab content */
 .tabcontent {
     min-height: 100%;
     display: block;
-    background: #9e1ffa;
+    background: #4f2068;
     border-radius: 12px;
-    padding: 6px 12px;
+    padding: 12px 12px;
     border-top: none;
+    transition-duration: 0.5s;
+    box-shadow: 0px 0px 6px 6px #ffffff;
 }
 
 .tabcontent .inactive {

@@ -11,7 +11,7 @@ function OrderDescription({description}: {description: OrderDescriptionData|stri
     }
 
     return (
-        <div>
+        <div className="tabcontent">
             <ValueEdit
                 name={"Creation slot:"}
                 value={description.creationSlot.toString()}
