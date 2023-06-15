@@ -27,15 +27,16 @@ html, body {
 }
 
 .value-edit {
-    align-items: center;
+    align-items: baseline;
+    flex-direction: column;
     font-family: monospace;
     display: flex;
     justify-content: right;
-    margin: 4px;
+    margin: 2px;
 }
 
 .value-edit .label {
-    margin: 4px;
+    margin: 2px;
     color: #f1f1f1;
 }
 
@@ -43,15 +44,14 @@ html, body {
     border-color: transparent;
     background: transparent;
     color: #b967de;
-    margin: 4px;
-    margin-top: 3px;
+    margin: 2px;
     transition-duration: 0.5s;
 }
 
 .value-edit .input {
     border-color: transparent;
     background: #b967de;
-    margin: 12px;
+    margin: 8px;
     border-radius: 10px;
     box-shadow: 0px 0px 4px 4px #da49d2;
     transition-duration: 0.5s;
@@ -86,7 +86,6 @@ html, body {
 .tabbutton {
     border-radius: 10px;
     background-color: transparent;
-    float: left;
     border-style: inset;
     border-color: transparent;
     cursor: pointer;
@@ -106,19 +105,18 @@ html, body {
 }
   
   /* Change background color of buttons on hover */
-  .tabbutton:hover {
+.tabbutton:hover {
     background-color: #c51ffa;
-  }
+}
   
 /* Create an active/current tablink class */
 .tabbutton-active {
     border-radius: 10px;
     background-color: #da49d2;
-    float: left;
     border: none;
     outline: none;
     cursor: pointer;
-    padding: 6px 6px;
+    padding: 6px;
     width: 100%;
     transition-duration: 0.5s;
     margin: 8px;
@@ -136,7 +134,7 @@ html, body {
     display: block;
     background: #4f2068;
     border-radius: 12px;
-    padding: 12px 12px;
+    padding: 12px;
     border-top: none;
     transition-duration: 0.5s;
     box-shadow: 0px 0px 6px 6px #ffffff;
@@ -152,4 +150,12 @@ html, body {
     align-content: center;
     justify-content: space-between;
     align-items: center;
+}
+
+.visibilitytab {
+
+}
+
+.visibilitytab .inactive{
+    display: none;
 }

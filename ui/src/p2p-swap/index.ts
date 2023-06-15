@@ -281,6 +281,7 @@ const P2P_SWAP_DEVNET = new PublicKey("AzVuKVf8qQjHBTyjEUZbr6zRvinZvjpuFZWMXPd76
 
 export {
     type OrderDescriptionData,
+    type CreateOrderProps,
     getOrderDescription,
     getOrderDescriptionChecked,
     publicKeyChecker,

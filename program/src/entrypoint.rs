@@ -32,7 +32,7 @@ entrypoint!(process_instruction);
 
 // Latest slot number is used as seed to generate order accounts
 // This constant prevents seed to bee too far in past
-const MAX_SLOT_DIFFERENCE: Slot = 40;
+const MAX_SLOT_DIFFERENCE: Slot = 150;
 
 fn create_order_account<'a>(
     system_account: &AccountInfo<'a>,

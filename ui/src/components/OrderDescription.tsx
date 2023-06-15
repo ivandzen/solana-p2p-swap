@@ -1,7 +1,7 @@
 import {ValueEdit} from "./ValueEdit";
 import React from "react";
 import {OrderDescriptionData} from "../p2p-swap";
-import {ButtonEditBox} from "./ButtonEditBox";
+import {Button} from "./Button";
 
 function OrderDescription({description}: {description: OrderDescriptionData|string}) {
     if (typeof (description) === 'string') {
@@ -60,21 +60,18 @@ function OrderDescription({description}: {description: OrderDescriptionData|stri
                 value={description.isPrivate.toString()}
                 readonly={true}
             />
-            <ButtonEditBox
-                className="button-edit-box"
-                buttonProps={{
-                    name: "Buy",
-                    className: "tabbutton-active",
-                    onClick: onBuyClicked,
-                }}
-                valeEditProps={{
-                    name: "Amount:",
-                    onChange: (value)=>{},
-                    valueChecker: (value)=>{ return true; },
-                    size: 45,
-                    readonly: false,
-                    value: "0",
-                }}
+            <ValueEdit
+                name="Amount:"
+                onChange={(value)=>{}}
+                valueChecker={(value)=>{ return true; }}
+                size={35}
+                readonly={false}
+                value="0"
+            />
+            <Button
+                name="Buy"
+                className="tabbutton-active"
+                onClick={onBuyClicked}
             />
         </div>
     )
