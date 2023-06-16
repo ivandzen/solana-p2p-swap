@@ -8,30 +8,32 @@ import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import {Visibility} from "./Visibility";
 import {CheckBox} from "./CheckBox";
 import { binary_to_base58 } from 'base58-js';
+import {useApp} from "../AppContext";
 
 function SellTab() {
     let {wallet, signMessage} = useWallet();
+    let {setAppMode, setOrderAddress} = useApp();
     let {connection} = useConnection();
-    const [sellToken, onSellTokenChange] = useState<string|null>(null);
-    const [sellAmount, onSellAmountChange] = useState<string|null>("0");
-    const [sellMinimum, onSellMinimumChange] = useState<string|null>("0");
-    const [buyToken, onBuyTokenChange] = useState<string|null>(null);
-    const [buyAmount, onBuyAmountChange] = useState<string|null>("0");
-    const [createOrderProps, setCreateOrderProps] = useState<CreateOrderProps|null>(null);
+    const [sellToken, onSellTokenChange] = useState<string|undefined>(undefined);
+    const [sellAmount, onSellAmountChange] = useState<string|undefined>("0");
+    const [sellMinimum, onSellMinimumChange] = useState<string|undefined>("0");
+    const [buyToken, onBuyTokenChange] = useState<string|undefined>(undefined);
+    const [buyAmount, onBuyAmountChange] = useState<string|undefined>("0");
+    const [createOrderProps, setCreateOrderProps] = useState<CreateOrderProps|undefined>(undefined);
     const [isPrivate, setIsPrivate] = useState(false);
     const [newOrderAddress, setNewOrderAddress] = useState<PublicKey|null>(null);
     const [trxSignature, setTrxSignature] = useState<string|undefined>(undefined);
-    const [unlockKey, setUnlockKey] = useState<string|null>(null);
+    const [unlockKey, setUnlockKey] = useState<string|undefined>(undefined);
 
     let isOrderDataReady = (): boolean => {
-        return !(!sellToken || !buyToken || !sellAmount || !buyAmount || !sellMinimum);
+        return !!(sellToken && buyToken && sellAmount && buyAmount && sellMinimum);
     };
 
     useEffect(() => {
         try {
             let signer = wallet?.adapter.publicKey;
             if (!signer || !isOrderDataReady()) {
-                setCreateOrderProps(null);
+                setCreateOrderProps(undefined);
                 return;
             }
 
@@ -50,7 +52,7 @@ function SellTab() {
             setCreateOrderProps(props);
         } catch (e: any) {
             console.warn(`Failed to create order props: ${e}`);
-            setCreateOrderProps(null);
+            setCreateOrderProps(undefined);
         }
     }, [sellToken, sellAmount, sellMinimum, buyToken, buyAmount, wallet, isPrivate]);
 
@@ -75,6 +77,7 @@ function SellTab() {
             }
 
             setTrxSignature(signature);
+            setOrderAddress(orderAccount);
             setNewOrderAddress(orderAccount);
             setMode("showtrx");
         } catch (e) {
@@ -100,13 +103,13 @@ function SellTab() {
                     />
                     <ValueEdit
                         name={"Sell Amount:"}
-                        value={sellAmount ? sellAmount.toString() : null}
+                        value={sellAmount ? sellAmount.toString() : undefined}
                         onChange={onSellAmountChange}
                         valueChecker={bigintChecker}
                     />
                     <ValueEdit
                         name={"Sell Minimum:"}
-                        value={sellMinimum ? sellMinimum.toString() : null}
+                        value={sellMinimum ? sellMinimum.toString() : undefined}
                         onChange={onSellMinimumChange}
                         valueChecker={bigintChecker}
                     />
@@ -118,13 +121,13 @@ function SellTab() {
                     />
                     <ValueEdit
                         name={"Buy Amount:"}
-                        value={buyAmount ? buyAmount.toString() : null}
+                        value={buyAmount ? buyAmount.toString() : undefined}
                         onChange={onBuyAmountChange}
                         valueChecker={bigintChecker}
                     />
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>
                     <Visibility isActive={isPrivate}>
-                        <label className="label">
+                        <label className="label-attention">
                             <p>You will be prompted to sign </p>
                             <p>order account address </p>
                             <p>encoded in binary form</p>
@@ -151,7 +154,9 @@ function SellTab() {
                             <Button
                                 name={"View details"}
                                 className="tabbutton-active"
-                                onClick={()=>{}}
+                                onClick={()=> {
+                                    setAppMode("Buy");
+                                }}
                             />
                         </div>
                     </Visibility>

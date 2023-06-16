@@ -1,7 +1,9 @@
-import React, {FC, useState} from "react";
+import React, {FC, ReactNode, useState} from "react";
 import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
 import {BuyTab} from "./BuyTab";
 import {SellTab} from "./SellTab";
+import {AppContext} from "../AppContext";
+import {PublicKey} from "@solana/web3.js";
 
 function ModeButton(
     { name, onClick, activeName }:
@@ -11,7 +13,10 @@ function ModeButton(
             activeName: string|null,
         }) {
     return (
-        <button className={name === activeName ? "tabbutton-active" : "tabbutton"} onClick={onClick}>
+        <button
+            className={name === activeName ? "tabbutton-active" : "tabbutton"}
+            onClick={onClick}
+        >
             {name}
         </button>
     );
@@ -34,36 +39,55 @@ function ModeTab(
 const MainWidget: FC = () => {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
-    const mode = urlParams.get("mode");
 
-    const [activeTab, setActiveTab] = useState(mode);
+    const [appMode, setAppMode] = useState<string|null>(urlParams.get("mode"));
+    let urlOrder: PublicKey|null = null;
+    try {
+        let tmp = urlParams.get("order_address");
+        if (tmp)
+            urlOrder = new PublicKey(tmp);
+    } catch (e) {}
+
+    const [orderAddress, setOrderAddress] = useState<PublicKey|null>(urlOrder);
 
     const buyClick = () => {
-        setActiveTab("Buy");
+        setAppMode("Buy");
     };
 
     const sellClick = () => {
-        setActiveTab("Sell");
+        setAppMode("Sell");
     };
 
     return  (
-        <div className="mainwindow">
-            <div className="walletbutton">
-                <WalletMultiButton/>
-            </div>
-            <div className ="tab">
-                <div className="tabcontent">
-                    <div className="tabheader">
-                        <ModeButton name="Buy" onClick={buyClick} activeName={activeTab}/>
-                        <ModeButton name="Sell" onClick={sellClick} activeName={activeTab}/>
-                    </div>
+        <AppContext.Provider
+            value = {{
+                appMode: appMode,
+                setAppMode: setAppMode,
+                setOrderAddress: (order: PublicKey|null) => {
+                    console.log(`NEW ORDER: ${order}`);
+                    if (order) setOrderAddress(order);
+                },
+            }}
+        >
+            <div className="mainwindow">
+                <div className="walletbutton">
+                    <WalletMultiButton/>
+                </div>
+                <div className ="tab">
+                    <div className="tabcontent">
+                        <div className="tabheader">
+                            <ModeButton name="Buy" onClick={buyClick} activeName={appMode}/>
+                            <ModeButton name="Sell" onClick={sellClick} activeName={appMode}/>
+                        </div>
 
-                    <ModeTab name="Buy" activeName={activeTab}><BuyTab/></ModeTab>
-                    <ModeTab name="Sell" activeName={activeTab}><SellTab/></ModeTab>
+                        <ModeTab name="Buy" activeName={appMode}>
+                            <BuyTab orderAddress={orderAddress ? orderAddress.toString() : undefined}/>
+                        </ModeTab>
+                        <ModeTab name="Sell" activeName={appMode}><SellTab/></ModeTab>
+                    </div>
                 </div>
             </div>
-
-        </div>
+        </AppContext.Provider>
     );
 }
 

@@ -1,16 +1,17 @@
 import {ConnectionContextState, useConnection} from "@solana/wallet-adapter-react";
 import {PublicKey} from "@solana/web3.js";
 import {OrderDescription} from "./OrderDescription";
-import React, {useEffect, useState} from "react";
+import React, {FC, useEffect, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
 import {getOrderDescriptionChecked, OrderDescriptionData, publicKeyChecker} from "../p2p-swap"
 import {P2P_SWAP_DEVNET} from "../p2p-swap";
 
+interface BuyTabProps {
+    orderAddress: string|undefined,
+}
 
-function BuyTab() {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const [orderAddress, handleOrderAddressChange] = useState<string|null>(urlParams.get('order_address'));
+const BuyTab: FC<BuyTabProps> = (props) => {
+    const [orderAddress, handleOrderAddressChange] = useState<string|undefined>(props.orderAddress);
     const [orderDescription, setOrderDescription]
         = useState<OrderDescriptionData|string>("Wrong order address");
     const connectionContext = useConnection();
@@ -42,7 +43,7 @@ function BuyTab() {
                 name={"Order Address:"}
                 onChange={handleOrderAddressChange}
                 valueChecker={publicKeyChecker}
-                value={orderAddress ? orderAddress : null}
+                value={orderAddress ? orderAddress : undefined}
             />
             <OrderDescription description={orderDescription}/>
         </div>

@@ -2,11 +2,11 @@ import React, {ChangeEvent, FC, useState} from "react";
 
 interface ValueEditProps {
     name: string,
-    onChange?: (value: string|null) => void;
-    valueChecker?: (value: string|null|undefined) => boolean;
+    onChange?: (value: string|undefined) => void;
+    valueChecker?: (value: string|undefined) => boolean;
     size?: number;
     readonly?: boolean;
-    value?: string|null
+    value?: string
 }
 
 const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
@@ -28,7 +28,7 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
             } else {
                 setInputStyle("input-failed");
                 if (attribs.onChange)
-                    attribs.onChange(null)
+                    attribs.onChange(undefined)
             }
         } else {
             setInputStyle("input");
