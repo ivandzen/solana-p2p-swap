@@ -1,10 +1,14 @@
 import {createContext, useContext} from "react";
 import {PublicKey} from "@solana/web3.js";
 
-export interface AppContext {
+export interface AppState {
     appMode: string|null,
-    setAppMode: (mode:string)=>void,
-    setOrderAddress: (order: PublicKey|null)=>void,
+    orderAddress: PublicKey|null,
+}
+
+export interface AppContext {
+    appState: AppState,
+    setAppState: (state: AppState)=>void,
 }
 
 export const AppContext = createContext<AppContext>({} as AppContext);

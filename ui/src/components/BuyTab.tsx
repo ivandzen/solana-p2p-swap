@@ -1,17 +1,14 @@
 import {ConnectionContextState, useConnection} from "@solana/wallet-adapter-react";
 import {PublicKey} from "@solana/web3.js";
 import {OrderDescription} from "./OrderDescription";
-import React, {FC, useEffect, useState} from "react";
+import React, {ChangeEvent, FC, useEffect, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
 import {getOrderDescriptionChecked, OrderDescriptionData, publicKeyChecker} from "../p2p-swap"
 import {P2P_SWAP_DEVNET} from "../p2p-swap";
+import {useApp} from "../AppContext";
 
-interface BuyTabProps {
-    orderAddress: string|undefined,
-}
-
-const BuyTab: FC<BuyTabProps> = (props) => {
-    const [orderAddress, handleOrderAddressChange] = useState<string|undefined>(props.orderAddress);
+const BuyTab: FC = () => {
+    const {appState, setAppState} = useApp();
     const [orderDescription, setOrderDescription]
         = useState<OrderDescriptionData|string>("Wrong order address");
     const connectionContext = useConnection();
@@ -30,20 +27,27 @@ const BuyTab: FC<BuyTabProps> = (props) => {
             }
         }
 
-        if (orderAddress)
-            updateOrderDescription(connectionContext, new PublicKey(orderAddress));
+        if (appState.orderAddress)
+            updateOrderDescription(connectionContext, new PublicKey(appState.orderAddress)).then(() => {});
         else
             setOrderDescription('Wrong order address');
 
-    }, [connectionContext, orderAddress]);
+    }, [connectionContext, appState]);
+
+    const setOrderAddress = (value: string|undefined) => {
+        setAppState({
+            appMode: "Buy",
+            orderAddress: value ? new PublicKey(value) : null,
+        })
+    }
 
     return (
-        <div>
+        <div className="vertical">
             <ValueEdit
                 name={"Order Address:"}
-                onChange={handleOrderAddressChange}
+                onChange={setOrderAddress}
                 valueChecker={publicKeyChecker}
-                value={orderAddress ? orderAddress : undefined}
+                value={appState?.orderAddress ? appState.orderAddress.toString() : undefined}
             />
             <OrderDescription description={orderDescription}/>
         </div>

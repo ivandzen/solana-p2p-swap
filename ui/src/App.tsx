@@ -2,10 +2,11 @@ import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import {useWalletModal, WalletModalProvider} from '@solana/wallet-adapter-react-ui';
 import {PhantomWalletAdapter} from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl } from '@solana/web3.js';
+import {clusterApiUrl, PublicKey} from '@solana/web3.js';
 import type { FC, ReactNode } from 'react';
-import React, { useMemo } from 'react';
+import React, {useMemo, useState} from 'react';
 import {MainWidget} from "./components/MainWidget";
+import {AppContext, AppState} from "./AppContext";
 
 export const App: FC = () => {
     return (
@@ -52,5 +53,27 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 const Content: FC = () => {
-    return <MainWidget/>;
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+
+    let urlOrder: PublicKey|null = null;
+    try {
+        let tmp = urlParams.get("order_address");
+        if (tmp)
+            urlOrder = new PublicKey(tmp);
+    } catch (e) {}
+
+    const [appState, setAppState] = useState<AppState>({
+        appMode: urlParams.get("mode"),
+        orderAddress: urlOrder,
+    })
+
+    return (
+        <AppContext.Provider value = {{
+            appState: appState,
+            setAppState: setAppState,
+        }}>
+            <MainWidget/>
+        </AppContext.Provider>
+    )
 };

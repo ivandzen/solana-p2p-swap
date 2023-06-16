@@ -12,7 +12,7 @@ import {useApp} from "../AppContext";
 
 function SellTab() {
     let {wallet, signMessage} = useWallet();
-    let {setAppMode, setOrderAddress} = useApp();
+    let {setAppState} = useApp();
     let {connection} = useConnection();
     const [sellToken, onSellTokenChange] = useState<string|undefined>(undefined);
     const [sellAmount, onSellAmountChange] = useState<string|undefined>("0");
@@ -77,7 +77,6 @@ function SellTab() {
             }
 
             setTrxSignature(signature);
-            setOrderAddress(orderAccount);
             setNewOrderAddress(orderAccount);
             setMode("showtrx");
         } catch (e) {
@@ -128,10 +127,10 @@ function SellTab() {
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>
                     <Visibility isActive={isPrivate}>
                         <label className="label-attention">
-                            <p>You will be prompted to sign </p>
-                            <p>order account address </p>
-                            <p>encoded in binary form</p>
-                            <p>to generate order unlock key </p>
+                            <p>Besides regular transaction approval, </p>
+                            <p>You will be prompted to sign message containing order account address</p>
+                            <p>encoded in binary form to generate order unlock key.</p>
+                            <p>NOTE: Order filling will be available only with this signature!</p>
                         </label>
                     </Visibility>
                     <Button
@@ -155,7 +154,10 @@ function SellTab() {
                                 name={"View details"}
                                 className="tabbutton-active"
                                 onClick={()=> {
-                                    setAppMode("Buy");
+                                    setAppState({
+                                        appMode: "Buy",
+                                        orderAddress: newOrderAddress,
+                                    });
                                 }}
                             />
                         </div>
