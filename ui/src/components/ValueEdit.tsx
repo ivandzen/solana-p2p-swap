@@ -45,7 +45,6 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
             <input
                 className={inputStyle}
                 onChange={checkValue}
-                size={attribs.size ? attribs.size : 35}
                 readOnly={attribs.readonly ? attribs.readonly : false}
                 value={value}
             />

@@ -3,11 +3,12 @@ import React from "react";
 
 interface CheckBoxProps {
     name: string,
+    setChecked: (checked: boolean) => void,
 }
 
 const CheckBox: FC<CheckBoxProps> = (props) => {
     let onClick = (cb: any) => {
-        console.log(cb);
+        props.setChecked(cb.target.checked);
     }
 
     return (

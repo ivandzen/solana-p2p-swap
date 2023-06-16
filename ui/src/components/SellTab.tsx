@@ -7,6 +7,7 @@ import {WalletConnectWalletAdapter} from "@solana/wallet-adapter-wallets";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import {Visibility} from "./Visibility";
 import {CheckBox} from "./CheckBox";
+import { binary_to_base58 } from 'base58-js';
 
 function SellTab() {
     let {wallet, signMessage} = useWallet();
@@ -17,6 +18,7 @@ function SellTab() {
     const [buyToken, onBuyTokenChange] = useState<string|null>(null);
     const [buyAmount, onBuyAmountChange] = useState<string|null>("0");
     const [createOrderProps, setCreateOrderProps] = useState<CreateOrderProps|null>(null);
+    const [isPrivate, setIsPrivate] = useState(false);
     const [newOrderAddress, setNewOrderAddress] = useState<PublicKey|null>(null);
     const [trxSignature, setTrxSignature] = useState<string|undefined>(undefined);
     const [unlockKey, setUnlockKey] = useState<string|null>(null);
@@ -42,7 +44,7 @@ function SellTab() {
                 signer: signer,
                 sellToken: new PublicKey(sellToken),
                 buyToken: new PublicKey(buyToken),
-                isPrivate: false,
+                isPrivate: isPrivate,
             }
 
             setCreateOrderProps(props);
@@ -50,7 +52,7 @@ function SellTab() {
             console.warn(`Failed to create order props: ${e}`);
             setCreateOrderProps(null);
         }
-    }, [sellToken, sellAmount, sellMinimum, buyToken, buyAmount, wallet]);
+    }, [sellToken, sellAmount, sellMinimum, buyToken, buyAmount, wallet, isPrivate]);
 
     let onSellClicked = async () => {
         if (!createOrderProps) {
@@ -64,6 +66,14 @@ function SellTab() {
 
         try {
             let signature = await wallet?.adapter.sendTransaction(transaction, connection);
+
+            if (isPrivate) {
+                let signature = await signMessage?.(orderAccount.toBytes());
+                if (signature) {
+                    setUnlockKey(binary_to_base58(signature));
+                }
+            }
+
             setTrxSignature(signature);
             setNewOrderAddress(orderAccount);
             setMode("showtrx");
@@ -79,7 +89,7 @@ function SellTab() {
     const [mode, setMode] = useState("filltrx");
 
     return (
-        <div>
+        <div className="vertical">
             <Visibility isActive={mode === "filltrx"}>
                 <div className="vertical">
                     <ValueEdit
@@ -112,7 +122,15 @@ function SellTab() {
                         onChange={onBuyAmountChange}
                         valueChecker={bigintChecker}
                     />
-                    <CheckBox name={"Is Private "} />
+                    <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>
+                    <Visibility isActive={isPrivate}>
+                        <label className="label">
+                            <p>You will be prompted to sign </p>
+                            <p>order account address </p>
+                            <p>encoded in binary form</p>
+                            <p>to generate order unlock key </p>
+                        </label>
+                    </Visibility>
                     <Button
                         name={"Sell"}
                         className={isOrderDataReady() ? "tabbutton-active" : "tabbutton"}
@@ -121,12 +139,36 @@ function SellTab() {
                 </div>
             </Visibility>
             <Visibility isActive={mode === "showtrx"}>
-                <div className="tabcontent">
-                    <ValueEdit
-                        name={`New Order: ${newOrderAddress}`}
-                        value={""}
-                        readonly={true}
-                    />
+                <div className="vertical">
+                    <Visibility isActive={!!(newOrderAddress)}>
+                        <div className="horizontal">
+                            <label className="label">
+                                <b>Order Address:</b>
+                            </label>
+                            <label className="label">
+                                <b>{newOrderAddress?.toString()}</b>
+                            </label>
+                            <Button
+                                name={"View details"}
+                                className="tabbutton-active"
+                                onClick={()=>{}}
+                            />
+                        </div>
+                    </Visibility>
+                    <Visibility isActive={!!(isPrivate && unlockKey)} >
+                        <div className="vertical">
+                            <label className="label">
+                                <b>Unlock Key:</b>
+                            </label>
+                            <label className="label">
+                                <b>{unlockKey}</b>
+                            </label>
+                            <label className="label-attention">
+                                <p>It is only possible to fill the order with this unlock key!</p>
+                                <p>Save it and provide to selected buyers</p>
+                            </label>
+                        </div>
+                    </Visibility>
                     <Button
                         name={"Create new order"}
                         className={"tabbutton-active"}
