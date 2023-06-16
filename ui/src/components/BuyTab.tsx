@@ -6,6 +6,8 @@ import {ValueEdit} from "./ValueEdit";
 import {getOrderDescriptionChecked, OrderDescriptionData, publicKeyChecker} from "../p2p-swap"
 import {P2P_SWAP_DEVNET} from "../p2p-swap";
 import {useApp} from "../AppContext";
+import {Button} from "./Button";
+import {Visibility} from "./Visibility";
 
 const BuyTab: FC = () => {
     const {appState, setAppState} = useApp();
@@ -41,6 +43,9 @@ const BuyTab: FC = () => {
         })
     }
 
+    const onBuyClicked = () => {
+    }
+
     return (
         <div className="vertical">
             <ValueEdit
@@ -50,6 +55,33 @@ const BuyTab: FC = () => {
                 value={appState?.orderAddress ? appState.orderAddress.toString() : undefined}
             />
             <OrderDescription description={orderDescription}/>
+            <Visibility isActive={typeof(orderDescription) !== 'string'}>
+                <div className="vertical">
+                    <ValueEdit
+                        name="Amount:"
+                        onChange={(value)=>{}}
+                        valueChecker={(value)=>{ return true; }}
+                        size={35}
+                        readonly={false}
+                        value="0"
+                    />
+                    <Visibility isActive={typeof orderDescription !== 'string' && orderDescription.isPrivate}>
+                        <ValueEdit
+                            name="Unlock signature:"
+                            onChange={(value)=>{}}
+                            valueChecker={(value)=>{ return true; }}
+                            size={35}
+                            readonly={false}
+                            value=" "
+                        />
+                    </Visibility>
+                    <Button
+                        name="Buy"
+                        className="tabbutton-active"
+                        onClick={onBuyClicked}
+                    />
+                </div>
+            </Visibility>
         </div>
     )
 }

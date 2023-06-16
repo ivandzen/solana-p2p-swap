@@ -10,9 +10,6 @@ function OrderDescription({description}: {description: OrderDescriptionData|stri
         )
     }
 
-    const onBuyClicked = () => {
-    }
-
     return (
         <div className="vertical">
             <ValueEdit
@@ -59,19 +56,6 @@ function OrderDescription({description}: {description: OrderDescriptionData|stri
                 name={"Is Private:"}
                 value={description.isPrivate.toString()}
                 readonly={true}
-            />
-            <ValueEdit
-                name="Amount:"
-                onChange={(value)=>{}}
-                valueChecker={(value)=>{ return true; }}
-                size={35}
-                readonly={false}
-                value="0"
-            />
-            <Button
-                name="Buy"
-                className="tabbutton-active"
-                onClick={onBuyClicked}
             />
         </div>
     )
