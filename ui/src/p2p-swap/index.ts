@@ -151,6 +151,19 @@ function publicKeyChecker(value: string|null|undefined): boolean {
     }
 }
 
+function bigintChecker(value: string|null|undefined): boolean {
+    try {
+        if (!value) {
+            return false;
+        }
+        BigInt(value);
+    } catch (e) {
+        return false
+    }
+
+    return true;
+}
+
 async function getOrderDescriptionChecked(
     connection: Connection,
     orderAddress: PublicKey,
@@ -285,6 +298,7 @@ export {
     getOrderDescription,
     getOrderDescriptionChecked,
     publicKeyChecker,
+    bigintChecker,
     checkOrder,
     createOrderInstruction,
     createOrderTransaction,

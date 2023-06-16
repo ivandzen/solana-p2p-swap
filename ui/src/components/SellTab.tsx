@@ -1,11 +1,12 @@
 import React, {useEffect, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
-import {CreateOrderProps, createOrderTransaction, P2P_SWAP_DEVNET, publicKeyChecker} from "../p2p-swap";
+import {bigintChecker, CreateOrderProps, createOrderTransaction, P2P_SWAP_DEVNET, publicKeyChecker} from "../p2p-swap";
 import {Button} from "./Button";
 import {Connection, PublicKey, SendTransactionError} from "@solana/web3.js";
 import {WalletConnectWalletAdapter} from "@solana/wallet-adapter-wallets";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import {Visibility} from "./Visibility";
+import {CheckBox} from "./CheckBox";
 
 function SellTab() {
     let {wallet, signMessage} = useWallet();
@@ -80,7 +81,7 @@ function SellTab() {
     return (
         <div>
             <Visibility isActive={mode === "filltrx"}>
-                <div className="tabcontent">
+                <div className="vertical">
                     <ValueEdit
                         name={"Sell Token:"}
                         value={sellToken}
@@ -89,15 +90,29 @@ function SellTab() {
                     />
                     <ValueEdit
                         name={"Sell Amount:"}
-                        value={sellAmount ? sellAmount.toString() : null} onChange={onSellAmountChange}/>
-                    <ValueEdit name={"Sell Minimum:"} value={sellMinimum ? sellMinimum.toString() : null} onChange={onSellMinimumChange}/>
+                        value={sellAmount ? sellAmount.toString() : null}
+                        onChange={onSellAmountChange}
+                        valueChecker={bigintChecker}
+                    />
+                    <ValueEdit
+                        name={"Sell Minimum:"}
+                        value={sellMinimum ? sellMinimum.toString() : null}
+                        onChange={onSellMinimumChange}
+                        valueChecker={bigintChecker}
+                    />
                     <ValueEdit
                         name={"Buy Token:"}
                         value={buyToken}
                         onChange={onBuyTokenChange}
                         valueChecker={publicKeyChecker}
                     />
-                    <ValueEdit name={"Buy Amount:"} value={buyAmount ? buyAmount.toString() : null} onChange={onBuyAmountChange}/>
+                    <ValueEdit
+                        name={"Buy Amount:"}
+                        value={buyAmount ? buyAmount.toString() : null}
+                        onChange={onBuyAmountChange}
+                        valueChecker={bigintChecker}
+                    />
+                    <CheckBox name={"Is Private "} />
                     <Button
                         name={"Sell"}
                         className={isOrderDataReady() ? "tabbutton-active" : "tabbutton"}
@@ -108,8 +123,8 @@ function SellTab() {
             <Visibility isActive={mode === "showtrx"}>
                 <div className="tabcontent">
                     <ValueEdit
-                        name={"New Order:"}
-                        value={newOrderAddress?.toString()}
+                        name={`New Order: ${newOrderAddress}`}
+                        value={""}
                         readonly={true}
                     />
                     <Button

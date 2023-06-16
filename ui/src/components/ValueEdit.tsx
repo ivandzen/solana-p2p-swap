@@ -40,7 +40,7 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
     };
 
     return (
-        <div className="value-edit">
+        <div className="horizontal">
             <label className="label"><b>{attribs.name}</b></label>
             <input
                 className={inputStyle}
