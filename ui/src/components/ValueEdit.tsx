@@ -1,4 +1,6 @@
-import React, {ChangeEvent, FC, useState} from "react";
+import React, {ChangeEvent, FC, useEffect, useState} from "react";
+import {Button} from "./Button";
+import {Visibility} from "./Visibility";
 
 interface ValueEditProps {
     name: string,
@@ -17,14 +19,15 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
     else if (attribs.valueChecker && !attribs.valueChecker(attribs.value))
         initialStyle = 'input-failed';
 
-    let [inputStyle, setInputStyle] = useState(initialStyle);
-    let checkValue = (event: ChangeEvent<HTMLInputElement>) => {
-        let eventValue = event.target.value;
-        if (attribs.valueChecker) {
-            if (attribs.valueChecker(eventValue)) {
+    const checkAndSetValue = (value: string) => {
+        if (attribs.readonly) {
+            setInputStyle("input-readonly");
+        }
+        else if (attribs.valueChecker) {
+            if (attribs.valueChecker(value)) {
                 setInputStyle("input");
                 if (attribs.onChange)
-                    attribs.onChange(eventValue);
+                    attribs.onChange(value);
             } else {
                 setInputStyle("input-failed");
                 if (attribs.onChange)
@@ -33,11 +36,21 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
         } else {
             setInputStyle("input");
             if (attribs.onChange)
-                attribs.onChange(eventValue);
+                attribs.onChange(value);
         }
 
-        setValue(eventValue);
+        setValue(value);
+    }
+
+    let [inputStyle, setInputStyle] = useState(initialStyle);
+    let checkValue = (event: ChangeEvent<HTMLInputElement>) => {
+        let eventValue = event.target.value;
+        checkAndSetValue(eventValue);
     };
+
+    useEffect(() => {
+        checkAndSetValue(attribs.value ? attribs.value : "");
+    }, [attribs.value]);
 
     return (
         <div className="horizontal">
@@ -48,6 +61,13 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
                 readOnly={attribs.readonly ? attribs.readonly : false}
                 value={value}
             />
+            <Visibility isActive={attribs.readonly ? attribs.readonly : false} >
+                <Button
+                    name={'cpy'}
+                    className={"copy-button"}
+                    onClick={() => {navigator.clipboard.writeText(value)}}
+                />
+            </Visibility>
         </div>
     );
 }

@@ -1,14 +1,23 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
 import {bigintChecker, CreateOrderProps, createOrderTransaction, P2P_SWAP_DEVNET, publicKeyChecker} from "../p2p-swap";
 import {Button} from "./Button";
-import {Connection, PublicKey, SendTransactionError} from "@solana/web3.js";
-import {WalletConnectWalletAdapter} from "@solana/wallet-adapter-wallets";
+import {PublicKey} from "@solana/web3.js";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import {Visibility} from "./Visibility";
 import {CheckBox} from "./CheckBox";
 import { binary_to_base58 } from 'base58-js';
 import {useApp} from "../AppContext";
+
+const SELL_TAB_MODE_CREATE_ORDER: string = "create-order";
+const SELL_TAB_MODE_SHOW_ORDER: string = "show-order";
+
+interface SellTabState {
+    mode: string,
+    orderAddress: PublicKey|null,
+    trxSignature: string|null,
+    unlockKey: string|null,
+}
 
 function SellTab() {
     let {wallet, signMessage} = useWallet();
@@ -21,9 +30,21 @@ function SellTab() {
     const [buyAmount, onBuyAmountChange] = useState<string|undefined>("0");
     const [createOrderProps, setCreateOrderProps] = useState<CreateOrderProps|undefined>(undefined);
     const [isPrivate, setIsPrivate] = useState(false);
-    const [newOrderAddress, setNewOrderAddress] = useState<PublicKey|null>(null);
-    const [trxSignature, setTrxSignature] = useState<string|undefined>(undefined);
-    const [unlockKey, setUnlockKey] = useState<string|undefined>(undefined);
+    const [sellTabState, setSellTabState] = useState<SellTabState>({
+        mode: SELL_TAB_MODE_CREATE_ORDER,
+        unlockKey: null,
+        trxSignature: null,
+        orderAddress: null,
+    });
+
+    let [mode, setMode] = useState(SELL_TAB_MODE_CREATE_ORDER);
+    let [newOrderAddress, setNewOrderAddress] = useState<PublicKey|null>(null);
+    let [unlockKey, setUnlockKey] = useState<string|null>(null);
+    useEffect(() => {
+        setMode(sellTabState.mode);
+        setNewOrderAddress(sellTabState.orderAddress);
+        setUnlockKey(sellTabState.unlockKey);
+    }, [sellTabState]);
 
     let isOrderDataReady = (): boolean => {
         return !!(sellToken && buyToken && sellAmount && buyAmount && sellMinimum);
@@ -69,30 +90,38 @@ function SellTab() {
         try {
             let signature = await wallet?.adapter.sendTransaction(transaction, connection);
 
+            let newSellTabState: SellTabState = {
+                mode: SELL_TAB_MODE_SHOW_ORDER,
+                orderAddress: orderAccount,
+                trxSignature: signature ? signature : null,
+                unlockKey: null,
+            };
+
             if (isPrivate) {
-                let signature = await signMessage?.(orderAccount.toBytes());
-                if (signature) {
-                    setUnlockKey(binary_to_base58(signature));
+                let unlockKey = await signMessage?.(orderAccount.toBytes());
+                if (unlockKey) {
+                    newSellTabState.unlockKey = binary_to_base58(unlockKey);
                 }
             }
 
-            setTrxSignature(signature);
-            setNewOrderAddress(orderAccount);
-            setMode("showtrx");
+            setSellTabState(newSellTabState);
         } catch (e) {
             console.log(`Failed to create order: ${e}`);
         }
     }
 
     let onCreateNewClicked = async () => {
-        setMode("filltrx");
+        setSellTabState({
+            mode: SELL_TAB_MODE_CREATE_ORDER,
+            unlockKey: sellTabState?.unlockKey,
+            trxSignature: sellTabState?.trxSignature,
+            orderAddress: sellTabState?.orderAddress,
+        });
     }
-
-    const [mode, setMode] = useState("filltrx");
 
     return (
         <div className="vertical">
-            <Visibility isActive={mode === "filltrx"}>
+            <Visibility isActive={mode === SELL_TAB_MODE_CREATE_ORDER}>
                 <div className="vertical">
                     <ValueEdit
                         name={"Sell Token:"}
@@ -140,16 +169,16 @@ function SellTab() {
                     />
                 </div>
             </Visibility>
-            <Visibility isActive={mode === "showtrx"}>
+            <Visibility isActive={mode === SELL_TAB_MODE_SHOW_ORDER}>
                 <div className="vertical">
                     <Visibility isActive={!!(newOrderAddress)}>
-                        <div className="horizontal">
-                            <label className="label">
-                                <b>Order Address:</b>
-                            </label>
-                            <label className="label">
-                                <b>{newOrderAddress?.toString()}</b>
-                            </label>
+                        <div className="vertical">
+                            <ValueEdit
+                                name={"Order Address:"}
+                                value={newOrderAddress?.toString()}
+                                readonly={true}
+                            />
+
                             <Button
                                 name={"View details"}
                                 className="tabbutton-active"
@@ -157,6 +186,7 @@ function SellTab() {
                                     setAppState({
                                         appMode: "Buy",
                                         orderAddress: newOrderAddress,
+                                        unlockKey: unlockKey,
                                     });
                                 }}
                             />
@@ -164,12 +194,12 @@ function SellTab() {
                     </Visibility>
                     <Visibility isActive={!!(isPrivate && unlockKey)} >
                         <div className="vertical">
-                            <label className="label">
-                                <b>Unlock Key:</b>
-                            </label>
-                            <label className="label">
-                                <b>{unlockKey}</b>
-                            </label>
+                            <ValueEdit
+                                name={"Unlock Key:"}
+                                value={unlockKey ? unlockKey : undefined}
+                                readonly={true}
+                            />
+
                             <label className="label-attention">
                                 <p>It is only possible to fill the order with this unlock key!</p>
                                 <p>Save it and provide to selected buyers</p>

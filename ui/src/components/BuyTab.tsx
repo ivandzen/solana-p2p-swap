@@ -1,7 +1,7 @@
 import {ConnectionContextState, useConnection} from "@solana/wallet-adapter-react";
 import {PublicKey} from "@solana/web3.js";
 import {OrderDescription} from "./OrderDescription";
-import React, {ChangeEvent, FC, useEffect, useState} from "react";
+import React, {FC, useEffect, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
 import {getOrderDescriptionChecked, OrderDescriptionData, publicKeyChecker} from "../p2p-swap"
 import {P2P_SWAP_DEVNET} from "../p2p-swap";
@@ -40,6 +40,15 @@ const BuyTab: FC = () => {
         setAppState({
             appMode: "Buy",
             orderAddress: value ? new PublicKey(value) : null,
+            unlockKey: appState.unlockKey,
+        })
+    }
+
+    const setUnlockKey = (value: string|undefined) => {
+        setAppState({
+            appMode: "Buy",
+            orderAddress: appState.orderAddress,
+            unlockKey: value ? value : null,
         })
     }
 
@@ -52,7 +61,7 @@ const BuyTab: FC = () => {
                 name={"Order Address:"}
                 onChange={setOrderAddress}
                 valueChecker={publicKeyChecker}
-                value={appState?.orderAddress ? appState.orderAddress.toString() : undefined}
+                value={appState.orderAddress ? appState.orderAddress.toString() : ""}
             />
             <OrderDescription description={orderDescription}/>
             <Visibility isActive={typeof(orderDescription) !== 'string'}>
@@ -61,18 +70,15 @@ const BuyTab: FC = () => {
                         name="Amount:"
                         onChange={(value)=>{}}
                         valueChecker={(value)=>{ return true; }}
-                        size={35}
                         readonly={false}
                         value="0"
                     />
                     <Visibility isActive={typeof orderDescription !== 'string' && orderDescription.isPrivate}>
                         <ValueEdit
                             name="Unlock signature:"
-                            onChange={(value)=>{}}
+                            onChange={setUnlockKey}
                             valueChecker={(value)=>{ return true; }}
-                            size={35}
-                            readonly={false}
-                            value=" "
+                            value={appState.unlockKey ? appState.unlockKey : ""}
                         />
                     </Visibility>
                     <Button

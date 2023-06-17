@@ -4,6 +4,7 @@ import {PublicKey} from "@solana/web3.js";
 export interface AppState {
     appMode: string|null,
     orderAddress: PublicKey|null,
+    unlockKey: string|null,
 }
 
 export interface AppContext {

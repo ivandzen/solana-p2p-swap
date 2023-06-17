@@ -56,16 +56,19 @@ const Content: FC = () => {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
 
+    const appMode = urlParams.get("mode");
     let urlOrder: PublicKey|null = null;
     try {
         let tmp = urlParams.get("order_address");
         if (tmp)
             urlOrder = new PublicKey(tmp);
     } catch (e) {}
+    const unlockKey = urlParams.get("unlock_key");
 
     const [appState, setAppState] = useState<AppState>({
-        appMode: urlParams.get("mode"),
+        appMode: appMode,
         orderAddress: urlOrder,
+        unlockKey: unlockKey,
     })
 
     return (

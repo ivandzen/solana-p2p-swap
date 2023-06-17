@@ -1,9 +1,8 @@
-import React, {FC, ReactNode, useState} from "react";
+import React, {FC} from "react";
 import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
 import {BuyTab} from "./BuyTab";
 import {SellTab} from "./SellTab";
-import {AppContext, AppState, useApp} from "../AppContext";
-import {PublicKey} from "@solana/web3.js";
+import {useApp} from "../AppContext";
 
 function ModeButton(
     { name, onClick, activeName }:
@@ -43,6 +42,7 @@ const MainWidget: FC = () => {
         setAppState({
             appMode: "Buy",
             orderAddress: appState.orderAddress,
+            unlockKey: appState.unlockKey,
         })
     };
 
@@ -50,6 +50,7 @@ const MainWidget: FC = () => {
         setAppState({
             appMode: "Sell",
             orderAddress: appState.orderAddress,
+            unlockKey: appState.unlockKey,
         })
     };
 
