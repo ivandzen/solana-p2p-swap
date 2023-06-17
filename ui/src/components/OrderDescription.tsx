@@ -1,12 +1,11 @@
 import {ValueEdit} from "./ValueEdit";
 import React from "react";
 import {OrderDescriptionData} from "../p2p-swap";
-import {Button} from "./Button";
 
-function OrderDescription({description}: {description: OrderDescriptionData|string}) {
-    if (typeof (description) === 'string') {
-        return (
-            <h1>{description}</h1>
+function OrderDescription({description}: {description: OrderDescriptionData|null}) {
+    if (!description) {
+        return(
+            <div></div>
         )
     }
 

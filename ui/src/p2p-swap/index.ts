@@ -13,6 +13,7 @@ import {
     getMint as getTokenMint, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createApproveInstruction,
 } from "@solana/spl-token"
 import { base58_to_binary } from 'base58-js';
+import {ConnectionContextState} from "@solana/wallet-adapter-react";
 
 interface OrderDescriptionData {
     creationSlot: bigint,
@@ -152,17 +153,25 @@ function publicKeyChecker(value: string|null|undefined): boolean {
     }
 }
 
-function unlockKeyChecker(value: string|null|undefined): boolean {
+function parseUnlockKey(value: string|null|undefined): Uint8Array|null {
     if (!value) {
-        return false;
+        return null;
     }
 
     try {
         let binForm = base58_to_binary(value);
-        return binForm.length == 64;
+        if (binForm.length != 64) {
+            return null;
+        }
+
+        return binForm;
     } catch (e) {
-        return false;
+        return null;
     }
+}
+
+function unlockKeyChecker(value: string|null|undefined): boolean {
+    return parseUnlockKey(value) !== null;
 }
 
 function bigintChecker(value: string|null|undefined): boolean {
@@ -176,6 +185,17 @@ function bigintChecker(value: string|null|undefined): boolean {
     }
 
     return true;
+}
+
+function parseBigInt(value: string|null|undefined): BigInt|null {
+    try {
+        if (!value) {
+            return null;
+        }
+        return BigInt(value);
+    } catch (e) {}
+
+    return null;
 }
 
 async function getOrderDescriptionChecked(
@@ -313,7 +333,9 @@ export {
     getOrderDescriptionChecked,
     publicKeyChecker,
     unlockKeyChecker,
+    parseUnlockKey,
     bigintChecker,
+    parseBigInt,
     checkOrder,
     createOrderInstruction,
     createOrderTransaction,

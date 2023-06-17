@@ -1,12 +1,13 @@
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import {useWalletModal, WalletModalProvider} from '@solana/wallet-adapter-react-ui';
+import {WalletModalProvider} from '@solana/wallet-adapter-react-ui';
 import {PhantomWalletAdapter} from '@solana/wallet-adapter-wallets';
 import {clusterApiUrl, PublicKey} from '@solana/web3.js';
 import type { FC, ReactNode } from 'react';
 import React, {useMemo, useState} from 'react';
 import {MainWidget} from "./components/MainWidget";
-import {AppContext, AppState} from "./AppContext";
+import {AppContext} from "./AppContext";
+import {OrderDescriptionData} from "./p2p-swap";
 
 export const App: FC = () => {
     return (
@@ -56,25 +57,33 @@ const Content: FC = () => {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
 
-    const appMode = urlParams.get("mode");
-    let urlOrder: PublicKey|null = null;
+    const initAppMode = urlParams.get("mode");
+    let initOrder: PublicKey|null = null;
     try {
         let tmp = urlParams.get("order_address");
         if (tmp)
-            urlOrder = new PublicKey(tmp);
+            initOrder = new PublicKey(tmp);
     } catch (e) {}
-    const unlockKey = urlParams.get("unlock_key");
+    const iniUnlockKey = urlParams.get("unlock_key");
 
-    const [appState, setAppState] = useState<AppState>({
-        appMode: appMode,
-        orderAddress: urlOrder,
-        unlockKey: unlockKey,
-    })
+    const [appMode, setAppMode] = useState<string|null>(initAppMode);
+    const [orderAddress, setOrderAddress] = useState<PublicKey|null>(initOrder);
+    const [unlockKey, setUnlockKey] = useState<string|null>(iniUnlockKey);
+    const [sellOrderDescription, setSellOrderDescription] = useState<OrderDescriptionData|null>(null);
+    const [buyOrderDescription, setBuyOrderDescription] = useState<OrderDescriptionData|null>(null);
 
     return (
         <AppContext.Provider value = {{
-            appState: appState,
-            setAppState: setAppState,
+            appMode: appMode,
+            orderAddress: orderAddress,
+            unlockKey: unlockKey,
+            setAppMode: setAppMode,
+            setOrderAddress: setOrderAddress,
+            setUnlockKey: setUnlockKey,
+            sellOrderDescription: sellOrderDescription,
+            setSellOrderDescription: setSellOrderDescription,
+            buyOrderDescription: buyOrderDescription,
+            setBuyOrderDescription: setBuyOrderDescription,
         }}>
             <MainWidget/>
         </AppContext.Provider>

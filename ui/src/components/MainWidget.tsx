@@ -36,22 +36,14 @@ function ModeTab(
 }
 
 const MainWidget: FC = () => {
-    const {appState, setAppState} = useApp();
+    const {appMode, setAppMode} = useApp();
 
     const buyClick = () => {
-        setAppState({
-            appMode: "Buy",
-            orderAddress: appState.orderAddress,
-            unlockKey: appState.unlockKey,
-        })
+        setAppMode("Buy");
     };
 
     const sellClick = () => {
-        setAppState({
-            appMode: "Sell",
-            orderAddress: appState.orderAddress,
-            unlockKey: appState.unlockKey,
-        })
+        setAppMode("Sell");
     };
 
     return  (
@@ -62,12 +54,12 @@ const MainWidget: FC = () => {
             <div className ="tab">
                 <div className="tabcontent">
                     <div className="tabheader">
-                        <ModeButton name="Buy" onClick={buyClick} activeName={appState.appMode}/>
-                        <ModeButton name="Sell" onClick={sellClick} activeName={appState.appMode}/>
+                        <ModeButton name="Buy" onClick={buyClick} activeName={appMode}/>
+                        <ModeButton name="Sell" onClick={sellClick} activeName={appMode}/>
                     </div>
 
-                    <ModeTab name="Buy" activeName={appState.appMode}><BuyTab/></ModeTab>
-                    <ModeTab name="Sell" activeName={appState.appMode}><SellTab/></ModeTab>
+                    <ModeTab name="Buy" activeName={appMode}><BuyTab/></ModeTab>
+                    <ModeTab name="Sell" activeName={appMode}><SellTab/></ModeTab>
                 </div>
             </div>
         </div>

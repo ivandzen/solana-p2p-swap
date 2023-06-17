@@ -4,7 +4,7 @@ import {Visibility} from "./Visibility";
 
 interface ValueEditProps {
     name: string,
-    onChange?: (value: string|undefined) => void;
+    onChange?: (value: string) => void;
     valueChecker?: (value: string|undefined) => boolean;
     size?: number;
     readonly?: boolean;
@@ -26,20 +26,16 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
         else if (attribs.valueChecker) {
             if (attribs.valueChecker(value)) {
                 setInputStyle("input");
-                if (attribs.onChange)
-                    attribs.onChange(value);
             } else {
                 setInputStyle("input-failed");
-                if (attribs.onChange)
-                    attribs.onChange(value)
             }
         } else {
             setInputStyle("input");
-            if (attribs.onChange)
-                attribs.onChange(value);
         }
 
         setValue(value);
+        if (attribs.onChange)
+            attribs.onChange(value);
     }
 
     let [inputStyle, setInputStyle] = useState(initialStyle);
@@ -62,11 +58,13 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
                 value={value}
             />
             <Visibility isActive={attribs.readonly ? attribs.readonly : false} >
-                <Button
+                <button
                     name={'copy'}
-                    className={"copy-button"}
+                    className="copy-button"
                     onClick={() => {navigator.clipboard.writeText(value)}}
-                />
+                >
+                    {'copy'}
+                </button>
             </Visibility>
         </div>
     );
