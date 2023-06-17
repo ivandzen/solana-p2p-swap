@@ -37,11 +37,13 @@ const BuyTab: FC = () => {
     }, [connectionContext, appState]);
 
     const setOrderAddress = (value: string|undefined) => {
-        setAppState({
-            appMode: "Buy",
-            orderAddress: value ? new PublicKey(value) : null,
-            unlockKey: appState.unlockKey,
-        })
+        try {
+            setAppState({
+                appMode: "Buy",
+                orderAddress: value ? new PublicKey(value) : null,
+                unlockKey: appState.unlockKey,
+            })
+        } catch (e) {}
     }
 
     const setUnlockKey = (value: string|undefined) => {

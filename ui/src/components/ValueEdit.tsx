@@ -31,7 +31,7 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
             } else {
                 setInputStyle("input-failed");
                 if (attribs.onChange)
-                    attribs.onChange(undefined)
+                    attribs.onChange(value)
             }
         } else {
             setInputStyle("input");
