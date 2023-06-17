@@ -12,6 +12,7 @@ import {
     Mint as TokenMint,
     getMint as getTokenMint, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createApproveInstruction,
 } from "@solana/spl-token"
+import { base58_to_binary } from 'base58-js';
 
 interface OrderDescriptionData {
     creationSlot: bigint,
@@ -146,6 +147,19 @@ function publicKeyChecker(value: string|null|undefined): boolean {
     try {
         new PublicKey(value);
         return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+function unlockKeyChecker(value: string|null|undefined): boolean {
+    if (!value) {
+        return false;
+    }
+
+    try {
+        let binForm = base58_to_binary(value);
+        return binForm.length == 64;
     } catch (e) {
         return false;
     }
@@ -298,6 +312,7 @@ export {
     getOrderDescription,
     getOrderDescriptionChecked,
     publicKeyChecker,
+    unlockKeyChecker,
     bigintChecker,
     checkOrder,
     createOrderInstruction,

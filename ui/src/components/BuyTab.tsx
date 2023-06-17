@@ -3,7 +3,7 @@ import {PublicKey} from "@solana/web3.js";
 import {OrderDescription} from "./OrderDescription";
 import React, {FC, useEffect, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
-import {getOrderDescriptionChecked, OrderDescriptionData, publicKeyChecker} from "../p2p-swap"
+import {getOrderDescriptionChecked, OrderDescriptionData, publicKeyChecker, unlockKeyChecker} from "../p2p-swap"
 import {P2P_SWAP_DEVNET} from "../p2p-swap";
 import {useApp} from "../AppContext";
 import {Button} from "./Button";
@@ -79,7 +79,7 @@ const BuyTab: FC = () => {
                         <ValueEdit
                             name="Unlock signature:"
                             onChange={setUnlockKey}
-                            valueChecker={(value)=>{ return true; }}
+                            valueChecker={unlockKeyChecker}
                             value={appState.unlockKey ? appState.unlockKey : ""}
                         />
                     </Visibility>

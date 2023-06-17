@@ -10,6 +10,8 @@ html, body {
     justify-content: center;
     align-items: center;
     font-family: Arial;
+    background-image: url('../images/octopus.png');
+    background-size: 100vw
 }
 
 .mainwindow {
@@ -23,32 +25,36 @@ html, body {
     align-content: center;
     display: flex;
     justify-content: right;
+    height: 5vh;
 }
 
 .input-readonly {
+    font-family: monospace;
     border-color: transparent;
     background: transparent;
     color: #b967de;
     margin: 2px;
-    min-width: 50vh;
+    min-width: 20vw;
     transition-duration: 0.5s;
 }
 
 .input {
+    font-family: monospace;
     border-color: transparent;
     background: #b967de;
     margin: 2px;
-    min-width: 50vh;
+    min-width: 20vw;
     border-radius: 10px;
     box-shadow: 0px 0px 4px 4px #da49d2;
     transition-duration: 0.5s;
 }
 
 .input-failed {
+    font-family: monospace;
     border-color: transparent;
     background: #3a1344;
     margin: 2px;
-    min-width: 50vh;
+    min-width: 20vw;
     border-radius: 10px;
     box-shadow: 0px 0px 4px 4px #f10000;
     transition-duration: 0.5s;
@@ -60,7 +66,7 @@ html, body {
     background-color: transparent;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 95vh;
     align-items: center;
     justify-content: center;
 }
@@ -85,14 +91,6 @@ html, body {
     min-width: 150px;
     transition-duration: 0.5s;
     box-shadow: 0px 0px 4px 4px #da49d2;
-}
-
-  .tabledata {
-      width: 50%
-  }
-
-.tableheader {
-    width: 50%;
 }
   
   /* Change background color of buttons on hover */
@@ -130,7 +128,7 @@ html, body {
     padding: 12px;
     border-top: none;
     transition-duration: 0.5s;
-    box-shadow: 0px 0px 6px 6px #ffffff;
+    box-shadow: 0px 0px 16px 16px #ffffff;
 }
 
 .tabcontent .inactive {
@@ -200,7 +198,7 @@ html, body {
 }
 
 .copy-button {
-    width: 30px;
+    width: 50px;
     height: 30px;
     border-radius: 10px;
     background-color: #da49d2;
