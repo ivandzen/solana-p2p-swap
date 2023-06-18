@@ -24,6 +24,7 @@ function SellTab() {
     let {
         sellOrderDescription,
         setSellOrderDescription,
+        domain,
     } = useApp();
     let {connection} = useConnection();
     const [sellToken, onSellTokenChange] = useState<string|undefined>(undefined);
@@ -38,6 +39,7 @@ function SellTab() {
     const [newUnlockKey, setNewUnlockKey] = useState<string|null>(null);
     const [errorDescription, setErrorDescription] = useState<string|null>(null);
     const [expandDetails, setExpandDetails] = useState<boolean>(false);
+    const [orderURL, setOrderURL] = useState<string|null>(null);
 
     useEffect(() => {
         try {
@@ -127,9 +129,21 @@ function SellTab() {
             setErrorDescription('Wrong order address');
     };
 
-    let onCreateNewClicked = async () => {
+    const onCreateNewClicked = async () => {
         setSellTabMode(SELL_TAB_MODE_CREATE_ORDER);
     }
+
+    useEffect(()=>{
+        if (newOrderAddress) {
+            let url = `${domain}/?mode=Buy&order_address=${newOrderAddress.toString()}`;
+            if (newUnlockKey) {
+                url += `&unlock_key=${newUnlockKey}`;
+            }
+            setOrderURL(url);
+        } else {
+            setOrderURL(null);
+        }
+    }, [newOrderAddress, newUnlockKey]);
 
     const bigintChecker = (value: string|undefined):boolean => {
         if (!value) {
@@ -237,6 +251,7 @@ function SellTab() {
                             </div>
                         </div>
                     </Visibility>
+                    <ValueEdit name={"Order URL:"} readonly={true} value={orderURL ? orderURL : undefined}/>
                     <Button
                         name={"Create new order"}
                         onClick={onCreateNewClicked}

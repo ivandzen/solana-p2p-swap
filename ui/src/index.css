@@ -175,6 +175,16 @@ html, body {
     margin: 4px;
 }
 
+.block {
+    flex-direction: column;
+    display: flex;
+    margin: 4px;
+    background: #3a1344;
+    border-radius: 10px;
+    border-style: solid;
+    border-color: #2a1344;
+}
+
 .label {
     align-items: flex-end;
     flex-direction: column;

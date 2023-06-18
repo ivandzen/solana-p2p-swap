@@ -53,7 +53,7 @@ const MainWidget: FC = () => {
             </div>
             <div className ="tab">
                 <div className="tabcontent">
-                    <div className="tabheader">
+                    <div className="horizontal">
                         <ModeButton name="Buy" onClick={buyClick} activeName={appMode}/>
                         <ModeButton name="Sell" onClick={sellClick} activeName={appMode}/>
                     </div>

@@ -84,6 +84,7 @@ const Content: FC = () => {
             setSellOrderDescription: setSellOrderDescription,
             buyOrderDescription: buyOrderDescription,
             setBuyOrderDescription: setBuyOrderDescription,
+            domain: "http://localhost:1234"
         }}>
             <MainWidget/>
         </AppContext.Provider>

@@ -13,6 +13,7 @@ export interface AppContext {
     setSellOrderDescription: (descr: OrderDescriptionData|null) => void,
     buyOrderDescription: OrderDescriptionData|null,
     setBuyOrderDescription: (descr: OrderDescriptionData|null) => void,
+    domain: string,
 }
 
 export const AppContext = createContext<AppContext>({} as AppContext);
