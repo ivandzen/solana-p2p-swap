@@ -10,8 +10,7 @@ function OrderDescription({description}: {description: OrderDescriptionData|null
     }
 
     return (
-        <div className="block">
-            <div className="vertical">
+        <div className="table-like">
                 <ValueEdit
                     name={"Creation slot:"}
                     value={description.creationSlot.toString()}
@@ -57,7 +56,6 @@ function OrderDescription({description}: {description: OrderDescriptionData|null
                     value={description.isPrivate.toString()}
                     readonly={true}
                 />
-            </div>
         </div>
     )
 }

@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
 import {
     CreateOrderProps,
@@ -8,8 +8,8 @@ import {
     publicKeyChecker
 } from "../p2p-swap";
 import {Button} from "./Button";
-import {PublicKey} from "@solana/web3.js";
-import {Connection, useConnection, useWallet} from "@solana/wallet-adapter-react";
+import {Connection, PublicKey} from "@solana/web3.js";
+import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import {Visibility} from "./Visibility";
 import {CheckBox} from "./CheckBox";
 import { binary_to_base58 } from 'base58-js';
@@ -44,7 +44,7 @@ function SellTab() {
     useEffect(() => {
         try {
             let signer = wallet?.adapter.publicKey;
-            if (!signer) {
+            if (!signer || !buyToken || !sellToken) {
                 setCreateOrderProps(undefined);
                 return;
             }
@@ -159,39 +159,41 @@ function SellTab() {
     }
 
     return (
-        <div className="vertical">
+        <div>
             <Visibility isActive={sellTabMode === SELL_TAB_MODE_CREATE_ORDER}>
                 <div className="vertical">
-                    <ValueEdit
-                        name={"Sell Token:"}
-                        value={sellToken}
-                        onChange={onSellTokenChange}
-                        valueChecker={publicKeyChecker}
-                    />
-                    <ValueEdit
-                        name={"Sell Amount:"}
-                        value={sellAmount ? sellAmount.toString() : undefined}
-                        onChange={onSellAmountChange}
-                        valueChecker={bigintChecker}
-                    />
-                    <ValueEdit
-                        name={"Sell Minimum:"}
-                        value={sellMinimum ? sellMinimum.toString() : undefined}
-                        onChange={onSellMinimumChange}
-                        valueChecker={bigintChecker}
-                    />
-                    <ValueEdit
-                        name={"Buy Token:"}
-                        value={buyToken}
-                        onChange={onBuyTokenChange}
-                        valueChecker={publicKeyChecker}
-                    />
-                    <ValueEdit
-                        name={"Buy Amount:"}
-                        value={buyAmount ? buyAmount.toString() : undefined}
-                        onChange={onBuyAmountChange}
-                        valueChecker={bigintChecker}
-                    />
+                    <div className="table-like">
+                        <ValueEdit
+                            name={"Sell Token:"}
+                            value={sellToken}
+                            onChange={onSellTokenChange}
+                            valueChecker={publicKeyChecker}
+                        />
+                        <ValueEdit
+                            name={"Sell Amount:"}
+                            value={sellAmount ? sellAmount.toString() : undefined}
+                            onChange={onSellAmountChange}
+                            valueChecker={bigintChecker}
+                        />
+                        <ValueEdit
+                            name={"Sell Minimum:"}
+                            value={sellMinimum ? sellMinimum.toString() : undefined}
+                            onChange={onSellMinimumChange}
+                            valueChecker={bigintChecker}
+                        />
+                        <ValueEdit
+                            name={"Buy Token:"}
+                            value={buyToken}
+                            onChange={onBuyTokenChange}
+                            valueChecker={publicKeyChecker}
+                        />
+                        <ValueEdit
+                            name={"Buy Amount:"}
+                            value={buyAmount ? buyAmount.toString() : undefined}
+                            onChange={onBuyAmountChange}
+                            valueChecker={bigintChecker}
+                        />
+                    </div>
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>
                     <Visibility isActive={isPrivate}>
                         <div className="label-attention">
