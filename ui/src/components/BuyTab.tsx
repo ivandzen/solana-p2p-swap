@@ -4,9 +4,8 @@ import {OrderDescription} from "./OrderDescription";
 import React, {FC, useEffect, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
 import {
-    bigintChecker,
     getOrderDescriptionChecked,
-    OrderDescriptionData, parseBigInt, parseUnlockKey,
+    parseBigInt, parseUnlockKey,
     publicKeyChecker,
     unlockKeyChecker
 } from "../p2p-swap"

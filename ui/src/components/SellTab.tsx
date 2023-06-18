@@ -12,9 +12,9 @@ import {Connection, PublicKey} from "@solana/web3.js";
 import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import {Visibility} from "./Visibility";
 import {CheckBox} from "./CheckBox";
-import { binary_to_base58 } from 'base58-js';
 import {useApp} from "../AppContext";
 import {OrderDescription} from "./OrderDescription";
+const base58 = require("base58-js");
 
 const SELL_TAB_MODE_CREATE_ORDER: string = "create-order";
 const SELL_TAB_MODE_SHOW_ORDER: string = "show-order";
@@ -90,13 +90,13 @@ function SellTab() {
             await createOrderTransaction(connection, createOrderProps);
 
         try {
-            let signature = await wallet?.adapter.sendTransaction(transaction, connection);
+            await wallet?.adapter.sendTransaction(transaction, connection);
             setNewOrderAddress(orderAccount);
 
             if (isPrivate) {
                 let unlockKey = await signMessage?.(orderAccount.toBytes());
                 if (unlockKey) {
-                    setNewUnlockKey(binary_to_base58(unlockKey));
+                    setNewUnlockKey(base58.binary_to_base58(unlockKey));
                 }
             }
 

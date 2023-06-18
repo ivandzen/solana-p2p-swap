@@ -1,5 +1,4 @@
 import React, {ChangeEvent, FC, useEffect, useState} from "react";
-import {Button} from "./Button";
 import {Visibility} from "./Visibility";
 
 interface ValueEditProps {
@@ -61,7 +60,7 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
                 <button
                     name={'copy'}
                     className="copy-button"
-                    onClick={() => {navigator.clipboard.writeText(value)}}
+                    onClick={() => {navigator.clipboard.writeText(value).then(()=>{})}}
                 >
                     {'copy'}
                 </button>

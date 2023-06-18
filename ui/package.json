@@ -25,6 +25,10 @@
         "start": "parcel src/index.html"
     },
     "dependencies": {
+        "@types/readable-stream": "^2.3.15",
+        "@types/keccak": "^3.0.1",
+        "@types/node-fetch": "^2.6.4",
+        "@types/node": "^20.3.0",
         "@solana/wallet-adapter-base": "^0.9.19",
         "@solana/wallet-adapter-react": "^0.15.25",
         "@solana/wallet-adapter-react-ui": "^0.9.29",

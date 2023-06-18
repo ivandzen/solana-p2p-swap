@@ -12,8 +12,7 @@ import {
     Mint as TokenMint,
     getMint as getTokenMint, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createApproveInstruction,
 } from "@solana/spl-token"
-import { base58_to_binary } from 'base58-js';
-import {ConnectionContextState} from "@solana/wallet-adapter-react";
+const base58 = require('base58-js');
 
 interface OrderDescriptionData {
     creationSlot: bigint,
@@ -159,7 +158,7 @@ function parseUnlockKey(value: string|null|undefined): Uint8Array|null {
     }
 
     try {
-        let binForm = base58_to_binary(value);
+        let binForm = base58.base58_to_binary(value);
         if (binForm.length != 64) {
             return null;
         }
