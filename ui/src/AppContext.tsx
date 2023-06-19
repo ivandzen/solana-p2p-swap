@@ -1,6 +1,8 @@
 import {createContext, useContext} from "react";
-import {PublicKey} from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import {OrderDescriptionData} from "./p2p-swap";
+import { Wallet } from "@solana/wallet-adapter-react";
+import { MessageSignerWalletAdapterProps } from "@solana/wallet-adapter-base";
 
 export interface AppContext {
     appMode: string|null,
@@ -14,6 +16,9 @@ export interface AppContext {
     buyOrderDescription: OrderDescriptionData|null,
     setBuyOrderDescription: (descr: OrderDescriptionData|null) => void,
     domain: string,
+    connection: Connection,
+    wallet: Wallet|null,
+    signMessage: MessageSignerWalletAdapterProps['signMessage'] | undefined;
 }
 
 export const AppContext = createContext<AppContext>({} as AppContext);

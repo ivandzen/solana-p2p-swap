@@ -9,7 +9,6 @@ import {
 } from "../p2p-swap";
 import {Button} from "./Button";
 import {Connection, PublicKey} from "@solana/web3.js";
-import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 import {Visibility} from "./Visibility";
 import {CheckBox} from "./CheckBox";
 import {useApp} from "../AppContext";
@@ -20,13 +19,15 @@ const SELL_TAB_MODE_CREATE_ORDER: string = "create-order";
 const SELL_TAB_MODE_SHOW_ORDER: string = "show-order";
 
 function SellTab() {
-    let {wallet, signMessage} = useWallet();
     let {
         sellOrderDescription,
         setSellOrderDescription,
         domain,
+        setAppMode,
+        connection,
+        wallet, signMessage,
     } = useApp();
-    let {connection} = useConnection();
+
     const [sellToken, onSellTokenChange] = useState<string|undefined>(undefined);
     const [sellAmount, onSellAmountChange] = useState<string|undefined>("0");
     const [sellMinimum, onSellMinimumChange] = useState<string|undefined>("0");
@@ -89,11 +90,14 @@ function SellTab() {
         let [transaction, orderAccount] =
             await createOrderTransaction(connection, createOrderProps);
 
+        setAppMode("Send-Txn");
+
         try {
             await wallet?.adapter.sendTransaction(transaction, connection);
             setNewOrderAddress(orderAccount);
 
             if (isPrivate) {
+                setAppMode("Sign-Pubkey");
                 let unlockKey = await signMessage?.(orderAccount.toBytes());
                 if (unlockKey) {
                     setNewUnlockKey(base58.binary_to_base58(unlockKey));
@@ -104,6 +108,8 @@ function SellTab() {
         } catch (e) {
             console.log(`Failed to create order: ${e}`);
         }
+
+        setAppMode("Sell");
     }
 
     let onViewDetailsClick = async () => {
@@ -196,13 +202,15 @@ function SellTab() {
                     </div>
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>
                     <Visibility isActive={isPrivate}>
-                        <div className="label-attention">
-                            <b>
-                            <p>Besides regular transaction approval, </p>
-                            <p>You will be prompted to sign message containing order account address</p>
-                            <p>encoded in binary form to generate order unlock key.</p>
-                            <p>NOTE: Order filling will be available only with this signature!</p>
-                            </b>
+                        <div className="vertical">
+                            <div className="label-attention">
+                                <b>
+                                    <p>Besides regular transaction approval, </p>
+                                    <p>You will be prompted to sign message containing order account address</p>
+                                    <p>encoded in binary form to generate order unlock key.</p>
+                                    <p>NOTE: Order filling will be available only with this signature!</p>
+                                </b>
+                            </div>
                         </div>
                     </Visibility>
                     <Button
@@ -244,7 +252,6 @@ function SellTab() {
                                 value={newUnlockKey ? newUnlockKey : undefined}
                                 readonly={true}
                             />
-
                             <div className="label-attention">
                                 <b>
                                 <p>It is only possible to fill the order with this unlock key!</p>
@@ -255,7 +262,7 @@ function SellTab() {
                     </Visibility>
                     <ValueEdit name={"Order URL:"} readonly={true} value={orderURL ? orderURL : undefined}/>
                     <Button
-                        name={"Create new order"}
+                        name={"Create another order"}
                         onClick={onCreateNewClicked}
                     />
                 </div>

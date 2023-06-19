@@ -191,7 +191,7 @@ function bigintChecker(value: string|null|undefined): boolean {
     return true;
 }
 
-function parseBigInt(value: string|null|undefined): BigInt|null {
+function parseBigInt(value: string|null|undefined): bigint|null {
     try {
         if (!value) {
             return null;

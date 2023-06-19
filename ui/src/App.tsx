@@ -1,10 +1,15 @@
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
+import {
+    ConnectionProvider,
+    useConnection,
+    useWallet,
+    WalletProvider
+} from "@solana/wallet-adapter-react";
 import {WalletModalProvider} from '@solana/wallet-adapter-react-ui';
 import {PhantomWalletAdapter} from '@solana/wallet-adapter-wallets';
 import {clusterApiUrl, PublicKey} from '@solana/web3.js';
 import type { FC, ReactNode } from 'react';
-import React, {useMemo, useState} from 'react';
+import React, { useEffect, useMemo, useState } from "react";
 import {MainWidget} from "./components/MainWidget";
 import {AppContext} from "./AppContext";
 import {OrderDescriptionData} from "./p2p-swap";
@@ -54,23 +59,33 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 const Content: FC = () => {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-
-    const initAppMode = urlParams.get("mode");
-    let initOrder: PublicKey|null = null;
-    try {
-        let tmp = urlParams.get("order_address");
-        if (tmp)
-            initOrder = new PublicKey(tmp);
-    } catch (e) {}
-    const iniUnlockKey = urlParams.get("unlock_key");
-
-    const [appMode, setAppMode] = useState<string|null>(initAppMode);
-    const [orderAddress, setOrderAddress] = useState<PublicKey|null>(initOrder);
-    const [unlockKey, setUnlockKey] = useState<string|null>(iniUnlockKey);
     const [sellOrderDescription, setSellOrderDescription] = useState<OrderDescriptionData|null>(null);
     const [buyOrderDescription, setBuyOrderDescription] = useState<OrderDescriptionData|null>(null);
+    const {connection} = useConnection();
+    const {wallet, signMessage, connected} = useWallet();
+    const [orderAddress, setOrderAddress] = useState<PublicKey|null>(null);
+    const [unlockKey, setUnlockKey] = useState<string|null>(null);
+    const [appMode, setAppMode] = useState<string|null>(null);
+
+    useEffect(() => {
+        if (connected) {
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const initAppMode = urlParams.get("mode");
+            let initOrder: PublicKey|null = null;
+            try {
+                let tmp = urlParams.get("order_address");
+                if (tmp)
+                    initOrder = new PublicKey(tmp);
+            } catch (e) {}
+            const initUnlockKey = urlParams.get("unlock_key");
+            setOrderAddress(initOrder);
+            setUnlockKey(initUnlockKey);
+            setAppMode(initAppMode ? initAppMode : "Buy");
+        } else {
+            setAppMode("Connect-Wallet");
+        }
+    }, [connected]);
 
     return (
         <AppContext.Provider value = {{
@@ -84,7 +99,10 @@ const Content: FC = () => {
             setSellOrderDescription: setSellOrderDescription,
             buyOrderDescription: buyOrderDescription,
             setBuyOrderDescription: setBuyOrderDescription,
-            domain: "http://localhost:1234"
+            domain: "http://localhost:1234",
+            connection: connection,
+            wallet: wallet,
+            signMessage: signMessage,
         }}>
             <MainWidget/>
         </AppContext.Provider>

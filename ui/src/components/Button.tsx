@@ -1,4 +1,4 @@
-import React, {FC, useEffect, useState} from "react";
+import React, {FC, useState} from "react";
 
 interface ButtonProps {
     name: string,
@@ -9,7 +9,7 @@ interface ButtonProps {
     disabled?: boolean,
 }
 const Button: FC<ButtonProps> = (props) => {
-    let initialStyle = "tabbutton";
+    let initialStyle: string;
 
     if (props.checkable) {
         if (props.checked) {

@@ -1,5 +1,4 @@
-import { ConnectionContextState, useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import {OrderDescription} from "./OrderDescription";
 import React, {FC, useEffect, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
@@ -21,25 +20,25 @@ const BuyTab: FC = () => {
         orderAddress, setOrderAddress,
         unlockKey, setUnlockKey,
         buyOrderDescription, setBuyOrderDescription,
+        setAppMode,
+        connection,
+        wallet,
     } = useApp();
-    const {wallet} = useWallet();
-    const {connection} = useConnection();
+
     const [errorDescription, setErrorDescription] = useState<string|null>("Wrong order address");
     const [buyAmount, setBuyAmount] = useState<string>("0");
-    const [fillOrderTxn, setFillOrderTxn] = useState<Transaction|null>(null);
-    const connectionContext = useConnection();
-    const [buyButtonName, setBuyButtonName] = useState("Buy");
+    const [fillOrderProps, setFillOrderProps] = useState<FillOrderProps|null>(null);
 
     useEffect(() => {
         async function updateOrderDescription(
-            connectionContext: ConnectionContextState,
+            connection: Connection,
             orderAddress: PublicKey
         ) {
             setBuyOrderDescription(null);
             setErrorDescription("Loading...");
             try {
                 let orderDescription
-                    = await getOrderDescriptionChecked(connectionContext.connection, orderAddress, P2P_SWAP_DEVNET);
+                    = await getOrderDescriptionChecked(connection, orderAddress, P2P_SWAP_DEVNET);
                 setBuyOrderDescription(orderDescription);
                 setErrorDescription(null);
             } catch (e: any) {
@@ -48,17 +47,18 @@ const BuyTab: FC = () => {
         }
 
         if (orderAddress)
-            updateOrderDescription(connectionContext, new PublicKey(orderAddress)).then(() => {});
+            updateOrderDescription(connection, new PublicKey(orderAddress)).then(() => {});
         else
             setErrorDescription('Wrong order address');
-    }, [connectionContext, orderAddress]);
+    }, [connection, orderAddress]);
 
     useEffect(() => {
         const sendTransaction = async () => {
             let signer = wallet?.adapter.publicKey;
             let unlockKeyParsed = parseUnlockKey(unlockKey);
             let buyAmountParsed = parseBigInt(buyAmount);
-            if (signer && orderAddress && buyOrderDescription && buyAmountParsed && buyAmountParsed > BigInt(0) && unlockKeyParsed) {
+            if (signer && orderAddress && buyOrderDescription &&
+                buyAmountParsed && buyAmountParsed > BigInt(0)) {
                 let props: FillOrderProps = {
                     order: buyOrderDescription,
                     orderAddress: orderAddress,
@@ -71,9 +71,9 @@ const BuyTab: FC = () => {
                     props.unlockKey = unlockKeyParsed;
                 }
 
-                setFillOrderTxn(await fillOrderTransaction(connection, props));
+                setFillOrderProps(props);
             } else {
-                setFillOrderTxn(null);
+                setFillOrderProps(null);
             }
         };
 
@@ -89,20 +89,21 @@ const BuyTab: FC = () => {
     }
 
     const onBuyClicked = async () => {
-        if (fillOrderTxn) {
-            let txn = fillOrderTxn;
-            setFillOrderTxn(null);
-            setBuyButtonName("Submitting...");
-
-            try {
-                await wallet?.adapter.sendTransaction(txn, connection);
-            } catch (e) {
-                console.log(`Failed to fill order: ${e}`);
-            }
-
-            setFillOrderTxn(txn);
-            setBuyButtonName("Buy");
+        if (!fillOrderProps) {
+            return;
         }
+
+        let props = fillOrderProps;
+        setAppMode("Send-Txn");
+
+        try {
+            let txn = await fillOrderTransaction(connection, props);
+            await wallet?.adapter.sendTransaction(txn, connection);
+        } catch (e) {
+            console.log(`Failed to fill order: ${e}`);
+        }
+
+        setAppMode("Buy");
     }
 
     return (
@@ -144,9 +145,9 @@ const BuyTab: FC = () => {
                         />
                     </Visibility>
                     <Button
-                        name={buyButtonName}
+                        name="Buy"
                         onClick={onBuyClicked}
-                        disabled={fillOrderTxn === null}
+                        disabled={fillOrderProps === null}
                     />
                 </div>
             </Visibility>
