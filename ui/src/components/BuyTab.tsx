@@ -1,14 +1,16 @@
-import {ConnectionContextState, useConnection} from "@solana/wallet-adapter-react";
-import {PublicKey} from "@solana/web3.js";
+import { ConnectionContextState, useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import {OrderDescription} from "./OrderDescription";
 import React, {FC, useEffect, useState} from "react";
 import {ValueEdit} from "./ValueEdit";
 import {
+    FillOrderProps,
+    fillOrderTransaction,
     getOrderDescriptionChecked,
     parseBigInt, parseUnlockKey,
     publicKeyChecker,
     unlockKeyChecker
-} from "../p2p-swap"
+} from "../p2p-swap";
 import {P2P_SWAP_DEVNET} from "../p2p-swap";
 import {useApp} from "../AppContext";
 import {Button} from "./Button";
@@ -20,10 +22,13 @@ const BuyTab: FC = () => {
         unlockKey, setUnlockKey,
         buyOrderDescription, setBuyOrderDescription,
     } = useApp();
+    const {wallet} = useWallet();
+    const {connection} = useConnection();
     const [errorDescription, setErrorDescription] = useState<string|null>("Wrong order address");
     const [buyAmount, setBuyAmount] = useState<string>("0");
-    const [buyTransaction, setBuyTransaction] = useState<string|null>(null);
+    const [fillOrderTxn, setFillOrderTxn] = useState<Transaction|null>(null);
     const connectionContext = useConnection();
+    const [buyButtonName, setBuyButtonName] = useState("Buy");
 
     useEffect(() => {
         async function updateOrderDescription(
@@ -49,13 +54,30 @@ const BuyTab: FC = () => {
     }, [connectionContext, orderAddress]);
 
     useEffect(() => {
-        let unlockKeyParsed = parseUnlockKey(unlockKey);
-        let buyAmountParsed = parseBigInt(buyAmount);
-        if (buyAmountParsed && buyAmountParsed > BigInt(0) && unlockKeyParsed) {
-            setBuyTransaction("YESSS!!!");
-        } else {
-            setBuyTransaction(null);
-        }
+        const sendTransaction = async () => {
+            let signer = wallet?.adapter.publicKey;
+            let unlockKeyParsed = parseUnlockKey(unlockKey);
+            let buyAmountParsed = parseBigInt(buyAmount);
+            if (signer && orderAddress && buyOrderDescription && buyAmountParsed && buyAmountParsed > BigInt(0) && unlockKeyParsed) {
+                let props: FillOrderProps = {
+                    order: buyOrderDescription,
+                    orderAddress: orderAddress,
+                    programId: P2P_SWAP_DEVNET,
+                    sellTokenAmount: buyAmountParsed,
+                    signer: signer,
+                };
+
+                if (buyOrderDescription.isPrivate && unlockKeyParsed) {
+                    props.unlockKey = unlockKeyParsed;
+                }
+
+                setFillOrderTxn(await fillOrderTransaction(connection, props));
+            } else {
+                setFillOrderTxn(null);
+            }
+        };
+
+        sendTransaction().then(()=>{});
     }, [orderAddress, buyAmount, unlockKey]);
 
     const onOrderAddressChange = (value: string|null) => {
@@ -66,7 +88,21 @@ const BuyTab: FC = () => {
         }
     }
 
-    const onBuyClicked = () => {
+    const onBuyClicked = async () => {
+        if (fillOrderTxn) {
+            let txn = fillOrderTxn;
+            setFillOrderTxn(null);
+            setBuyButtonName("Submitting...");
+
+            try {
+                await wallet?.adapter.sendTransaction(txn, connection);
+            } catch (e) {
+                console.log(`Failed to fill order: ${e}`);
+            }
+
+            setFillOrderTxn(txn);
+            setBuyButtonName("Buy");
+        }
     }
 
     return (
@@ -108,9 +144,9 @@ const BuyTab: FC = () => {
                         />
                     </Visibility>
                     <Button
-                        name="Buy"
+                        name={buyButtonName}
                         onClick={onBuyClicked}
-                        disabled={buyTransaction === null}
+                        disabled={fillOrderTxn === null}
                     />
                 </div>
             </Visibility>

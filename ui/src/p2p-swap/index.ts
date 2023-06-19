@@ -1,17 +1,22 @@
 import {
-    Connection,
+    AccountMeta,
+    Connection, Ed25519Program,
     PublicKey,
     SystemProgram,
-    SYSVAR_CLOCK_PUBKEY,
+    SYSVAR_CLOCK_PUBKEY, SYSVAR_INSTRUCTIONS_PUBKEY,
     Transaction,
     TransactionInstruction
-} from "@solana/web3.js"
+} from "@solana/web3.js";
 import {
     getAssociatedTokenAddressSync,
     getAccount as getSPLAccount,
     Mint as TokenMint,
-    getMint as getTokenMint, TOKEN_PROGRAM_ID, createAssociatedTokenAccountInstruction, createApproveInstruction,
-} from "@solana/spl-token"
+    getMint as getTokenMint,
+    TOKEN_PROGRAM_ID,
+    createAssociatedTokenAccountInstruction,
+    createApproveInstruction,
+    getAssociatedTokenAddress
+} from "@solana/spl-token";
 const base58 = require('base58-js');
 
 interface OrderDescriptionData {
@@ -323,11 +328,109 @@ async function createOrderTransaction(
     return [transaction, orderAccount];
 }
 
+interface FillOrderProps {
+    signer: PublicKey,
+    programId: PublicKey,
+    sellTokenAmount: bigint,
+    orderAddress: PublicKey,
+    order: OrderDescriptionData,
+    unlockKey?: Uint8Array,
+    buyerBuyTokenWallet?: PublicKey,
+}
+
+async function createFillInstruction(props: FillOrderProps): Promise<TransactionInstruction> {
+    if (!props.buyerBuyTokenWallet) {
+        throw "Buyer buy token wallet is not set";
+    }
+
+    let keys: AccountMeta[] = [
+        { pubkey: props.order.seller, isSigner: false, isWritable: false },
+        { pubkey: props.signer, isSigner: true, isWritable: true },
+        { pubkey: props.orderAddress, isSigner: false, isWritable: true },
+    ];
+
+    if (props.order.isPrivate) {
+        keys.push({ pubkey: SYSVAR_INSTRUCTIONS_PUBKEY, isSigner: false, isWritable: false });
+    }
+
+    let [orderWalletAuthority] = getOrderWalletAuthority(props.programId, props.order.seller);
+
+    let sellerBuyTokenWallet
+      = await getAssociatedTokenAddress(props.order.buyToken.address, props.order.seller, false);
+
+    let buyerSellTokenWallet =
+        await getAssociatedTokenAddress(props.order.sellToken.address, props.signer, false);
+
+    keys.push(
+      { pubkey: orderWalletAuthority, isSigner: false, isWritable: false },
+      { pubkey: props.order.sellToken.address, isSigner: false, isWritable: false },
+      { pubkey: props.order.orderWallet, isSigner: false, isWritable: true },
+      { pubkey: props.order.buyToken.address, isSigner: false, isWritable: false },
+      { pubkey: props.buyerBuyTokenWallet, isSigner: false, isWritable: true },
+      { pubkey: sellerBuyTokenWallet, isSigner: false, isWritable: true },
+      { pubkey: buyerSellTokenWallet, isSigner: false, isWritable: true },
+      { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    )
+
+    let data: Buffer = Buffer.concat([
+        Buffer.from(int8ToBytes(P2PSwapInstructions.FillOrder)),
+        Buffer.from(int64ToBytes(props.sellTokenAmount)),
+    ]);
+
+    return new TransactionInstruction({
+        keys: keys,
+        programId: props.programId,
+        data: data
+    });
+}
+
+async function fillOrderTransaction(
+  connection: Connection,
+  props: FillOrderProps,
+): Promise<Transaction> {
+    const { blockhash } = await connection.getLatestBlockhash();
+    let transaction = new Transaction({ recentBlockhash: blockhash, feePayer: props.signer });
+
+    props.buyerBuyTokenWallet = await getAssociatedTokenAddress(
+      props.order.sellToken.address,
+      props.signer,
+      false
+    );
+
+    let buyTokenAmount = (props.sellTokenAmount * props.order.buyAmount) / props.order.sellAmount;
+
+    // Allow p2p-swap program to transfer funds from signer's token account
+    transaction.add(
+      createApproveInstruction(
+        props.buyerBuyTokenWallet,
+        props.programId,
+        props.signer,
+        buyTokenAmount,
+      ));
+
+    if (props.order.isPrivate) {
+        if (!props.unlockKey) {
+            throw "Unlock key is not specified for private order";
+        }
+
+        transaction.add(Ed25519Program.createInstructionWithPublicKey({
+            publicKey: props.order.seller.toBytes(),
+            message: props.orderAddress.toBytes(),
+            signature: props.unlockKey,
+        }));
+    }
+
+    transaction.add(await createFillInstruction(props));
+
+    return transaction;
+}
+
 const P2P_SWAP_DEVNET = new PublicKey("AzVuKVf8qQjHBTyjEUZbr6zRvinZvjpuFZWMXPd76Fzx");
 
 export {
     type OrderDescriptionData,
     type CreateOrderProps,
+    type FillOrderProps,
     getOrderDescription,
     getOrderDescriptionChecked,
     publicKeyChecker,
@@ -338,5 +441,6 @@ export {
     checkOrder,
     createOrderInstruction,
     createOrderTransaction,
+    fillOrderTransaction,
     P2P_SWAP_DEVNET,
 }
