@@ -6,7 +6,7 @@ import {
     WalletProvider
 } from "@solana/wallet-adapter-react";
 import {WalletModalProvider} from '@solana/wallet-adapter-react-ui';
-import {PhantomWalletAdapter} from '@solana/wallet-adapter-wallets';
+import { BraveWalletAdapter, PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import {clusterApiUrl, PublicKey} from '@solana/web3.js';
 import type { FC, ReactNode } from 'react';
 import React, { useEffect, useMemo, useState } from "react";
@@ -44,6 +44,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
              * in the npm package `@solana/wallet-adapter-wallets`.
              */
             new PhantomWalletAdapter(),
+            new BraveWalletAdapter(),
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [network]
@@ -51,7 +52,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
     return (
         <ConnectionProvider endpoint={endpoint}>
-            <WalletProvider wallets={wallets} autoConnect>
+            <WalletProvider wallets={wallets}>
                 <WalletModalProvider>{children}</WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
