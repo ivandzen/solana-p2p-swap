@@ -66,6 +66,7 @@ const Content: FC = () => {
     const [orderAddress, setOrderAddress] = useState<PublicKey|null>(null);
     const [unlockKey, setUnlockKey] = useState<string|null>(null);
     const [appMode, setAppMode] = useState<string|null>(null);
+    const [orders, setOrders] = useState<Map<PublicKey, OrderDescriptionData>|undefined>(undefined);
 
     useEffect(() => {
         if (connected) {
@@ -103,6 +104,8 @@ const Content: FC = () => {
             connection: connection,
             wallet: wallet,
             signMessage: signMessage,
+            orders: orders,
+            setOrders: setOrders,
         }}>
             <MainWidget/>
         </AppContext.Provider>

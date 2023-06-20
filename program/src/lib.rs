@@ -39,7 +39,9 @@ pub struct SwapSPLOrder {
     // SPL wallet where tokens are stored. Every seller has dedicated order wallet for every
     // token he sells (all orders with the same token uses the same order wallet)
     pub order_wallet: Pubkey,
-    // Token for payment (SOL if None)
+    // Token to sell
+    pub token_mint: Pubkey,
+    // Token for payment
     pub price_mint: Pubkey,
     // How much price-tokens seller wants to get
     pub buy_amount: u64,
@@ -82,13 +84,13 @@ pub fn get_order_address(program_id: &Pubkey, seller: &Pubkey, order_seed: u64) 
 }
 
 impl Pack for SwapSPLOrder {
-    const LEN: usize = 137;
+    const LEN: usize = 169;
     fn unpack_from_slice(src: &[u8]) -> Result<Self, ProgramError> {
-        let src = array_ref![src, 0, 137];
+        let src = array_ref![src, 0, 169];
         let (creation_slot, seller, sell_amount,
-            order_wallet, price_mint, buy_amount,
+            order_wallet, token_mint, price_mint, buy_amount,
             min_sell_amount, remains_to_fill, is_private) =
-            array_refs![src, 8, 32, 8, 32, 32, 8, 8, 8, 1];
+            array_refs![src, 8, 32, 8, 32, 32, 32, 8, 8, 8, 1];
 
         let creation_slot = u64::from_le_bytes(*creation_slot);
         let sell_amount = u64::from_le_bytes(*sell_amount);
@@ -106,6 +108,7 @@ impl Pack for SwapSPLOrder {
             seller: Pubkey::new_from_array(*seller),
             sell_amount,
             order_wallet: Pubkey::new_from_array(*order_wallet),
+            token_mint: Pubkey::new_from_array(*token_mint),
             price_mint: Pubkey::new_from_array(*price_mint),
             buy_amount,
             min_sell_amount,
@@ -115,23 +118,25 @@ impl Pack for SwapSPLOrder {
     }
 
     fn pack_into_slice(&self, dst: &mut [u8]) {
-        let dst = array_mut_ref![dst, 0, 137];
+        let dst = array_mut_ref![dst, 0, 169];
         let (
             creation_slot_dst,
             seller_dst,
             sell_amount_dst,
             order_wallet_dst,
+            token_mint_dst,
             price_mint_dst,
             buy_amount_dst,
             min_sell_mount_dst,
             remains_to_fill_dst,
             is_private_dst,
-        ) = mut_array_refs![dst, 8, 32, 8, 32, 32, 8, 8, 8, 1];
+        ) = mut_array_refs![dst, 8, 32, 8, 32, 32, 32, 8, 8, 8, 1];
         let &SwapSPLOrder {
             creation_slot,
             ref seller,
             sell_amount,
             ref order_wallet,
+            ref token_mint,
             ref price_mint,
             buy_amount,
             min_sell_amount,
@@ -142,6 +147,7 @@ impl Pack for SwapSPLOrder {
         seller_dst.copy_from_slice(seller.as_ref());
         *sell_amount_dst = sell_amount.to_le_bytes();
         order_wallet_dst.copy_from_slice(order_wallet.as_ref());
+        token_mint_dst.copy_from_slice(token_mint.as_ref());
         price_mint_dst.copy_from_slice(price_mint.as_ref());
         *buy_amount_dst = buy_amount.to_le_bytes();
         *min_sell_mount_dst = min_sell_amount.to_le_bytes();

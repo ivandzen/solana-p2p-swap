@@ -210,6 +210,7 @@ fn _create_order<'a>(
         seller: seller.key.clone(),
         sell_amount,
         order_wallet: order_wallet.key.clone(),
+        token_mint: sell_token_mint.key.clone(),
         price_mint: buy_token_mint.key.clone(),
         buy_amount,
         min_sell_amount,
@@ -282,6 +283,15 @@ fn check_and_get_order_wallet(
                 "Order wallet authority not match. Expected: {:?}",
                 expected_order_wallet_authority,
             );
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    if order_wallet.mint != order.token_mint {
+        msg!(
+            "Token mint not match. Expected: {:?}",
+            order.token_mint,
+        );
+
         return Err(ProgramError::InvalidAccountData);
     }
 

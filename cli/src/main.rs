@@ -1,8 +1,3 @@
-use solana_sdk::ed25519_instruction::{
-    DATA_START,
-    PUBKEY_SERIALIZED_SIZE,
-    SIGNATURE_SERIALIZED_SIZE,
-};
 use {
     bytemuck::{ bytes_of, Pod, Zeroable },
     clap::{ App, Arg, ArgMatches, SubCommand },
@@ -13,12 +8,21 @@ use {
         get_order_address,
         P2PSwapInstructions,
     },
-    solana_client::rpc_client::RpcClient,
+    solana_client::{
+        rpc_client::{ RpcClient },
+        rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+        rpc_filter::RpcFilterType,
+    },
     solana_clap_utils::{
         input_validators::{is_valid_pubkey, is_url_or_moniker, normalize_to_url_if_moniker},
         keypair::signer_from_path,
     },
     solana_sdk::{
+        ed25519_instruction::{
+            DATA_START,
+            PUBKEY_SERIALIZED_SIZE,
+            SIGNATURE_SERIALIZED_SIZE,
+        },
         instruction::{AccountMeta, Instruction},
         pubkey::Pubkey,
         program_pack::Pack,
@@ -503,6 +507,28 @@ fn process_revoke_order(context: &AppContext, args: &Option<&ArgMatches>) {
     }
 }
 
+fn process_list_orders(context: &AppContext) {
+    match context.client.get_program_accounts_with_config(
+        &context.p2p_swap,
+        RpcProgramAccountsConfig {
+            filters: Some(vec![RpcFilterType::DataSize(SwapSPLOrder::LEN as u64)]),
+            account_config: RpcAccountInfoConfig {
+                encoding: Some(solana_account_decoder::UiAccountEncoding::Base64),
+                commitment: None,
+                data_slice: None,
+                min_context_slot: None,
+            },
+            with_context: None,
+        }) {
+        Ok(accounts) => {
+            println!("Orders: {:#?}", accounts);
+        },
+        Err(err) => {
+            println!("Failed to retrieve orders for swap contract: {:?}", err);
+        },
+    }
+}
+
 fn main() {
     let matches = App::new("p2p-swap-cli")
         .about("CLI to interact with p2p-swap smart-contract")
@@ -679,6 +705,10 @@ fn main() {
                         .help("Amount of tokens to revoke (only seller can specify this parameter)")
                 )
         )
+        .subcommand(
+            SubCommand::with_name("list-orders")
+                .about("Returns list of orders")
+        )
         .get_matches();
 
     let context = AppContext::parse(&matches).unwrap();
@@ -689,6 +719,7 @@ fn main() {
         "get-order" => process_get_order(&context, &args),
         "buy-order" => process_buy_order(&context, &args),
         "revoke-order" => process_revoke_order(&context, &args),
+        "list-orders" => process_list_orders(&context),
         _ => {
             warn!("Unknown subcommand '{:?}'", subcommand);
             exit(1)

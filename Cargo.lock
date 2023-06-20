@@ -1872,6 +1872,7 @@ dependencies = [
  "log",
  "p2p-swap",
  "rand 0.8.5",
+ "solana-account-decoder",
  "solana-clap-utils",
  "solana-cli-config",
  "solana-client",

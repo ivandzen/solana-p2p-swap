@@ -24,13 +24,49 @@ interface OrderDescriptionData {
     seller: PublicKey,
     sellAmount: bigint,
     orderWallet: PublicKey,
+    tokenMint: PublicKey,
     priceMint: PublicKey,
     buyAmount: bigint,
     minSellAmount: bigint,
     remainsToFill: bigint,
     isPrivate: boolean,
-    sellToken: TokenMint,
-    buyToken: TokenMint,
+    sellToken?: TokenMint,
+    buyToken?: TokenMint,
+}
+
+const ORDER_ACCOUNT_SIZE = 169;
+
+function parseOrderDescription(
+    data: Buffer
+): OrderDescriptionData {
+    if (data.length != ORDER_ACCOUNT_SIZE) {
+        throw "Account is not p2p order";
+    }
+
+    let view = new DataView(data.slice(0, ORDER_ACCOUNT_SIZE).buffer, 0);
+    let creationSlot = view.getBigUint64(0, true);
+    let seller = new PublicKey(data.slice(8, 40));
+    let sellAmount = view.getBigUint64(40, true);
+    let orderWallet = new PublicKey(data.slice(48, 80));
+    let tokenMint = new PublicKey(data.slice(80, 112));
+    let priceMint = new PublicKey(data.slice(112, 144));
+    let buyAmount = view.getBigUint64(144, true);
+    let minSellAmount = view.getBigUint64(152, true);
+    let remainsToFill = view.getBigUint64(160, true);
+    let isPrivate = view.getUint8(168) != 0;
+
+    return {
+        creationSlot: creationSlot,
+        seller: seller,
+        sellAmount: sellAmount,
+        orderWallet: orderWallet,
+        tokenMint: tokenMint,
+        priceMint: priceMint,
+        buyAmount: buyAmount,
+        minSellAmount: minSellAmount,
+        remainsToFill: remainsToFill,
+        isPrivate: isPrivate,
+    };
 }
 
 async function getOrderDescription(
@@ -43,38 +79,14 @@ async function getOrderDescription(
     }
 
     let data = orderData.data;
-    if (data.length != 137) {
-        throw "Account is not p2p order";
-    }
-
-    let view = new DataView(data.slice(0, 137).buffer, 0);
-    let creationSlot = view.getBigUint64(0, true);
-    let seller = new PublicKey(data.slice(8, 40));
-    let sellAmount = view.getBigUint64(40, true);
-    let orderWallet = new PublicKey(data.slice(48, 80));
-    let priceMint = new PublicKey(data.slice(80, 112));
-    let buyAmount = view.getBigUint64(112, true);
-    let minSellAmount = view.getBigUint64(120, true);
-    let remainsToFill = view.getBigUint64(128, true);
-    let isPrivate = view.getUint8(136) == 0 ? false : true;
-
-    let orderWalletAccount = await getSPLAccount(connection, orderWallet);
+    let order = parseOrderDescription(data);
+    let orderWalletAccount = await getSPLAccount(connection, order.orderWallet);
     let sellToken = await getTokenMint(connection, orderWalletAccount.mint);
-    let buyToken = await getTokenMint(connection, priceMint);
+    let buyToken = await getTokenMint(connection, order.priceMint);
+    order.sellToken = sellToken;
+    order.buyToken = buyToken;
 
-    return {
-        "creationSlot": creationSlot,
-        "seller": seller,
-        "sellAmount": sellAmount,
-        "orderWallet": orderWallet,
-        "priceMint": priceMint,
-        "buyAmount": buyAmount,
-        "minSellAmount": minSellAmount,
-        "remainsToFill": remainsToFill,
-        "isPrivate": isPrivate,
-        "sellToken": sellToken,
-        "buyToken": buyToken,
-    };
+    return order;
 }
 
 function int64ToBytes(value: bigint): ArrayBuffer {
@@ -128,11 +140,16 @@ async function checkOrder(
         }
     }
 
+
     if (orderAddress) {
         let [expectedOrderAddress, _] = getOrderAddress(programId, order.seller, order.creationSlot);
         if (!expectedOrderAddress.equals(orderAddress)) {
             return `Order address not match. Expected: ${expectedOrderAddress}`;
         }
+    }
+
+    if (!order.sellToken) {
+        return "sellToken not set";
     }
 
     let [authority, _] = getOrderWalletAuthority(programId, order.seller);
@@ -343,6 +360,14 @@ async function createFillInstruction(props: FillOrderProps): Promise<Transaction
         throw "Buyer buy token wallet is not set";
     }
 
+    if (!props.order.sellToken) {
+        throw "Sell token is not set in order";
+    }
+
+    if (!props.order.buyToken) {
+        throw "Buy token is not set in order";
+    }
+
     let keys: AccountMeta[] = [
         { pubkey: props.order.seller, isSigner: false, isWritable: false },
         { pubkey: props.signer, isSigner: true, isWritable: true },
@@ -391,6 +416,10 @@ async function fillOrderTransaction(
     const { blockhash } = await connection.getLatestBlockhash();
     let transaction = new Transaction({ recentBlockhash: blockhash, feePayer: props.signer });
 
+    if (!props.order.sellToken) {
+        throw "Sell token is not set in order";
+    }
+
     props.buyerBuyTokenWallet = await getAssociatedTokenAddress(
       props.order.sellToken.address,
       props.signer,
@@ -428,9 +457,11 @@ async function fillOrderTransaction(
 const P2P_SWAP_DEVNET = new PublicKey("AzVuKVf8qQjHBTyjEUZbr6zRvinZvjpuFZWMXPd76Fzx");
 
 export {
+    ORDER_ACCOUNT_SIZE,
     type OrderDescriptionData,
     type CreateOrderProps,
     type FillOrderProps,
+    parseOrderDescription,
     getOrderDescription,
     getOrderDescriptionChecked,
     publicKeyChecker,

@@ -32,6 +32,11 @@ function OrderDescription({description}: {description: OrderDescriptionData|null
                     readonly={true}
                 />
                 <ValueEdit
+                    name={"Token Mint:"}
+                    value={description.tokenMint.toBase58()}
+                    readonly={true}
+                />
+                <ValueEdit
                     name={"Price Mint:"}
                     value={description.priceMint.toBase58()}
                     readonly={true}

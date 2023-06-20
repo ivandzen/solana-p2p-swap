@@ -51,25 +51,30 @@ CLI returns account address of new order and resulting transaction.
 
 ### 2. Read order information
 ```bash
-./p2p-swap-cli -u devnet -p AzVuKVf8qQjHBTyjEUZbr6zRvinZvjpuFZWMXPd76Fzx get-order 6dfxGdK649xeCmtNXcvBFYbovyYsCogJLD6SGx27m6Cf
+./p2p-swap-cli -u devnet -p AzVuKVf8qQjHBTyjEUZbr6zRvinZvjpuFZWMXPd76Fzx get-order GdrUiik1NkKbJeDguvUPFVyPYeCDCfkhCEb5CSxrLmxu
 
-Order 6dfxGdK649xeCmtNXcvBFYbovyYsCogJLD6SGx27m6Cf
-SwapSPLOrder { 
-  seller: GAm8jdsCJ8mLJQz36CvbDoUb8ksscC8XDjrJnJs5V6JW, 
-  sell_amount: 1000000000, 
-  order_wallet: CameizQ3sR13Gbzz1W1CaBcjUCcgW18jWqmThEGBdizQ, 
-  price_mint: C8e5NgaTygdrZcpMJGWSsw5ABsvtw4ZJBhb4YBbB5CQq, 
-  buy_amount: 1000000, 
-  min_sell_amount: 100000000, 
-  remains_to_fill: 600000000, 
-  is_private: false 
+
+Order GdrUiik1NkKbJeDguvUPFVyPYeCDCfkhCEb5CSxrLmxu
+SwapSPLOrder {
+    creation_slot: 224134504,
+    seller: GAm8jdsCJ8mLJQz36CvbDoUb8ksscC8XDjrJnJs5V6JW,
+    sell_amount: 1000000000,
+    order_wallet: CameizQ3sR13Gbzz1W1CaBcjUCcgW18jWqmThEGBdizQ,
+    token_mint: 9ZKnokZY5zet7guaAv6CBtx7KDRJfYFjfxsnHeME81vM,
+    price_mint: C8e5NgaTygdrZcpMJGWSsw5ABsvtw4ZJBhb4YBbB5CQq,
+    buy_amount: 1000000,
+    min_sell_amount: 100000000,
+    remains_to_fill: 1000000000,
+    is_private: true,
 }
+
 ```
 This command returns full description of the order including:
 
     1. seller - address of the account created this order (owner of the order tokens)
     2. sell_amount - amount of tokens locked inside order initially (in decimals parts)
     3. order_wallet - address of wallet account where order tokens are locked
+    4. token_mint - address of the token locked inside this order - token to be sold
     4. price_mint - address of token required to fill this order - price token - token2 in that case
     5. buy_amount - amount of price token required to buy all the order tokens (in decimals parts).
     6. min_sell_amount - minimum amount of order tokens to buy

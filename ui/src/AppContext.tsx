@@ -19,6 +19,8 @@ export interface AppContext {
     connection: Connection,
     wallet: Wallet|null,
     signMessage: MessageSignerWalletAdapterProps['signMessage'] | undefined;
+    orders: Map<PublicKey, OrderDescriptionData>|undefined;
+    setOrders: (orders: Map<PublicKey, OrderDescriptionData>|undefined) => void;
 }
 
 export const AppContext = createContext<AppContext>({} as AppContext);

@@ -4,6 +4,7 @@ import {BuyTab} from "./BuyTab";
 import {SellTab} from "./SellTab";
 import {useApp} from "../AppContext";
 import { Visibility } from "./Visibility";
+import {OrderList} from "./OrderList";
 
 function ModeButton(
     { name, onClick, activeName }:
@@ -56,9 +57,12 @@ const MainWidget: FC = () => {
                 <Visibility isActive={appMode === "Connect-Wallet"}>
                     <div className="tabcontent">
                         <div className="vertical">
-                            <h1>Please, connect your Solana wallet</h1>
+                            <h1>{"Please, connect your Solana wallet ⇧"}</h1>
                         </div>
                     </div>
+                </Visibility>
+                <Visibility isActive={appMode === "Order-List"}>
+                    <OrderList></OrderList>
                 </Visibility>
                 <Visibility isActive={appMode === "Buy" || appMode === "Sell"}>
                     <div className="tabcontent">

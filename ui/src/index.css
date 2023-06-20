@@ -2,7 +2,12 @@
 
 html, body {
     background-color: #303030;
-    color: #000000;
+    color: #ffffff;
+}
+
+:root {
+    --background: #636983;
+    --active: #e5a2e2;
 }
 
 #app {
@@ -10,7 +15,7 @@ html, body {
     justify-content: center;
     align-items: center;
     font-family: Arial;
-    background-image: url('../images/octopus.png');
+    background-color: var(--background);
     background-size: 100vw
 }
 
