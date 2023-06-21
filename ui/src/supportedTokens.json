@@ -1,0 +1,14 @@
+[
+  {
+    "label": "USDT (test-fake)",
+    "pubkey": "9ZKnokZY5zet7guaAv6CBtx7KDRJfYFjfxsnHeME81vM"
+  },
+  {
+    "label": "USDC (test-fake)",
+    "pubkey": "C8e5NgaTygdrZcpMJGWSsw5ABsvtw4ZJBhb4YBbB5CQq"
+  },
+  {
+    "label": "DAI (test-fake)",
+    "pubkey": "6AmkXwiuMTBsK4me3Trt6LQvQ48cioSsmdMLKozjYAci"
+  }
+]

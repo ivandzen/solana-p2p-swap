@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {MainWidget} from "./components/MainWidget";
 import {AppContext} from "./AppContext";
 import {OrderDescriptionData} from "./p2p-swap";
+import supportedTokensFile from "./supportedTokens.json";
 
 export const App: FC = () => {
     return (
@@ -89,6 +90,13 @@ const Content: FC = () => {
         }
     }, [connected]);
 
+    let domain = process.env.SITE_DOMAIN || "http://localhost:1234";
+
+    let supportedTokens: Map<string, PublicKey> = new Map();
+    for (let entry of supportedTokensFile) {
+        supportedTokens.set(entry.label, new PublicKey(entry.pubkey));
+    }
+
     return (
         <AppContext.Provider value = {{
             appMode: appMode,
@@ -101,12 +109,13 @@ const Content: FC = () => {
             setSellOrderDescription: setSellOrderDescription,
             buyOrderDescription: buyOrderDescription,
             setBuyOrderDescription: setBuyOrderDescription,
-            domain: "http://localhost:1234",
+            domain: domain,
             connection: connection,
             wallet: wallet,
             signMessage: signMessage,
             orders: orders,
             setOrders: setOrders,
+            supportedTokens: supportedTokens,
         }}>
             <MainWidget/>
         </AppContext.Provider>

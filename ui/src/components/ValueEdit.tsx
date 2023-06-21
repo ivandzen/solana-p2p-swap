@@ -12,25 +12,22 @@ interface ValueEditProps {
 
 const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
     let [value, setValue] = useState(attribs.value ? attribs.value : '');
-    let initialStyle = 'input';
+    let initialStyle = '';
     if (attribs.readonly)
-        initialStyle = 'input-readonly';
+        initialStyle = '';
     else if (attribs.valueChecker && !attribs.valueChecker(attribs.value))
-        initialStyle = 'input-failed';
+        initialStyle = 'invalid';
 
     const checkAndSetValue = (value: string) => {
         if (attribs.readonly) {
-            setInputStyle("input-readonly");
+            setInputStyle("");
         }
-        else if (attribs.valueChecker) {
-            if (attribs.valueChecker(value)) {
-                setInputStyle("input");
-            } else {
-                setInputStyle("input-failed");
-            }
-        } else {
-            setInputStyle("input");
-        }
+
+        setInputStyle(
+            attribs.valueChecker && !attribs.valueChecker(value)
+            ? "invalid"
+            : ""
+        );
 
         setValue(value);
         if (attribs.onChange)
@@ -51,6 +48,7 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
         <div className="horizontal">
             <label className="label"><b>{attribs.name}</b></label>
             <input
+                type="text"
                 className={inputStyle}
                 onChange={checkValue}
                 readOnly={attribs.readonly ? attribs.readonly : false}

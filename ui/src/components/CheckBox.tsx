@@ -13,7 +13,7 @@ const CheckBox: FC<CheckBoxProps> = (props) => {
 
     return (
         <div className="horizontal">
-            <input className="checkbox" type="checkbox" onChange={onClick}/>
+            <input type="checkbox" onChange={onClick}/>
             <label className="label"><b>{props.name}</b></label>
         </div>
     )

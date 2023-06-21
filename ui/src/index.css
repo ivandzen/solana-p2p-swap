@@ -33,37 +33,41 @@ html, body {
     height: 5vh;
 }
 
-.input-readonly {
+input {
     font-family: monospace;
     border-color: transparent;
+    border-radius: 10px;
+    margin: 2px;
+    transition-duration: 0.5s;
+}
+
+input:focus {
+    box-shadow: 0px 0px 4px 4px #ffffff;
+}
+
+input[type="text"]:read-write {
+    background: #b967de;
+    min-width: 20vw;
+}
+
+input[type="text"]:read-only {
     background: transparent;
     color: #b967de;
-    margin: 2px;
     min-width: 20vw;
-    transition-duration: 0.5s;
 }
 
-.input {
-    font-family: monospace;
-    border-color: transparent;
-    background: #b967de;
-    margin: 2px;
-    min-width: 20vw;
-    border-radius: 10px;
-    transition-duration: 0.5s;
-}
-
-.input-failed {
-    font-family: monospace;
-    border-color: transparent;
+input[type="text"][class~="invalid"]:read-write {
     background: #3a1344;
-    margin: 2px;
     min-width: 20vw;
-    border-radius: 10px;
     box-shadow: 0px 0px 4px 4px #f10000;
-    transition-duration: 0.5s;
     color: #f10000;
+}
 
+input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 8px;
+    box-shadow: 0px 0px 2px 2px #da49d2;
 }
 
 .tab {
@@ -193,11 +197,43 @@ html, body {
     color: #e5a2e2
 }
 
+.token-box {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.token-list {
+    margin: 4px;
+    background: #e5a2e2;
+    border-radius: 10px;
+    border-style: none;
+    flex-direction: column;
+    display: flex;
+    float: inherit;
+    align-items: stretch;
+    color: #2a1344;
+    min-width: 200px;
+    position: absolute;
+}
+
+.token-item {
+    background: #e5a2e2;
+    border-radius: 10px;
+    border-style: solid;
+    border-color: transparent;
+    color: #2a1344;
+}
+
+.token-item:hover {
+    background-color: #b967de;
+}
+
 .label {
     color: #f1f1f1;
     margin: 2px;
     font-family: monospace;
-    display: block;
+    display: flex;
 }
 
 .label-attention {
@@ -214,17 +250,7 @@ html, body {
     box-shadow: 0px 0px 3px 3px #e5a2e2;
 }
 
-.checkbox {
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
-    background-color: #da49d2;
-    cursor: pointer;
-    padding: 6px;
-    transition-duration: 0.5s;
-    margin: 8px;
-    box-shadow: 0px 0px 2px 2px #da49d2;
-}
+
 
 .copy-button {
     width: 50px;

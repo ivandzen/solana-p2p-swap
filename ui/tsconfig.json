@@ -1,6 +1,6 @@
 {
     "extends": "./tsconfig.root.json",
-    "include": ["src"],
+    "include": ["src", "src/supportedTokens.json"],
     "compilerOptions": {
         "outDir": "lib",
         "noEmit": true,

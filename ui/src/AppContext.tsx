@@ -4,6 +4,8 @@ import {OrderDescriptionData} from "./p2p-swap";
 import { Wallet } from "@solana/wallet-adapter-react";
 import { MessageSignerWalletAdapterProps } from "@solana/wallet-adapter-base";
 
+type SupportedTokens = Map<string, PublicKey>;
+
 export interface AppContext {
     appMode: string|null,
     orderAddress: PublicKey|null,
@@ -21,6 +23,7 @@ export interface AppContext {
     signMessage: MessageSignerWalletAdapterProps['signMessage'] | undefined;
     orders: Map<PublicKey, OrderDescriptionData>|undefined;
     setOrders: (orders: Map<PublicKey, OrderDescriptionData>|undefined) => void;
+    supportedTokens: SupportedTokens,
 }
 
 export const AppContext = createContext<AppContext>({} as AppContext);
