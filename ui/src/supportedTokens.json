@@ -1,14 +1,18 @@
 [
   {
-    "label": "USDT (test-fake)",
+    "label": "USDT",
     "pubkey": "9ZKnokZY5zet7guaAv6CBtx7KDRJfYFjfxsnHeME81vM"
   },
   {
-    "label": "USDC (test-fake)",
+    "label": "USDC",
     "pubkey": "C8e5NgaTygdrZcpMJGWSsw5ABsvtw4ZJBhb4YBbB5CQq"
   },
   {
-    "label": "DAI (test-fake)",
+    "label": "DAI",
     "pubkey": "6AmkXwiuMTBsK4me3Trt6LQvQ48cioSsmdMLKozjYAci"
+  },
+  {
+    "label": "wETH",
+    "pubkey": "F4DgNXqiT3zUQA7dhqN5VzEPkRcd8vtqFwpJSwEEvnz5"
   }
 ]

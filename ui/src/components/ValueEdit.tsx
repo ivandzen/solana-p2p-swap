@@ -3,11 +3,12 @@ import {Visibility} from "./Visibility";
 
 interface ValueEditProps {
     name: string,
-    onChange?: (value: string) => void;
-    valueChecker?: (value: string|undefined) => boolean;
-    size?: number;
-    readonly?: boolean;
-    value?: string
+    onChange?: (value: string) => void,
+    valueChecker?: (value: string|undefined) => boolean,
+    size?: number,
+    readonly?: boolean,
+    value?: string,
+    type?: string
 }
 
 const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
@@ -48,7 +49,7 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
         <div className="horizontal">
             <label className="label"><b>{attribs.name}</b></label>
             <input
-                type="text"
+                type={attribs.type ? attribs.type : "text"}
                 className={inputStyle}
                 onChange={checkValue}
                 readOnly={attribs.readonly ? attribs.readonly : false}

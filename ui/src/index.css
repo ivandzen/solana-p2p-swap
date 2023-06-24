@@ -36,9 +36,14 @@ html, body {
 input {
     font-family: monospace;
     border-color: transparent;
-    border-radius: 10px;
-    margin: 2px;
+    border-radius: 2px;
+    margin: 1px;
     transition-duration: 0.5s;
+    align-content: end;
+}
+
+.datalist input {
+    width: 60px;
 }
 
 input:focus {
@@ -47,18 +52,15 @@ input:focus {
 
 input[type="text"]:read-write {
     background: #b967de;
-    min-width: 20vw;
 }
 
 input[type="text"]:read-only {
     background: transparent;
     color: #b967de;
-    min-width: 20vw;
 }
 
 input[type="text"][class~="invalid"]:read-write {
     background: #3a1344;
-    min-width: 20vw;
     box-shadow: 0px 0px 4px 4px #f10000;
     color: #f10000;
 }
@@ -96,7 +98,6 @@ input[type="checkbox"] {
     padding: 6px 6px;
     width: 100%;
     margin: 8px;
-    min-width: 150px;
     transition-duration: 0.5s;
     box-shadow: 0px 0px 4px 4px #da49d2;
 }
@@ -117,7 +118,6 @@ input[type="checkbox"] {
     width: 100%;
     transition-duration: 0.5s;
     margin: 8px;
-    min-width: 150px;
     box-shadow: 0px 0px 2px 2px #da49d2;
 }
 
@@ -174,7 +174,7 @@ input[type="checkbox"] {
     flex-direction: row;
     display: flex;
     align-items: center;
-    margin: 2px;
+    margin: 1px;
 }
 
 .vertical {
@@ -253,7 +253,7 @@ input[type="checkbox"] {
 
 
 .copy-button {
-    width: 50px;
+    width: 25px;
     height: 25px;
     border-radius: 10px;
     background-color: #da49d2;
@@ -266,7 +266,13 @@ input[type="checkbox"] {
     box-shadow: 0px 0px 2px 2px #da49d2;
 }
 
-.copy-button:hover {
+.copy-button:disabled {
+    background-color: #3a1344;
+    color: #999999;
+}
+
+
+.copy-button:enabled:hover {
     background-color: #e5a2e2;
     box-shadow: 0px 0px 5px 5px #e5a2e2;
 }

@@ -1,9 +1,11 @@
-import React, { ChangeEvent, EventHandler, FC, useState } from "react";
-import {Mint} from "@solana/spl-token"
+import React, { ChangeEvent, EventHandler, FC, useEffect, useState } from "react";
+import { Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useApp } from "../AppContext";
 import { DatalistInput, Item } from "react-datalist-input";
-import { PublicKey } from "@solana/web3.js";
-import { publicKeyChecker } from "../p2p-swap";
+import { Connection, PublicKey } from "@solana/web3.js";
+import { publicKeyChecker, WalletToken } from "../p2p-swap";
+import * as timers from "timers";
+import { ValueEdit } from "./ValueEdit";
 
 interface TokenBoxProps {
     name: string,
@@ -26,47 +28,88 @@ const TokenItem: FC<TokenItemProps> = (props) => {
 }
 
 const TokenBox: FC<TokenBoxProps> = (props) => {
-    const {connection, supportedTokens, wallet} = useApp();
-    const [value, setValue] = useState<string|undefined>(undefined);
+    const {
+        supportedTokens,
+        walletTokens,
+    } = useApp();
+    const [tokenName, setTokenName] = useState<string|undefined>(undefined);
+    const [tokenAddress, setTokenAddress] = useState<string|undefined>(undefined);
     const [inputStyle, setInputStyle] = useState<string>('invalid');
+    const [tokens, setTokens] = useState<Item[]>([]);
+    const [selectedToken, setSelectedToken] = useState<WalletToken|undefined>(undefined);
 
-    const checkAndSetValue = (value: string) => {
-        console.log(`checkAndSetValue: ${value}`);
+    const checkAndSetToken = (value: string) => {
         let publicKey = supportedTokens.get(value);
         if (publicKey) {
+            setSelectedToken(walletTokens.get(value));
+
+
             setInputStyle('');
-            setValue(value)
+            setTokenName(value);
+            setTokenAddress(publicKey.toBase58());
         } else {
             setInputStyle(publicKeyChecker(value) ? '': 'invalid');
-            setValue(value);
+            setTokenName(value);
+            setTokenAddress(value);
         }
     }
-    const onItemSelected = (item: Item) => {
-        checkAndSetValue(item.node.props.label);
+    const onTokenSelected = (item: Item) => {
+        checkAndSetToken(item.node.props.label);
     };
 
-    const onChange = (event: any) => {
-        checkAndSetValue(event.target.value);
+    const onTokenChange = (event: any) => {
+        checkAndSetToken(event.target.value);
     };
 
-    let tokens = new Array();
-    for (let [label, pubkey] of supportedTokens) {
-        tokens.push({id: label, node: <TokenItem value={pubkey} label={label}/>});
+    const onAmountChange = (amount: any) => {
+        console.log(`NEW AMOUNT: ${amount}`);
     }
+
+    useEffect(() => {
+        let tokens = [];
+        for (let [, walletToken] of walletTokens) {
+            if (walletToken.label) {
+                tokens.push({
+                                id: walletToken.label,
+                                node: <TokenItem value={walletToken.mint} label={walletToken.label}/>
+                            });
+            }
+        }
+
+        setTokens(tokens);
+    }, [walletTokens]);
 
     return (
         <div className="token-box">
-            <label className="label"><b>{props.name}</b></label>
+            <ValueEdit
+                name={props.name}
+                type='number'
+                onChange={onAmountChange}
+            />
             <DatalistInput
-                inputProps={{type: "text", className: inputStyle}}
-                label={props.name}
+                className={"datalist"}
+                inputProps={{
+                    type: "number",
+                    className: inputStyle,
+                    title: tokenAddress,
+                }}
+                label={''}
                 showLabel={false}
                 isExpandedClassName="token-list"
-                value={value}
+                value={tokenName}
                 items={tokens}
-                onSelect={onItemSelected}
-                onChange={onChange}
+                onSelect={onTokenSelected}
+                onChange={onTokenChange}
             />
+            <button
+                disabled={!publicKeyChecker(tokenAddress)}
+                className="copy-button"
+                onClick={() => {
+                    if (tokenAddress)
+                        navigator.clipboard.writeText(tokenAddress).then(()=>{})
+                }}
+                title="Copy token address"
+            >cp</button>
         </div>
     )
 }

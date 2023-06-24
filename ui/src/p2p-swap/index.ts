@@ -1,6 +1,6 @@
 import {
     AccountMeta,
-    Connection, Ed25519Program,
+    Connection, Ed25519Program, ParsedAccountData,
     PublicKey,
     SystemProgram,
     SYSVAR_CLOCK_PUBKEY, SYSVAR_INSTRUCTIONS_PUBKEY,
@@ -17,6 +17,7 @@ import {
     createApproveInstruction,
     getAssociatedTokenAddress
 } from "@solana/spl-token";
+import { WalletError } from "@solana/wallet-adapter-base";
 const base58 = require('base58-js');
 
 interface OrderDescriptionData {
@@ -454,6 +455,81 @@ async function fillOrderTransaction(
     return transaction;
 }
 
+interface WalletToken {
+    label?: string,
+    isNative: boolean,
+    mint: PublicKey,
+    owner: PublicKey,
+    state: string,
+    tokenAmount: bigint,
+    decimals: number,
+    uiAmount: number
+}
+
+async function getTokens(
+    connection:Connection,
+    owner: PublicKey,
+    supportedTokens: Map<string, PublicKey>
+): Promise<Map<string, WalletToken>> {
+    console.log("Reading tokens...");
+    let accounts = await connection.getParsedTokenAccountsByOwner(
+        owner,
+        {
+            programId: TOKEN_PROGRAM_ID
+        });
+
+    if (accounts.value) {
+        let result: Map<string, WalletToken> = new Map();
+        for (let key in accounts.value) {
+            let entry = accounts.value[key].account.data.parsed.info;
+            let mint = new PublicKey(entry.mint);
+            const getLabel = (mint: PublicKey) => {
+                for (let [label, address] of supportedTokens) {
+                    if (address.toBase58() == mint.toBase58()) {
+                        return label;
+                    }
+                }
+
+                return undefined;
+            };
+
+            let label = getLabel(mint);
+            if (label) {
+                result.set(
+                    label,
+                    {
+                        label: label,
+                        isNative: entry.isNative,
+                        mint: mint,
+                        owner: new PublicKey(entry.owner),
+                        state: entry.state,
+                        tokenAmount: BigInt(entry.tokenAmount.amount),
+                        decimals: entry.tokenAmount.decimals,
+                        uiAmount: parseInt(entry.tokenAmount.uiAmount)
+                    });
+            } else {
+                result.set(
+                    "UNKNOWN TOKEN",
+                    {
+                        label: undefined,
+                        isNative: entry.isNative,
+                        mint: mint,
+                        owner: new PublicKey(entry.owner),
+                        state: entry.state,
+                        tokenAmount: BigInt(entry.tokenAmount.amount),
+                        decimals: entry.tokenAmount.decimals,
+                        uiAmount: parseInt(entry.tokenAmount.uiAmount)
+                    });
+            }
+
+        }
+        console.log(`Tokens: ${result}`);
+        return result;
+    }
+
+    return new Map();
+}
+
 const P2P_SWAP_DEVNET = new PublicKey("AzVuKVf8qQjHBTyjEUZbr6zRvinZvjpuFZWMXPd76Fzx");
 
 export {
@@ -461,6 +537,7 @@ export {
     type OrderDescriptionData,
     type CreateOrderProps,
     type FillOrderProps,
+    type WalletToken,
     parseOrderDescription,
     getOrderDescription,
     getOrderDescriptionChecked,
@@ -473,5 +550,6 @@ export {
     createOrderInstruction,
     createOrderTransaction,
     fillOrderTransaction,
+    getTokens,
     P2P_SWAP_DEVNET,
 }

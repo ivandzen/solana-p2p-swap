@@ -7,13 +7,14 @@ import {
 } from "@solana/wallet-adapter-react";
 import {WalletModalProvider} from '@solana/wallet-adapter-react-ui';
 import { BraveWalletAdapter, PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
-import {clusterApiUrl, PublicKey} from '@solana/web3.js';
+import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 import type { FC, ReactNode } from 'react';
 import React, { useEffect, useMemo, useState } from "react";
 import {MainWidget} from "./components/MainWidget";
 import {AppContext} from "./AppContext";
-import {OrderDescriptionData} from "./p2p-swap";
+import { OrderDescriptionData, getTokens, WalletToken } from "./p2p-swap";
 import supportedTokensFile from "./supportedTokens.json";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export const App: FC = () => {
     return (
@@ -60,6 +61,8 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
     );
 };
 
+
+
 const Content: FC = () => {
     const [sellOrderDescription, setSellOrderDescription] = useState<OrderDescriptionData|null>(null);
     const [buyOrderDescription, setBuyOrderDescription] = useState<OrderDescriptionData|null>(null);
@@ -69,6 +72,7 @@ const Content: FC = () => {
     const [unlockKey, setUnlockKey] = useState<string|null>(null);
     const [appMode, setAppMode] = useState<string|null>(null);
     const [orders, setOrders] = useState<Map<PublicKey, OrderDescriptionData>|undefined>(undefined);
+    const [walletTokens, setWalletTokens] = useState<Map<string, WalletToken>>(new Map());
 
     useEffect(() => {
         if (connected) {
@@ -97,6 +101,22 @@ const Content: FC = () => {
         supportedTokens.set(entry.label, new PublicKey(entry.pubkey));
     }
 
+    useEffect(() => {
+        const impl = async() => {
+            if (!connected) {
+                return;
+            }
+
+            if (wallet?.adapter.publicKey) {
+                let tokens = await getTokens(connection, wallet.adapter.publicKey, supportedTokens);
+                setWalletTokens(tokens);
+            } else {
+                setWalletTokens(new Map());
+            }
+        };
+        impl().then(()=>{});
+    }, [connected, connection, wallet]);
+
     return (
         <AppContext.Provider value = {{
             appMode: appMode,
@@ -116,6 +136,7 @@ const Content: FC = () => {
             orders: orders,
             setOrders: setOrders,
             supportedTokens: supportedTokens,
+            walletTokens: walletTokens,
         }}>
             <MainWidget/>
         </AppContext.Provider>

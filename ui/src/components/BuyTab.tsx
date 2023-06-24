@@ -14,6 +14,7 @@ import {P2P_SWAP_DEVNET} from "../p2p-swap";
 import {useApp} from "../AppContext";
 import {Button} from "./Button";
 import {Visibility} from "./Visibility";
+import { TokenBox } from "./TokenBox";
 
 const BuyTab: FC = () => {
     const {
@@ -22,10 +23,10 @@ const BuyTab: FC = () => {
         buyOrderDescription, setBuyOrderDescription,
         setAppMode,
         connection,
-        wallet,
+        wallet
     } = useApp();
 
-    const [errorDescription, setErrorDescription] = useState<string|null>("Wrong order address");
+    const [errorDescription, setErrorDescription] = useState<string|null>("Please, select order");
     const [buyAmount, setBuyAmount] = useState<string>("0");
     const [fillOrderProps, setFillOrderProps] = useState<FillOrderProps|null>(null);
 
@@ -49,7 +50,7 @@ const BuyTab: FC = () => {
         if (orderAddress)
             updateOrderDescription(connection, new PublicKey(orderAddress)).then(() => {});
         else
-            setErrorDescription('Wrong order address');
+            setErrorDescription('Please, select order');
     }, [connection, orderAddress]);
 
     useEffect(() => {
@@ -81,6 +82,11 @@ const BuyTab: FC = () => {
     }, [orderAddress, buyAmount, unlockKey]);
 
     const onOrderAddressChange = (value: string|null) => {
+        if (value && value.length == 0) {
+            setErrorDescription('Please, select order');
+            return;
+        }
+
         try {
             setOrderAddress(value ? new PublicKey(value) : null);
         } catch (e) {
@@ -151,6 +157,24 @@ const BuyTab: FC = () => {
                     />
                 </div>
             </Visibility>
+            <div className="table-like">
+                <div className='horizontal'>
+                    <TokenBox
+                        name="I want to sell:"
+                        mint={buyOrderDescription?.sellToken ? buyOrderDescription.sellToken : null}
+                    />
+                </div>
+                <div className='horizontal'>
+                    <TokenBox
+                        name="I want to buy:"
+                        mint={buyOrderDescription?.sellToken ? buyOrderDescription.sellToken : null}
+                    />
+                </div>
+                <div className='horizontal'>
+                    <label><b>Minimum to sell:</b></label>
+                    <ValueEdit name='' type='number'/>
+                </div>
+            </div>
         </div>
     )
 }

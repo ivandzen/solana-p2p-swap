@@ -1,6 +1,6 @@
 import {createContext, useContext} from "react";
 import { Connection, PublicKey } from "@solana/web3.js";
-import {OrderDescriptionData} from "./p2p-swap";
+import { OrderDescriptionData, WalletToken } from "./p2p-swap";
 import { Wallet } from "@solana/wallet-adapter-react";
 import { MessageSignerWalletAdapterProps } from "@solana/wallet-adapter-base";
 
@@ -24,6 +24,7 @@ export interface AppContext {
     orders: Map<PublicKey, OrderDescriptionData>|undefined;
     setOrders: (orders: Map<PublicKey, OrderDescriptionData>|undefined) => void;
     supportedTokens: SupportedTokens,
+    walletTokens: Map<string, WalletToken>,
 }
 
 export const AppContext = createContext<AppContext>({} as AppContext);
