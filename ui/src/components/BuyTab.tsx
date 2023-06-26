@@ -15,6 +15,7 @@ import {useApp} from "../AppContext";
 import {Button} from "./Button";
 import {Visibility} from "./Visibility";
 import { TokenBox } from "./TokenBox";
+import { CheckBox } from "./CheckBox";
 
 const BuyTab: FC = () => {
     const {
@@ -157,24 +158,6 @@ const BuyTab: FC = () => {
                     />
                 </div>
             </Visibility>
-            <div className="table-like">
-                <div className='horizontal'>
-                    <TokenBox
-                        name="I want to sell:"
-                        mint={buyOrderDescription?.sellToken ? buyOrderDescription.sellToken : null}
-                    />
-                </div>
-                <div className='horizontal'>
-                    <TokenBox
-                        name="I want to buy:"
-                        mint={buyOrderDescription?.sellToken ? buyOrderDescription.sellToken : null}
-                    />
-                </div>
-                <div className='horizontal'>
-                    <label><b>Minimum to sell:</b></label>
-                    <ValueEdit name='' type='number'/>
-                </div>
-            </div>
         </div>
     )
 }

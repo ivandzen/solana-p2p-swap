@@ -13,6 +13,7 @@ import {Visibility} from "./Visibility";
 import {CheckBox} from "./CheckBox";
 import {useApp} from "../AppContext";
 import {OrderDescription} from "./OrderDescription";
+import { TokenBox } from "./TokenBox";
 const base58 = require("base58-js");
 
 const SELL_TAB_MODE_CREATE_ORDER: string = "create-order";
@@ -213,6 +214,29 @@ function SellTab() {
                             </div>
                         </div>
                     </Visibility>
+                    <Button
+                        name={"Sell"}
+                        onClick={onSellClicked}
+                        disabled={!createOrderProps}
+                    />
+                </div>
+                <div className="vertical">
+                    <label>
+                        <b>I want to sell:</b>
+                    </label>
+                    <TokenBox name="" />
+                    <label>
+                        <b>I want to buy:</b>
+                    </label>
+                    <TokenBox name="" />
+                    <label>
+                        <b>Sell minimum:</b>
+                    </label>
+                    <ValueEdit
+                        name=''
+                        type='number'
+                    />
+                    <CheckBox name={"Is Private "} setChecked={()=>{}}/>
                     <Button
                         name={"Sell"}
                         onClick={onSellClicked}

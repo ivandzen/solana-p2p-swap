@@ -59,7 +59,7 @@ input[type="text"]:read-only {
     color: #b967de;
 }
 
-input[type="text"][class~="invalid"]:read-write {
+input[class~="invalid"]:read-write {
     background: #3a1344;
     box-shadow: 0px 0px 4px 4px #f10000;
     color: #f10000;
@@ -90,16 +90,13 @@ input[type="checkbox"] {
 
   /* Style the buttons that are used to open the tab content */
 .tabbutton {
-    border-radius: 10px;
+    border-radius: 3px;
     background-color: transparent;
     border-style: inset;
     border-color: transparent;
     cursor: pointer;
-    padding: 6px 6px;
     width: 100%;
-    margin: 8px;
     transition-duration: 0.5s;
-    box-shadow: 0px 0px 4px 4px #da49d2;
 }
   
   /* Change background color of buttons on hover */
@@ -109,21 +106,17 @@ input[type="checkbox"] {
   
 /* Create an active/current tablink class */
 .tabbutton-active {
-    border-radius: 10px;
     background-color: #da49d2;
     border: none;
     outline: none;
     cursor: pointer;
-    padding: 6px;
     width: 100%;
+    margin: 2px;
     transition-duration: 0.5s;
-    margin: 8px;
-    box-shadow: 0px 0px 2px 2px #da49d2;
 }
 
 .tabbutton-active:hover {
     background-color: #e5a2e2;
-    box-shadow: 0px 0px 5px 5px #e5a2e2;
 }
 
 .tabbutton-active:disabled {

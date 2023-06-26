@@ -3,18 +3,17 @@ import { Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { useApp } from "../AppContext";
 import { DatalistInput, Item } from "react-datalist-input";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { publicKeyChecker, WalletToken } from "../p2p-swap";
-import * as timers from "timers";
-import { ValueEdit } from "./ValueEdit";
+import { parseBigInt, WalletToken } from "../p2p-swap";
+import { Button } from './Button';
 
 interface TokenBoxProps {
-    name: string,
-    mint: Mint|null,
+    onTokenChanged: (token: WalletToken) => void,
+    onAmountChanged: (amount: bigint) => void,
 }
 
 interface TokenItemProps {
     value: PublicKey,
-    label?: string
+    label?: string,
 }
 
 const TokenItem: FC<TokenItemProps> = (props) => {
@@ -27,6 +26,35 @@ const TokenItem: FC<TokenItemProps> = (props) => {
     )
 }
 
+function strToAmount(value: string, token: WalletToken): bigint {
+    let [intPartStr, decPartStr] = value.split('.');
+
+    let intPart: bigint|null = 0n;
+    let decPart: bigint|null = 0n;
+    if (intPartStr) intPart = parseBigInt(intPartStr);
+
+    if (decPartStr) {
+        if (decPartStr.length > token.decimals) {
+            decPartStr = decPartStr.substring(0, token.decimals);
+        } else if (decPartStr.length < token.decimals) {
+            decPartStr = decPartStr.padEnd(token.decimals, '0');
+        }
+        decPart = parseBigInt(decPartStr);
+    }
+
+    if (intPart !== null && decPart !== null) {
+        return intPart * (10n ** BigInt(token.decimals)) + decPart;
+    }
+
+    throw `Failed to convert '${value}' to bigint`;
+}
+
+function amountToStr(value: bigint, token: WalletToken): string {
+    let intPart = value / 10n ** BigInt(token.decimals);
+    let decPart = value - intPart * (10n ** BigInt(token.decimals));
+    return `${intPart}.${decPart}`;
+}
+
 const TokenBox: FC<TokenBoxProps> = (props) => {
     const {
         supportedTokens,
@@ -34,44 +62,53 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
     } = useApp();
     const [tokenName, setTokenName] = useState<string|undefined>(undefined);
     const [tokenAddress, setTokenAddress] = useState<string|undefined>(undefined);
-    const [inputStyle, setInputStyle] = useState<string>('invalid');
+    const [tokenInputStyle, setTokenInputStyle] = useState<string>('invalid');
     const [tokens, setTokens] = useState<Item[]>([]);
     const [selectedToken, setSelectedToken] = useState<WalletToken|undefined>(undefined);
+    const [amountStr, setAmountStr] = useState<string|undefined>('0');
+    const [amountStyle, setAmountStyle] = useState<string>('invalid');
 
-    const checkAndSetToken = (value: string) => {
-        let publicKey = supportedTokens.get(value);
-        if (publicKey) {
-            setSelectedToken(walletTokens.get(value));
-
-
-            setInputStyle('');
-            setTokenName(value);
-            setTokenAddress(publicKey.toBase58());
-        } else {
-            setInputStyle(publicKeyChecker(value) ? '': 'invalid');
-            setTokenName(value);
-            setTokenAddress(value);
-        }
-    }
     const onTokenSelected = (item: Item) => {
-        checkAndSetToken(item.node.props.label);
+        if (!walletTokens) {
+            return;
+        }
+        setTokenName(item.node.props.label);
+        setSelectedToken(walletTokens.get(item.node.props.label));
     };
 
     const onTokenChange = (event: any) => {
-        checkAndSetToken(event.target.value);
+        if (!walletTokens) {
+            return;
+        }
+        setTokenName(event.target.value);
+        setSelectedToken(walletTokens.get(event.target.value));
     };
 
-    const onAmountChange = (amount: any) => {
-        console.log(`NEW AMOUNT: ${amount}`);
+    const onAmountChange = (event: ChangeEvent<any>) => {
+        setAmountStr(event.target.value);
+    }
+
+    const maxButtonClick = () => {
+        if (!selectedToken) {
+            return;
+        }
+        setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken));
     }
 
     useEffect(() => {
+        if (!walletTokens) {
+            return;
+        }
         let tokens = [];
+        console.log(walletTokens);
         for (let [, walletToken] of walletTokens) {
             if (walletToken.label) {
                 tokens.push({
                                 id: walletToken.label,
-                                node: <TokenItem value={walletToken.mint} label={walletToken.label}/>
+                                node: <TokenItem
+                                    value={walletToken.mint}
+                                    label={walletToken.label}
+                                />
                             });
             }
         }
@@ -79,19 +116,55 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
         setTokens(tokens);
     }, [walletTokens]);
 
+    useEffect(() => {
+        if (!selectedToken) {
+            setTokenInputStyle('invalid');
+            return;
+        }
+        setTokenInputStyle('');
+
+        if (!amountStr) {
+            setAmountStyle('invalid');
+            return;
+        }
+
+        try {
+            let amount = strToAmount(amountStr, selectedToken);
+            if (amount < 1) {
+                setAmountStyle('invalid');
+                return;
+            }
+
+            setAmountStyle('');
+            if (amount > selectedToken.tokenAmount) {
+                setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken));
+            }
+        } catch (e) {
+            console.log(`TokenBox: ${e}`);
+            setAmountStyle('invalid');
+        }
+    }, [amountStr, selectedToken]);
+
     return (
         <div className="token-box">
-            <ValueEdit
-                name={props.name}
+            <input
+                className={amountStyle}
                 type='number'
                 onChange={onAmountChange}
+                value={amountStr}
+                disabled={tokenInputStyle == 'invalid'}
+            />
+            <Button
+                disabled={tokenInputStyle == 'invalid'}
+                name="MAX"
+                onClick={maxButtonClick}
             />
             <DatalistInput
                 className={"datalist"}
                 inputProps={{
                     type: "number",
-                    className: inputStyle,
-                    title: tokenAddress,
+                    className: tokenInputStyle,
+                    title: tokenName,
                 }}
                 label={''}
                 showLabel={false}
@@ -102,7 +175,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 onChange={onTokenChange}
             />
             <button
-                disabled={!publicKeyChecker(tokenAddress)}
+                disabled={tokenInputStyle == 'invalid'}
                 className="copy-button"
                 onClick={() => {
                     if (tokenAddress)

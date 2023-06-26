@@ -509,7 +509,7 @@ async function getTokens(
                     });
             } else {
                 result.set(
-                    "UNKNOWN TOKEN",
+                    mint.toBase58(),
                     {
                         label: undefined,
                         isNative: entry.isNative,
