@@ -25,6 +25,8 @@ export interface AppContext {
     setOrders: (orders: Map<PublicKey, OrderDescriptionData>|undefined) => void;
     supportedTokens: SupportedTokens,
     walletTokens: Map<string, WalletToken>,
+    explorer: string,
+    cluster: string,
 }
 
 export const AppContext = createContext<AppContext>({} as AppContext);

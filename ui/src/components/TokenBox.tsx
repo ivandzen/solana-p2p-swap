@@ -59,6 +59,8 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
     const {
         supportedTokens,
         walletTokens,
+        explorer,
+        cluster,
     } = useApp();
     const [tokenName, setTokenName] = useState<string|undefined>(undefined);
     const [tokenAddress, setTokenAddress] = useState<string|undefined>(undefined);
@@ -93,6 +95,15 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
             return;
         }
         setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken));
+    }
+
+    const onExplorerClick = () => {
+        if (!selectedToken) {
+            return;
+        }
+
+        let url = `${explorer}/token/${selectedToken?.mint.toBase58()}?cluster=${cluster}`;
+        window.open(url);
     }
 
     useEffect(() => {
@@ -164,7 +175,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 inputProps={{
                     type: "number",
                     className: tokenInputStyle,
-                    title: tokenName,
+                    title: tokenName
                 }}
                 label={''}
                 showLabel={false}
@@ -176,13 +187,10 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
             />
             <button
                 disabled={tokenInputStyle == 'invalid'}
-                className="copy-button"
-                onClick={() => {
-                    if (tokenAddress)
-                        navigator.clipboard.writeText(tokenAddress).then(()=>{})
-                }}
-                title="Copy token address"
-            >cp</button>
+                className='tabbutton-active'
+                onClick={onExplorerClick}
+                title="Open in explorer"
+            >explorer</button>
         </div>
     )
 }

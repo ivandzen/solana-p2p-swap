@@ -137,6 +137,8 @@ const Content: FC = () => {
             setOrders: setOrders,
             supportedTokens: supportedTokens,
             walletTokens: walletTokens,
+            explorer: 'https://solscan.io',
+            cluster: 'devnet',
         }}>
             <MainWidget/>
         </AppContext.Provider>

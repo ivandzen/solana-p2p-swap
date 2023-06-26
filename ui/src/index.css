@@ -248,7 +248,6 @@ input[type="checkbox"] {
 .copy-button {
     width: 25px;
     height: 25px;
-    border-radius: 10px;
     background-color: #da49d2;
     border: none;
     outline: none;
@@ -256,7 +255,6 @@ input[type="checkbox"] {
     padding: 2px;
     transition-duration: 0.5s;
     margin: 4px;
-    box-shadow: 0px 0px 2px 2px #da49d2;
 }
 
 .copy-button:disabled {
@@ -267,5 +265,4 @@ input[type="checkbox"] {
 
 .copy-button:enabled:hover {
     background-color: #e5a2e2;
-    box-shadow: 0px 0px 5px 5px #e5a2e2;
 }
