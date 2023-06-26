@@ -64,7 +64,6 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
 
 const Content: FC = () => {
-    const [sellOrderDescription, setSellOrderDescription] = useState<OrderDescriptionData|null>(null);
     const [buyOrderDescription, setBuyOrderDescription] = useState<OrderDescriptionData|null>(null);
     const {connection} = useConnection();
     const {wallet, signMessage, connected} = useWallet();
@@ -125,8 +124,6 @@ const Content: FC = () => {
             setAppMode: setAppMode,
             setOrderAddress: setOrderAddress,
             setUnlockKey: setUnlockKey,
-            sellOrderDescription: sellOrderDescription,
-            setSellOrderDescription: setSellOrderDescription,
             buyOrderDescription: buyOrderDescription,
             setBuyOrderDescription: setBuyOrderDescription,
             domain: domain,

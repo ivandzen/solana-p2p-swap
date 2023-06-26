@@ -13,8 +13,6 @@ export interface AppContext {
     setAppMode: (mode: string) => void,
     setOrderAddress: (address: PublicKey|null) => void,
     setUnlockKey: (key: string|null) => void,
-    sellOrderDescription: OrderDescriptionData|null,
-    setSellOrderDescription: (descr: OrderDescriptionData|null) => void,
     buyOrderDescription: OrderDescriptionData|null,
     setBuyOrderDescription: (descr: OrderDescriptionData|null) => void,
     domain: string,

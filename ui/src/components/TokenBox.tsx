@@ -7,8 +7,8 @@ import { parseBigInt, WalletToken } from "../p2p-swap";
 import { Button } from './Button';
 
 interface TokenBoxProps {
-    onTokenChanged: (token: WalletToken) => void,
-    onAmountChanged: (amount: bigint) => void,
+    onTokenChanged: (token: WalletToken|undefined) => void,
+    onAmountChanged: (amount: bigint|undefined) => void,
 }
 
 interface TokenItemProps {
@@ -64,7 +64,6 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
     } = useApp();
     const [tokenName, setTokenName] = useState<string|undefined>(undefined);
     const [tokenAddress, setTokenAddress] = useState<string|undefined>(undefined);
-    const [tokenInputStyle, setTokenInputStyle] = useState<string>('invalid');
     const [tokens, setTokens] = useState<Item[]>([]);
     const [selectedToken, setSelectedToken] = useState<WalletToken|undefined>(undefined);
     const [amountStr, setAmountStr] = useState<string|undefined>('0');
@@ -128,11 +127,10 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
     }, [walletTokens]);
 
     useEffect(() => {
+        props.onTokenChanged(selectedToken)
         if (!selectedToken) {
-            setTokenInputStyle('invalid');
             return;
         }
-        setTokenInputStyle('');
 
         if (!amountStr) {
             setAmountStyle('invalid');
@@ -148,8 +146,11 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
 
             setAmountStyle('');
             if (amount > selectedToken.tokenAmount) {
+                props.onAmountChanged(selectedToken.tokenAmount);
                 setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken));
+                return;
             }
+            props.onAmountChanged(amount);
         } catch (e) {
             console.log(`TokenBox: ${e}`);
             setAmountStyle('invalid');
@@ -163,10 +164,10 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 type='number'
                 onChange={onAmountChange}
                 value={amountStr}
-                disabled={tokenInputStyle == 'invalid'}
+                disabled={!selectedToken}
             />
             <Button
-                disabled={tokenInputStyle == 'invalid'}
+                disabled={!selectedToken}
                 name="MAX"
                 onClick={maxButtonClick}
             />
@@ -174,7 +175,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 className={"datalist"}
                 inputProps={{
                     type: "number",
-                    className: tokenInputStyle,
+                    className: selectedToken ? '' : 'invalid',
                     title: tokenName
                 }}
                 label={''}
@@ -186,7 +187,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 onChange={onTokenChange}
             />
             <button
-                disabled={tokenInputStyle == 'invalid'}
+                disabled={!selectedToken}
                 className='tabbutton-active'
                 onClick={onExplorerClick}
                 title="Open in explorer"
