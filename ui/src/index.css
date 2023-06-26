@@ -19,6 +19,10 @@ html, body {
     background-size: 100vw
 }
 
+label {
+    font-family: monospace;
+}
+
 .mainwindow {
     display: flex;
     flex-direction: column;
@@ -134,7 +138,7 @@ input[type="checkbox"] {
     min-height: 100%;
     display: flex;
     flex-direction: column;
-    background: #4f2068;
+    background: #636983;
     border-radius: 12px;
     padding: 12px;
     border-top: none;

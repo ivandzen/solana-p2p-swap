@@ -168,14 +168,18 @@ function SellTab() {
         <div>
             <Visibility isActive={sellTabMode === SELL_TAB_MODE_CREATE_ORDER}>
                 <div className="vertical">
-                    <label>
-                        <b>I want to sell:</b>
-                    </label>
-                    <TokenBox onTokenChanged={onSellTokenChange} onAmountChanged={onSellAmountChange}/>
-                    <label>
-                        <b>I want to buy:</b>
-                    </label>
-                    <TokenBox onTokenChanged={onBuyTokenChange} onAmountChanged={onBuyAmountChange}/>
+                    <div className='table-like'>
+                        <TokenBox
+                            name={'Sell'}
+                            onTokenChanged={onSellTokenChange}
+                            onAmountChanged={onSellAmountChange}
+                        />
+                        <TokenBox
+                            name={'Buy'}
+                            onTokenChanged={onBuyTokenChange}
+                            onAmountChanged={onBuyAmountChange}
+                        />
+                    </div>
                     <label>
                         <b>Sell minimum:</b>
                     </label>
@@ -190,10 +194,13 @@ function SellTab() {
                         <div className="vertical">
                             <div className="label-attention">
                                 <b>
-                                    <p>Besides regular transaction approval, </p>
-                                    <p>You will be prompted to sign message containing order account address</p>
-                                    <p>encoded in binary form to generate order unlock key.</p>
-                                    <p>NOTE: Order filling will be available only with this signature!</p>
+                                    <p>Besides regular transaction approval,</p>
+                                    <p>You will be prompted to sign message</p>
+                                    <p>containing order account address</p>
+                                    <p>encoded in binary form to generate </p>
+                                    <p>order unlock key.</p>
+                                    <p>NOTE: Order filling will be available</p>
+                                    <p>only with this signature!</p>
                                 </b>
                             </div>
                         </div>

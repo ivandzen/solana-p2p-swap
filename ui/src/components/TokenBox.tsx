@@ -7,6 +7,7 @@ import { parseBigInt, WalletToken } from "../p2p-swap";
 import { Button } from './Button';
 
 interface TokenBoxProps {
+    name: string,
     onTokenChanged: (token: WalletToken|undefined) => void,
     onAmountChanged: (amount: bigint|undefined) => void,
 }
@@ -159,6 +160,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
 
     return (
         <div className="token-box">
+            <label><b>{props.name}</b></label>
             <input
                 className={amountStyle}
                 type='number'
