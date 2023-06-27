@@ -199,10 +199,8 @@ const BuyTab: FC = () => {
 
             let txn = await fillOrderTransaction(connection, props);
             await wallet?.adapter.sendTransaction(txn, connection);
-        } catch (e) {
-            if (typeof(e) === 'string') {
-                showErrorMessage(e.toString());
-            }
+        } catch (e: any) {
+            showErrorMessage(e.toString());
         }
 
         setAppMode("Buy");
@@ -240,10 +238,6 @@ const BuyTab: FC = () => {
             setSellAmountDec(sellAmountDec);
             setSellAmount(sellAmountDec.toString());
         } catch (e: any) {
-            if (typeof(e) === 'string') {
-                showErrorMessage(e.toString());
-            }
-
             setBuyAmountDec(null);
             setSellAmountDec(null);
             setSellAmount('0');

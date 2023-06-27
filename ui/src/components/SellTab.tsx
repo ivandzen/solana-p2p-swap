@@ -108,8 +108,8 @@ function SellTab() {
             }
 
             setSellTabMode(SELL_TAB_MODE_SHOW_ORDER);
-        } catch (e) {
-            console.log(`Failed to create order: ${e}`);
+        } catch (e: any) {
+            showErrorMessage(e.toString());
         }
 
         setAppMode("Sell");
@@ -202,6 +202,7 @@ function SellTab() {
                             </label>
                             <input
                                 type='number'
+                                className={sellMinimBigint ? '' : 'invalid'}
                                 value={sellMinimum}
                                 onChange={(event) => { setSellMinimum(event.target.value) }}
                             />
