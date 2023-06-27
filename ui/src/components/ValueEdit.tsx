@@ -8,7 +8,8 @@ interface ValueEditProps {
     size?: number,
     readonly?: boolean,
     value?: string,
-    type?: string
+    type?: string,
+    copybutton?: boolean,
 }
 
 const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
@@ -55,7 +56,7 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
                 readOnly={attribs.readonly ? attribs.readonly : false}
                 value={value}
             />
-            <Visibility isActive={attribs.readonly ? attribs.readonly : false} >
+            <Visibility isActive={!!attribs.copybutton}>
                 <button
                     className="copy-button"
                     onClick={() => {navigator.clipboard.writeText(value).then(()=>{})}}

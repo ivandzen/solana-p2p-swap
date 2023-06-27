@@ -18,6 +18,7 @@ import {
     getAssociatedTokenAddress
 } from "@solana/spl-token";
 import { WalletError } from "@solana/wallet-adapter-base";
+import Decimal from "decimal.js";
 const base58 = require('base58-js');
 
 interface OrderDescriptionData {
@@ -68,6 +69,14 @@ function parseOrderDescription(
         remainsToFill: remainsToFill,
         isPrivate: isPrivate,
     };
+}
+
+export function amountToDecimal(value: bigint, decimals: number): Decimal {
+    return new Decimal(value.toString()).div(new Decimal(10).pow(new Decimal(decimals)));
+}
+
+export function amountToStr(value: bigint, decimals: number): string {
+    return amountToDecimal(value, decimals).toString();
 }
 
 async function getOrderDescription(

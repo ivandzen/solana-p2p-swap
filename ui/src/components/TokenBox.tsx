@@ -1,15 +1,16 @@
-import React, { ChangeEvent, EventHandler, FC, useEffect, useState } from "react";
-import { Mint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import React, { ChangeEvent, FC, useEffect, useState } from "react";
 import { useApp } from "../AppContext";
 import { DatalistInput, Item } from "react-datalist-input";
-import { Connection, PublicKey } from "@solana/web3.js";
-import { parseBigInt, WalletToken } from "../p2p-swap";
+import { PublicKey } from "@solana/web3.js";
+import { amountToStr, parseBigInt, WalletToken } from "../p2p-swap";
 import { Button } from './Button';
+import { Visibility } from "./Visibility";
 
 interface TokenBoxProps {
     name: string,
     onTokenChanged: (token: WalletToken|undefined) => void,
     onAmountChanged: (amount: bigint|undefined) => void,
+    limitWalletAmount?: boolean,
 }
 
 interface TokenItemProps {
@@ -50,21 +51,15 @@ function strToAmount(value: string, token: WalletToken): bigint {
     throw `Failed to convert '${value}' to bigint`;
 }
 
-function amountToStr(value: bigint, token: WalletToken): string {
-    let intPart = value / 10n ** BigInt(token.decimals);
-    let decPart = value - intPart * (10n ** BigInt(token.decimals));
-    return `${intPart}.${decPart}`;
-}
+
 
 const TokenBox: FC<TokenBoxProps> = (props) => {
     const {
-        supportedTokens,
         walletTokens,
         explorer,
         cluster,
     } = useApp();
     const [tokenName, setTokenName] = useState<string|undefined>(undefined);
-    const [tokenAddress, setTokenAddress] = useState<string|undefined>(undefined);
     const [tokens, setTokens] = useState<Item[]>([]);
     const [selectedToken, setSelectedToken] = useState<WalletToken|undefined>(undefined);
     const [amountStr, setAmountStr] = useState<string|undefined>('0');
@@ -94,7 +89,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
         if (!selectedToken) {
             return;
         }
-        setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken));
+        setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken.decimals));
     }
 
     const onExplorerClick = () => {
@@ -139,6 +134,12 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
         }
 
         try {
+            if (parseFloat(amountStr) < 1) {
+                props.onAmountChanged(1n);
+                setAmountStr(amountToStr(1n, selectedToken.decimals));
+                return;
+            }
+
             let amount = strToAmount(amountStr, selectedToken);
             if (amount < 1) {
                 setAmountStyle('invalid');
@@ -146,9 +147,9 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
             }
 
             setAmountStyle('');
-            if (amount > selectedToken.tokenAmount) {
+            if (props.limitWalletAmount && amount > selectedToken.tokenAmount) {
                 props.onAmountChanged(selectedToken.tokenAmount);
-                setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken));
+                setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken.decimals));
                 return;
             }
             props.onAmountChanged(amount);
@@ -168,17 +169,20 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 value={amountStr}
                 disabled={!selectedToken}
             />
-            <Button
-                disabled={!selectedToken}
-                name="MAX"
-                onClick={maxButtonClick}
-            />
+            <Visibility isActive={!!props.limitWalletAmount}>
+                <button
+                    className='fixed'
+                    disabled={!selectedToken}
+                    title="Place all your tokens"
+                    onClick={maxButtonClick}
+                >MAX</button>
+            </Visibility>
             <DatalistInput
                 className={"datalist"}
                 inputProps={{
                     type: "number",
                     className: selectedToken ? '' : 'invalid',
-                    title: tokenName
+                    title: selectedToken?.mint.toBase58()
                 }}
                 label={''}
                 showLabel={false}
@@ -190,7 +194,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
             />
             <button
                 disabled={!selectedToken}
-                className='tabbutton-active'
+                className='fixed'
                 onClick={onExplorerClick}
                 title="Open in explorer"
             >explorer</button>

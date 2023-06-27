@@ -1,11 +1,12 @@
-import React, {useEffect, useState} from "react";
+import React, { ChangeEvent, useEffect, useState } from "react";
 import {ValueEdit} from "./ValueEdit";
 import {
+    amountToDecimal,
     CreateOrderProps,
     createOrderTransaction,
     getOrderDescriptionChecked, OrderDescriptionData,
     P2P_SWAP_DEVNET,
-    publicKeyChecker, WalletToken
+    WalletToken
 } from "../p2p-swap";
 import {Button} from "./Button";
 import {Connection, PublicKey} from "@solana/web3.js";
@@ -14,6 +15,7 @@ import {CheckBox} from "./CheckBox";
 import {useApp} from "../AppContext";
 import {OrderDescription} from "./OrderDescription";
 import { TokenBox } from "./TokenBox";
+import Decimal from "decimal.js";
 const base58 = require("base58-js");
 
 const SELL_TAB_MODE_CREATE_ORDER: string = "create-order";
@@ -25,12 +27,14 @@ function SellTab() {
         setAppMode,
         connection,
         wallet, signMessage,
+        showErrorMessage,
     } = useApp();
 
     const [sellOrderDescription, setSellOrderDescription] = useState<OrderDescriptionData|null>(null);
     const [sellToken, onSellTokenChange] = useState<WalletToken|undefined>(undefined);
     const [sellAmount, onSellAmountChange] = useState<bigint|undefined>(0n);
-    const [sellMinimum, onSellMinimumChange] = useState<string|undefined>("0");
+    const [sellMinimum, setSellMinimum] = useState<string|undefined>("0");
+    const [sellMinimBigint, setSellMinimumBigint] = useState<bigint|null>(null);
     const [buyToken, onBuyTokenChange] = useState<WalletToken|undefined>(undefined);
     const [buyAmount, onBuyAmountChange] = useState<bigint|undefined>(0n);
     const [createOrderProps, setCreateOrderProps] = useState<CreateOrderProps|undefined>(undefined);
@@ -45,18 +49,17 @@ function SellTab() {
     useEffect(() => {
         try {
             let signer = wallet?.adapter.publicKey;
-            if (!signer || !buyToken || !sellToken) {
+            if (!signer || !buyToken || !sellToken || !sellMinimBigint) {
                 setCreateOrderProps(undefined);
                 return;
             }
 
             let sellAmountParsed = sellAmount? sellAmount : 0n;
             let buyAmountParsed = buyAmount ? buyAmount : 0n;
-            let sellMinimumParsed = BigInt(sellMinimum ? sellMinimum: 0);
 
             if (sellAmountParsed <= 0n
                 || buyAmountParsed <= 0n
-                || sellMinimumParsed <= 0n) {
+                || sellMinimBigint <= 0n) {
                 setCreateOrderProps(undefined);
                 return;
             }
@@ -65,7 +68,7 @@ function SellTab() {
                 programId: P2P_SWAP_DEVNET,
                 sellAmount: sellAmountParsed,
                 buyAmount: buyAmountParsed,
-                minSellAmount: sellMinimumParsed,
+                minSellAmount: sellMinimBigint,
                 creationSlot: BigInt(0), // will be overriden later
                 signer: signer,
                 sellToken: sellToken.mint,
@@ -135,10 +138,6 @@ function SellTab() {
             setErrorDescription('Wrong order address');
     };
 
-    const onCreateNewClicked = async () => {
-        setSellTabMode(SELL_TAB_MODE_CREATE_ORDER);
-    }
-
     useEffect(()=>{
         if (newOrderAddress) {
             let url = `${domain}/?mode=Buy&order_address=${newOrderAddress.toString()}`;
@@ -151,18 +150,35 @@ function SellTab() {
         }
     }, [newOrderAddress, newUnlockKey]);
 
-    const bigintChecker = (value: string|undefined):boolean => {
-        if (!value) {
-            return false;
+    useEffect(() => {
+        if (!sellToken || !sellAmount || !sellMinimum) {
+            setSellMinimumBigint(null);
+            return;
         }
 
         try {
-            let v = BigInt(value);
-            return (v > BigInt(0));
-        } catch (e) {}
+            let value =  new Decimal(sellMinimum)
+                .mul(new Decimal(10)
+                         .pow(new Decimal(sellToken?.decimals)));
 
-        return false;
-    }
+            let valueBigint = BigInt(value.toString());
+            if (valueBigint < 1) {
+                setSellMinimumBigint(1n);
+                setSellMinimum(amountToDecimal(1n, sellToken.decimals).toString());
+                return;
+            }
+
+            if (valueBigint > sellAmount) {
+                setSellMinimumBigint(sellAmount);
+                setSellMinimum(amountToDecimal(sellAmount, sellToken.decimals).toString());
+                return;
+            }
+
+            setSellMinimumBigint(valueBigint);
+        } catch (e) {
+            setSellMinimumBigint(null);
+        }
+    }, [sellToken, sellAmount, sellMinimum]);
 
     return (
         <div>
@@ -173,22 +189,24 @@ function SellTab() {
                             name={'Sell'}
                             onTokenChanged={onSellTokenChange}
                             onAmountChanged={onSellAmountChange}
+                            limitWalletAmount={true}
                         />
                         <TokenBox
                             name={'Buy'}
                             onTokenChanged={onBuyTokenChange}
                             onAmountChanged={onBuyAmountChange}
                         />
+                        <div className='horizontal'>
+                            <label>
+                                <b>Sell minimum :</b>
+                            </label>
+                            <input
+                                type='number'
+                                value={sellMinimum}
+                                onChange={(event) => { setSellMinimum(event.target.value) }}
+                            />
+                        </div>
                     </div>
-                    <label>
-                        <b>Sell minimum:</b>
-                    </label>
-                    <ValueEdit
-                        name=''
-                        type='number'
-                        valueChecker={bigintChecker}
-                        onChange={onSellMinimumChange}
-                    />
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>
                     <Visibility isActive={isPrivate}>
                         <div className="vertical">
@@ -255,7 +273,9 @@ function SellTab() {
                     <ValueEdit name={"Order URL:"} readonly={true} value={orderURL ? orderURL : undefined}/>
                     <Button
                         name={"Create another order"}
-                        onClick={onCreateNewClicked}
+                        onClick={async () => {
+                            setSellTabMode(SELL_TAB_MODE_CREATE_ORDER);
+                        }}
                     />
                 </div>
             </Visibility>

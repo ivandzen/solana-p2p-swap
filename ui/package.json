@@ -25,20 +25,21 @@
         "start": "parcel src/index.html"
     },
     "dependencies": {
-        "@types/readable-stream": "^2.3.15",
-        "@types/keccak": "^3.0.1",
-        "@types/node-fetch": "^2.6.4",
-        "@types/node": "^20.3.0",
+        "@solana/spl-token": "^0.3.6",
         "@solana/wallet-adapter-base": "^0.9.19",
-        "@solana/wallet-adapter-react": "^0.15.25",
-        "@solana/wallet-adapter-react-ui": "^0.9.29",
+        "@solana/wallet-adapter-react": "^0.15.20",
+        "@solana/wallet-adapter-react-ui": "^0.9.18",
         "@solana/wallet-adapter-wallets": "^0.19.6",
         "@solana/web3.js": "^1.73.2",
-        "@solana/spl-token": "^0.3.6",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
+        "@types/keccak": "^3.0.1",
+        "@types/node": "^20.3.0",
+        "@types/node-fetch": "^2.6.4",
+        "@types/readable-stream": "^2.3.15",
         "base58-js": "^2.0.0",
-        "react-datalist-input": "^3.2.1"
+        "decimal.js": "^10.4.3",
+        "react": "^18.2.0",
+        "react-datalist-input": "^3.2.1",
+        "react-dom": "^18.2.0"
     },
     "devDependencies": {
         "@types/react": "^18.0.28",

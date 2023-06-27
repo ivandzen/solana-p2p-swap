@@ -4,7 +4,7 @@ import { OrderDescriptionData, WalletToken } from "./p2p-swap";
 import { Wallet } from "@solana/wallet-adapter-react";
 import { MessageSignerWalletAdapterProps } from "@solana/wallet-adapter-base";
 
-type SupportedTokens = Map<string, PublicKey>;
+export type SupportedTokens = Map<string, PublicKey>;
 
 export interface AppContext {
     appMode: string|null,
@@ -23,6 +23,7 @@ export interface AppContext {
     setOrders: (orders: Map<PublicKey, OrderDescriptionData>|undefined) => void;
     supportedTokens: SupportedTokens,
     walletTokens: Map<string, WalletToken>,
+    showErrorMessage: (msg: string|null) => void,
     explorer: string,
     cluster: string,
 }

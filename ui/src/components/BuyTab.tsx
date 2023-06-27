@@ -1,8 +1,9 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import {OrderDescription} from "./OrderDescription";
-import React, {FC, useEffect, useState} from "react";
+import React, { ChangeEvent, FC, InputHTMLAttributes, useEffect, useState } from "react";
 import {ValueEdit} from "./ValueEdit";
 import {
+    amountToDecimal,
     FillOrderProps,
     fillOrderTransaction,
     getOrderDescriptionChecked,
@@ -11,11 +12,24 @@ import {
     unlockKeyChecker
 } from "../p2p-swap";
 import {P2P_SWAP_DEVNET} from "../p2p-swap";
-import {useApp} from "../AppContext";
+import { SupportedTokens, useApp } from "../AppContext";
 import {Button} from "./Button";
 import {Visibility} from "./Visibility";
-import { TokenBox } from "./TokenBox";
-import { CheckBox } from "./CheckBox";
+import {
+    SimplifiedOrderDescription,
+    SimplifiedOrderDescriptionData
+} from "./SimplifiedOrderDescription";
+import Decimal from "decimal.js";
+
+function getTokenName(supportedTokens: SupportedTokens, inPubkey: PublicKey): string {
+    for (let [label, pubkey] of supportedTokens) {
+        if (pubkey.equals(inPubkey)) {
+            return label;
+        }
+    }
+
+    return inPubkey.toBase58();
+}
 
 const BuyTab: FC = () => {
     const {
@@ -24,12 +38,19 @@ const BuyTab: FC = () => {
         buyOrderDescription, setBuyOrderDescription,
         setAppMode,
         connection,
-        wallet
+        wallet,
+        supportedTokens,
+        walletTokens
     } = useApp();
 
     const [errorDescription, setErrorDescription] = useState<string|null>("Please, select order");
     const [buyAmount, setBuyAmount] = useState<string>("0");
+    const [buyAmountDec, setBuyAmountDec] = useState<Decimal|null>(null);
+    const [sellAmount, setSellAmount] = useState<string>("0");
+    const [sellAmountDec, setSellAmountDec] = useState<Decimal|null>(null);
     const [fillOrderProps, setFillOrderProps] = useState<FillOrderProps|null>(null);
+    const [simplifiedDescription, setSimplifiedDescription] = useState<SimplifiedOrderDescriptionData|null>(null);
+    const [expandDetails, setExpandDetails] = useState<boolean>(false);
 
     useEffect(() => {
         async function updateOrderDescription(
@@ -37,10 +58,48 @@ const BuyTab: FC = () => {
             orderAddress: PublicKey
         ) {
             setBuyOrderDescription(null);
+            setSimplifiedDescription(null);
             setErrorDescription("Loading...");
             try {
-                let orderDescription
-                    = await getOrderDescriptionChecked(connection, orderAddress, P2P_SWAP_DEVNET);
+                let orderDescription = await getOrderDescriptionChecked(
+                    connection,
+                    orderAddress,
+                    P2P_SWAP_DEVNET
+                );
+
+                if (orderDescription.buyToken && orderDescription.sellToken) {
+                    let price =
+                        amountToDecimal(
+                            orderDescription.buyAmount,
+                            orderDescription.buyToken.decimals
+                        ).div(
+                            amountToDecimal(
+                                orderDescription.sellAmount,
+                                orderDescription.sellToken.decimals
+                            )
+                        );
+
+                    setSimplifiedDescription(
+                        {
+                            price: price,
+                            orderTokenName: getTokenName(supportedTokens, orderDescription.tokenMint),
+                            priceTokenName: getTokenName(supportedTokens, orderDescription.priceMint),
+                            minSellAmount:
+                                amountToDecimal(
+                                    orderDescription.minSellAmount,
+                                    orderDescription.sellToken.decimals
+                                ),
+                            remainsToFill:
+                                amountToDecimal(
+                                    orderDescription.remainsToFill,
+                                    orderDescription.sellToken.decimals
+                                ),
+                            isPrivate: orderDescription.isPrivate
+                        });
+                }
+
+
+
                 setBuyOrderDescription(orderDescription);
                 setErrorDescription(null);
             } catch (e: any) {
@@ -56,9 +115,18 @@ const BuyTab: FC = () => {
 
     useEffect(() => {
         const sendTransaction = async () => {
+            if (
+                !buyAmountDec
+                || !buyOrderDescription
+                || !buyOrderDescription.sellToken
+            ) {
+                setFillOrderProps(null);
+                return;
+            }
+
             let signer = wallet?.adapter.publicKey;
             let unlockKeyParsed = parseUnlockKey(unlockKey);
-            let buyAmountParsed = parseBigInt(buyAmount);
+            let buyAmountParsed = BigInt(buyAmountDec.mul(new Decimal(10).pow(buyOrderDescription?.sellToken?.decimals)).toString());
             if (signer && orderAddress && buyOrderDescription &&
                 buyAmountParsed && buyAmountParsed > BigInt(0)) {
                 let props: FillOrderProps = {
@@ -80,7 +148,7 @@ const BuyTab: FC = () => {
         };
 
         sendTransaction().then(()=>{});
-    }, [orderAddress, buyAmount, unlockKey]);
+    }, [orderAddress, buyAmountDec, unlockKey]);
 
     const onOrderAddressChange = (value: string|null) => {
         if (value && value.length == 0) {
@@ -113,6 +181,71 @@ const BuyTab: FC = () => {
         setAppMode("Buy");
     }
 
+    const onBuyAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
+        setBuyAmount(event.target.value);
+        if (!simplifiedDescription) {
+            return;
+        }
+
+        try {
+            let amountDec = new Decimal(event.target.value);
+            if (amountDec.lessThan(simplifiedDescription.minSellAmount)) {
+                amountDec = simplifiedDescription.minSellAmount;
+            }
+
+            if (amountDec.greaterThan(simplifiedDescription.remainsToFill)) {
+                amountDec = simplifiedDescription.remainsToFill;
+            }
+
+            setBuyAmount(amountDec.toString());
+            setBuyAmountDec(amountDec);
+        } catch (e) {
+            setBuyAmountDec(null);
+        }
+    }
+
+    useEffect(() => {
+        setErrorDescription(null);
+        if (
+            !buyOrderDescription
+            || !buyOrderDescription.buyToken
+            || !simplifiedDescription
+            || !buyAmountDec
+        ) {
+            setSellAmountDec(null);
+            return;
+        }
+
+        try {
+            let walletPriceToken = walletTokens.get(simplifiedDescription.priceTokenName);
+            if (!walletPriceToken) {
+                setErrorDescription(`You dont have ${simplifiedDescription.priceTokenName} to fill this order`);
+                setSellAmountDec(null);
+                setSellAmount('0');
+                return;
+            }
+
+            let sellAmountDec = buyAmountDec.mul(simplifiedDescription?.price);
+            let walletAmountDec = amountToDecimal(
+                walletPriceToken.tokenAmount,
+                buyOrderDescription?.buyToken?.decimals
+            );
+
+            if (sellAmountDec.greaterThan(walletAmountDec)) {
+                setErrorDescription(`You have not enough ${simplifiedDescription.priceTokenName}`);
+                setSellAmountDec(null);
+                setSellAmount('0');
+                return;
+            }
+
+            setSellAmountDec(sellAmountDec);
+            setSellAmount(sellAmountDec.toString());
+        } catch (e) {
+            setSellAmountDec(null);
+            setSellAmount('0');
+        }
+    }, [buyAmountDec]);
+
     return (
         <div className="vertical">
             <ValueEdit
@@ -121,28 +254,42 @@ const BuyTab: FC = () => {
                 valueChecker={publicKeyChecker}
                 value={orderAddress ? orderAddress.toString() : ""}
             />
-            <OrderDescription description={buyOrderDescription}/>
+            <SimplifiedOrderDescription data={simplifiedDescription}/>
+            <Button
+                name={"View details"}
+                onClick={()=>{}}
+                checkable={true}
+                checked={expandDetails}
+                setChecked={setExpandDetails}
+            />
+            <Visibility isActive={expandDetails}>
+                <OrderDescription description={buyOrderDescription}/>
+            </Visibility>
             <Visibility isActive={!!errorDescription}>
                 <h1>{errorDescription}</h1>
             </Visibility>
             <Visibility isActive={!!buyOrderDescription}>
-                <div className="vertical">
-                    <ValueEdit
-                        name="Amount:"
-                        onChange={setBuyAmount}
-                        valueChecker={(value) => {
-                            if (!value) {
-                                return false;
-                            }
-
-                            try {
-                                let v = BigInt(value);
-                                return v > 0;
-                            } catch (e) {return false}
-                        }}
-                        readonly={false}
-                        value={buyAmount.toString()}
-                    />
+                <div className="table-like">
+                    <div className='horizontal'>
+                        <label><b>You want to get :</b></label>
+                        <input
+                            className={buyAmountDec ? '' : 'invalid'}
+                            type='number'
+                            value={buyAmount}
+                            onChange={onBuyAmountChange}
+                        />
+                        <label><b>{simplifiedDescription?.orderTokenName}</b></label>
+                    </div>
+                    <div className='horizontal'>
+                        <label><b>You will give :</b></label>
+                        <input
+                            className={sellAmountDec ? '' : 'invalid'}
+                            type='number'
+                            value={sellAmount}
+                            readOnly={true}
+                        />
+                        <label><b>{simplifiedDescription?.priceTokenName}</b></label>
+                    </div>
                     <Visibility isActive={!!buyOrderDescription && buyOrderDescription.isPrivate}>
                         <ValueEdit
                             name="Unlock signature:"

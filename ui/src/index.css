@@ -41,29 +41,34 @@ input {
     font-family: monospace;
     border-color: transparent;
     border-radius: 2px;
-    margin: 1px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    margin-left: 5px;
+    margin-right: 5px;
     transition-duration: 0.5s;
-    align-content: end;
+    width: 100%;
 }
 
-.datalist input {
-    width: 60px;
+div[class~='datalist'] {
+    display: flex;
+    min-width: 60px;
+    max-width: 60px;
 }
 
 input:focus {
     box-shadow: 0px 0px 4px 4px #ffffff;
 }
 
-input[type="text"]:read-write {
+input:read-write {
     background: #b967de;
 }
 
-input[type="text"]:read-only {
+input:read-only {
     background: transparent;
     color: #b967de;
 }
 
-input[class~="invalid"]:read-write {
+input[class~="invalid"] {
     background: #3a1344;
     box-shadow: 0px 0px 4px 4px #f10000;
     color: #f10000;
@@ -72,7 +77,7 @@ input[class~="invalid"]:read-write {
 input[type="checkbox"] {
     width: 20px;
     height: 20px;
-    margin: 8px;
+    margin: 2px;
     box-shadow: 0px 0px 2px 2px #da49d2;
 }
 
@@ -94,29 +99,31 @@ input[type="checkbox"] {
 
   /* Style the buttons that are used to open the tab content */
 .tabbutton {
-    border-radius: 3px;
+    border-radius: 2px;
     background-color: transparent;
     border-style: inset;
     border-color: transparent;
     cursor: pointer;
     width: 100%;
     transition-duration: 0.5s;
+    margin: 2px;
 }
   
   /* Change background color of buttons on hover */
 .tabbutton:hover {
     background-color: #c51ffa;
 }
-  
+
 /* Create an active/current tablink class */
 .tabbutton-active {
+    border-radius: 2px;
     background-color: #da49d2;
     border: none;
     outline: none;
     cursor: pointer;
     width: 100%;
-    margin: 2px;
     transition-duration: 0.5s;
+    margin: 2px;
 }
 
 .tabbutton-active:hover {
@@ -130,7 +137,6 @@ input[type="checkbox"] {
 
 .tabbutton-active:disabled:hover {
     background-color: #3a1344;
-    box-shadow: 0px 0px 2px 2px #da49d2;
 }
 
 /* Style the tab content */
@@ -171,7 +177,8 @@ input[type="checkbox"] {
     flex-direction: row;
     display: flex;
     align-items: center;
-    margin: 1px;
+    margin: 2px;
+    width: 100%
 }
 
 .vertical {
@@ -183,7 +190,6 @@ input[type="checkbox"] {
 }
 
 .table-like {
-    margin: 4px;
     background: #3a1344;
     border-radius: 10px;
     border-style: solid;
@@ -191,6 +197,7 @@ input[type="checkbox"] {
     flex-direction: column;
     display: flex;
     align-items: end;
+    padding: 5px;
     color: #e5a2e2
 }
 
@@ -198,10 +205,12 @@ input[type="checkbox"] {
     display: flex;
     flex-direction: row;
     align-items: center;
+    width: 100%;
+    margin: 2px;
 }
 
 .token-list {
-    margin: 4px;
+    margin: 2px;
     background: #e5a2e2;
     border-radius: 10px;
     border-style: none;
@@ -241,7 +250,7 @@ input[type="checkbox"] {
     background: #da498f;
     flex-direction: column;
     font-family: monospace;
-    margin: 8px;
+    margin: 2px;
     color: #4f2068;
     width: 100%;
     box-shadow: 0px 0px 3px 3px #e5a2e2;
@@ -258,7 +267,7 @@ input[type="checkbox"] {
     cursor: pointer;
     padding: 2px;
     transition-duration: 0.5s;
-    margin: 4px;
+    margin: 2px;
 }
 
 .copy-button:disabled {
@@ -269,4 +278,24 @@ input[type="checkbox"] {
 
 .copy-button:enabled:hover {
     background-color: #e5a2e2;
+}
+
+button[class='fixed'] {
+    border-radius: 2px;
+    background-color: #da49d2;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    max-width: 100px;
+    transition-duration: 0.5s;
+    margin: 2px;
+}
+
+button[class='fixed']:hover {
+    background-color: #e5a2e2;
+}
+
+.token-box label {
+    max-width: 40px;
+    min-width: 40px;
 }
