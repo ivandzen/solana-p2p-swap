@@ -445,7 +445,7 @@ fn fill_order<'a>(
     let seller = next_account_info(account_info_iter)?; // 1 - seller pubkey
     let buyer = next_account_info(account_info_iter)?; // 2 - buyer pubkey
     let order_account = next_account_info(account_info_iter)?; // 3 - order pubkey
-    let mut order = SwapSPLOrder::unpack(&order_account.data.borrow())?;
+    let (mut order, order_seed) = check_and_get_order(program_id, seller, order_account)?;
 
     if order.is_private {
         let sysvar_instructions = next_account_info(account_info_iter)?; // 4 -sysvar instruction
@@ -484,11 +484,6 @@ fn fill_order<'a>(
         }
     }
 
-    if order.seller != *seller.key {
-        msg!("Seller does not match: {:?}", order.seller);
-        return Err(ProgramError::InvalidAccountData);
-    }
-
     if order.min_sell_amount > sell_token_amount {
         msg!("Buy amount is below minimum");
         return Err(ProgramError::Custom(P2PSwapError::BuyAmountBelowMinimum as u32));
@@ -499,29 +494,14 @@ fn fill_order<'a>(
         return Err(ProgramError::Custom(P2PSwapError::NotEnoughTokensInOrder as u32));
     }
 
-    let (expected_order_wallet_authority, bump_seed) = get_order_wallet_authority(program_id, seller.key);
     let order_wallet_authority = next_account_info(account_info_iter)?; // 5 - order wallet authority
-    if expected_order_wallet_authority != *order_wallet_authority.key {
-        msg!(
-            "Order wallet authority not match. Excpected {:?}",
-            expected_order_wallet_authority,
-        );
-        return Err(ProgramError::InvalidAccountData);
-    }
-
     let sell_token = next_account_info(account_info_iter)?; // 6 - sell token mint
-
-    let expected_order_wallet = get_order_wallet_address(
-        sell_token.key,
-        order_wallet_authority.key
-    );
     let order_wallet_accinfo = next_account_info(account_info_iter)?; // 7 - order wallet
-    if expected_order_wallet != *order_wallet_accinfo.key || order.order_wallet != *order_wallet_accinfo.key {
-        msg!("Order wallet not match. Expected: {:?}", order.order_wallet);
-        return Err(ProgramError::InvalidAccountData);
-    }
-
-    let order_wallet = SPLAccount::unpack(&order_wallet_accinfo.data.borrow())?;
+    let (order_wallet, order_wallet_seed) = check_and_get_order_wallet(
+        program_id,
+        &order,
+        order_wallet_authority,
+        order_wallet_accinfo)?;
 
     if order_wallet.mint != *sell_token.key {
         msg!("Sell token not match. Expected: {:?}", order_wallet.mint);
@@ -575,6 +555,7 @@ fn fill_order<'a>(
 
     let buy_token_amount = (sell_token_amount * order.buy_amount) / order.sell_amount;
 
+    msg!("Transfering from order to buyer");
     let tfer_inst = spl_token::instruction::transfer(
         &spl_token::id(),
         order_wallet_accinfo.key,
@@ -591,9 +572,10 @@ fn fill_order<'a>(
             buyer_sell_token_wallet.clone(),
             order_wallet_authority.clone(),
         ],
-        &[&[b"OrderWalletAuthority", &seller.key.to_bytes(), &[bump_seed]]],
+        &[&[b"OrderWalletAuthority", &seller.key.to_bytes(), &[order_wallet_seed]]],
     )?;
 
+    msg!("Transfering from buyer to seller");
     let tfer_inst = spl_token::instruction::transfer(
         &spl_token::id(),
         buyer_buy_token_wallet.key,

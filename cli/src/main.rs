@@ -359,7 +359,7 @@ fn process_buy_order(context: &AppContext, args: &Option<&ArgMatches>) {
         let order = get_order(context, &order_address).unwrap();
 
         let order_wallet_authority =
-            get_order_wallet_authority(&context.p2p_swap, &context.signer.pubkey()).0;
+            get_order_wallet_authority(&context.p2p_swap, &order.seller).0;
 
         let order_token_mint =
             get_order_token_mint(context, &order).unwrap();

@@ -81,7 +81,7 @@ function SellTab() {
             console.warn(`Failed to create order props: ${e}`);
             setCreateOrderProps(undefined);
         }
-    }, [sellToken, sellAmount, sellMinimum, buyToken, buyAmount, wallet, isPrivate]);
+    }, [sellToken, sellAmount, sellMinimBigint, buyToken, buyAmount, wallet, isPrivate]);
 
     let onSellClicked = async () => {
         if (!createOrderProps) {

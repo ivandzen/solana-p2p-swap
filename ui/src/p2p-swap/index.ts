@@ -426,12 +426,12 @@ async function fillOrderTransaction(
     const { blockhash } = await connection.getLatestBlockhash();
     let transaction = new Transaction({ recentBlockhash: blockhash, feePayer: props.signer });
 
-    if (!props.order.sellToken) {
-        throw "Sell token is not set in order";
+    if (!props.order.buyToken) {
+        throw "Buy token is not set in order";
     }
 
     props.buyerBuyTokenWallet = await getAssociatedTokenAddress(
-      props.order.sellToken.address,
+      props.order.buyToken.address,
       props.signer,
       false
     );
