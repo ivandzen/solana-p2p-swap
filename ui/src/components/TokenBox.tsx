@@ -21,7 +21,7 @@ const TokenItem: FC<TokenItemProps> = (props) => {
     return (
         <div className="token-item">
             <div className="horizontal">
-                <label><b>{props.label}</b>{": " + props.value.toBase58()}</label>
+                <label><b>{props.label}</b></label>
             </div>
         </div>
     )
