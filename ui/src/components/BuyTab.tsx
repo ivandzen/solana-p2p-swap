@@ -174,10 +174,35 @@ const BuyTab: FC = () => {
         setAppMode("Send-Txn");
 
         try {
+            if (
+                !simplifiedDescription
+                || !buyOrderDescription
+                || !buyOrderDescription.buyToken
+                || !sellAmountDec
+            ) {
+                return;
+            }
+
+            let walletPriceToken = walletTokens.get(simplifiedDescription.priceTokenName);
+            if (!walletPriceToken) {
+                throw `You dont have ${simplifiedDescription.priceTokenName} to fill this order`;
+            }
+
+            let walletAmountDec = amountToDecimal(
+                walletPriceToken.tokenAmount,
+                buyOrderDescription?.buyToken?.decimals
+            );
+
+            if (sellAmountDec.greaterThan(walletAmountDec)) {
+                throw `You have not enough ${simplifiedDescription.priceTokenName}`;
+            }
+
             let txn = await fillOrderTransaction(connection, props);
             await wallet?.adapter.sendTransaction(txn, connection);
         } catch (e) {
-            console.log(`Failed to fill order: ${e}`);
+            if (typeof(e) === 'string') {
+                showErrorMessage(e.toString());
+            }
         }
 
         setAppMode("Buy");
@@ -191,9 +216,7 @@ const BuyTab: FC = () => {
     useEffect(() => {
         setErrorDescription(null);
 
-        if (!buyOrderDescription
-            || !simplifiedDescription
-            || !buyOrderDescription.buyToken) {
+        if (!simplifiedDescription) {
             setBuyAmountDec(null);
             setSellAmountDec(null);
             setSellAmount('0');
@@ -213,22 +236,7 @@ const BuyTab: FC = () => {
             }
 
             setBuyAmountDec(buyAmountDec);
-
-            let walletPriceToken = walletTokens.get(simplifiedDescription.priceTokenName);
-            if (!walletPriceToken) {
-                throw `You dont have ${simplifiedDescription.priceTokenName} to fill this order`;
-            }
-
             let sellAmountDec = buyAmountDec.mul(simplifiedDescription?.price);
-            let walletAmountDec = amountToDecimal(
-                walletPriceToken.tokenAmount,
-                buyOrderDescription?.buyToken?.decimals
-            );
-
-            if (sellAmountDec.greaterThan(walletAmountDec)) {
-                throw `You have not enough ${simplifiedDescription.priceTokenName}`;
-            }
-
             setSellAmountDec(sellAmountDec);
             setSellAmount(sellAmountDec.toString());
         } catch (e: any) {
