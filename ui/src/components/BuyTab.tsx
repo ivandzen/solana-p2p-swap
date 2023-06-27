@@ -232,7 +232,10 @@ const BuyTab: FC = () => {
             setSellAmountDec(sellAmountDec);
             setSellAmount(sellAmountDec.toString());
         } catch (e: any) {
-            showErrorMessage(e.toString());
+            if (typeof(e) === 'string') {
+                showErrorMessage(e.toString());
+            }
+
             setBuyAmountDec(null);
             setSellAmountDec(null);
             setSellAmount('0');

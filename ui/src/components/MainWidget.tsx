@@ -55,17 +55,17 @@ const MainWidget: FC = () => {
                     <WalletMultiButton/>
                 </div>
                 <div className ="tab">
-                    <Visibility isActive={appMode === "Connect-Wallet"}>
+                    <Visibility isActive={!errorMessage && (appMode === "Connect-Wallet")}>
                         <div className="tabcontent">
                             <div className="vertical">
                                 <h1>{"Please, connect your Solana wallet ⇧"}</h1>
                             </div>
                         </div>
                     </Visibility>
-                    <Visibility isActive={appMode === "Order-List"}>
+                    <Visibility isActive={!errorMessage && appMode === "Order-List"}>
                         <OrderList></OrderList>
                     </Visibility>
-                    <Visibility isActive={appMode === "Buy" || appMode === "Sell"}>
+                    <Visibility isActive={!errorMessage && (appMode === "Buy" || appMode === "Sell")}>
                         <div className="tabcontent">
                             <div className="horizontal">
                                 <ModeButton name="Buy" onClick={buyClick} activeName={appMode}/>
@@ -76,12 +76,12 @@ const MainWidget: FC = () => {
                             <ModeTab name="Sell" activeName={appMode}><SellTab/></ModeTab>
                         </div>
                     </Visibility>
-                    <Visibility isActive={appMode === "Send-Txn"}>
+                    <Visibility isActive={!errorMessage && appMode === "Send-Txn"}>
                         <div className="tabcontent">
                             <h1>Sending transaction...</h1>
                         </div>
                     </Visibility>
-                    <Visibility isActive={appMode === "Sign-Pubkey"}>
+                    <Visibility isActive={!errorMessage && appMode === "Sign-Pubkey"}>
                         <div className="tabcontent">
                             <div className="vertical">
                                 <h1>Signing order public key...</h1>

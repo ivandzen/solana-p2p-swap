@@ -1,7 +1,7 @@
 import React, { ChangeEvent, useEffect, useState } from "react";
 import {ValueEdit} from "./ValueEdit";
 import {
-    amountToDecimal,
+    amountToDecimal, amountToStr,
     CreateOrderProps,
     createOrderTransaction,
     getOrderDescriptionChecked, OrderDescriptionData,
@@ -198,13 +198,28 @@ function SellTab() {
                         />
                         <div className='horizontal'>
                             <label>
-                                <b>Sell minimum :</b>
+                                <b>Sell minimum</b>
                             </label>
                             <input
                                 type='number'
                                 value={sellMinimum}
                                 onChange={(event) => { setSellMinimum(event.target.value) }}
                             />
+                            <button
+                                className='fixed'
+                                disabled={!(sellAmount && sellToken)}
+                                onClick={() => {
+                                    if (sellAmount && sellToken)
+                                        setSellMinimum(
+                                            amountToStr(
+                                                sellAmount,
+                                                sellToken?.decimals
+                                            )
+                                        );
+                                }}
+                            >
+                                Whole
+                            </button>
                         </div>
                     </div>
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>
