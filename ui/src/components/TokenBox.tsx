@@ -3,7 +3,6 @@ import { useApp } from "../AppContext";
 import { DatalistInput, Item } from "react-datalist-input";
 import { PublicKey } from "@solana/web3.js";
 import { amountToStr, parseBigInt, WalletToken } from "../p2p-swap";
-import { Button } from './Button';
 import { Visibility } from "./Visibility";
 
 interface TokenBoxProps {

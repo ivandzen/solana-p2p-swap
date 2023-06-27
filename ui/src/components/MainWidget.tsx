@@ -38,7 +38,7 @@ function ModeTab(
 }
 
 const MainWidget: FC = () => {
-    const {appMode, setAppMode} = useApp();
+    const {appMode, setAppMode, errorMessage, showErrorMessage} = useApp();
 
     const buyClick = () => {
         setAppMode("Buy");
@@ -49,53 +49,61 @@ const MainWidget: FC = () => {
     };
 
     return  (
-        <div className="mainwindow">
-            <div className="walletbutton">
-                <WalletMultiButton/>
-            </div>
-            <div className ="tab">
-                <Visibility isActive={appMode === "Connect-Wallet"}>
-                    <div className="tabcontent">
-                        <div className="vertical">
-                            <h1>{"Please, connect your Solana wallet ⇧"}</h1>
-                        </div>
-                    </div>
-                </Visibility>
-                <Visibility isActive={appMode === "Order-List"}>
-                    <OrderList></OrderList>
-                </Visibility>
-                <Visibility isActive={appMode === "Buy" || appMode === "Sell"}>
-                    <div className="tabcontent">
-                        <div className="horizontal">
-                            <ModeButton name="Buy" onClick={buyClick} activeName={appMode}/>
-                            <ModeButton name="Sell" onClick={sellClick} activeName={appMode}/>
-                        </div>
-
-                        <ModeTab name="Buy" activeName={appMode}><BuyTab/></ModeTab>
-                        <ModeTab name="Sell" activeName={appMode}><SellTab/></ModeTab>
-                    </div>
-                </Visibility>
-                <Visibility isActive={appMode === "Send-Txn"}>
-                    <div className="tabcontent">
-                        <h1>Sending transaction...</h1>
-                    </div>
-                </Visibility>
-                <Visibility isActive={appMode === "Sign-Pubkey"}>
-                    <div className="tabcontent">
-                        <div className="vertical">
-                            <h1>Signing order public key...</h1>
-                            <div className="label-attention">
-                                <b>
-                                    <p>Message contains order address</p>
-                                    <p>encoded in binary form. This signature</p>
-                                    <p>later will be used by buyers to unlock</p>
-                                    <p>Your order.</p>
-                                </b>
+        <div>
+            <div className="mainwindow">
+                <div className="walletbutton">
+                    <WalletMultiButton/>
+                </div>
+                <div className ="tab">
+                    <Visibility isActive={appMode === "Connect-Wallet"}>
+                        <div className="tabcontent">
+                            <div className="vertical">
+                                <h1>{"Please, connect your Solana wallet ⇧"}</h1>
                             </div>
                         </div>
+                    </Visibility>
+                    <Visibility isActive={appMode === "Order-List"}>
+                        <OrderList></OrderList>
+                    </Visibility>
+                    <Visibility isActive={appMode === "Buy" || appMode === "Sell"}>
+                        <div className="tabcontent">
+                            <div className="horizontal">
+                                <ModeButton name="Buy" onClick={buyClick} activeName={appMode}/>
+                                <ModeButton name="Sell" onClick={sellClick} activeName={appMode}/>
+                            </div>
+
+                            <ModeTab name="Buy" activeName={appMode}><BuyTab/></ModeTab>
+                            <ModeTab name="Sell" activeName={appMode}><SellTab/></ModeTab>
+                        </div>
+                    </Visibility>
+                    <Visibility isActive={appMode === "Send-Txn"}>
+                        <div className="tabcontent">
+                            <h1>Sending transaction...</h1>
+                        </div>
+                    </Visibility>
+                    <Visibility isActive={appMode === "Sign-Pubkey"}>
+                        <div className="tabcontent">
+                            <div className="vertical">
+                                <h1>Signing order public key...</h1>
+                                <div className="label-attention">
+                                    <b>
+                                        <p>Message contains order address</p>
+                                        <p>encoded in binary form. This signature</p>
+                                        <p>later will be used by buyers to unlock</p>
+                                        <p>Your order.</p>
+                                    </b>
+                                </div>
+                            </div>
+                        </div>
+                    </Visibility>
+                    <div
+                        className={errorMessage ? 'error-message' : 'error-message-inactive'}
+                        onClick={() => { showErrorMessage(null) }}
+                    >
+                        {errorMessage}
                     </div>
-                </Visibility>
-              </div>
+                </div>
+            </div>
         </div>
     );
 }

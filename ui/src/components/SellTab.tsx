@@ -238,6 +238,7 @@ function SellTab() {
                                 name={"Order Address:"}
                                 value={newOrderAddress?.toString()}
                                 readonly={true}
+                                copybutton={true}
                             />
 
                             <Button
@@ -261,6 +262,7 @@ function SellTab() {
                                 name={"Unlock Key:"}
                                 value={newUnlockKey ? newUnlockKey : undefined}
                                 readonly={true}
+                                copybutton={true}
                             />
                             <div className="label-attention">
                                 <b>
@@ -270,7 +272,12 @@ function SellTab() {
                             </div>
                         </div>
                     </Visibility>
-                    <ValueEdit name={"Order URL:"} readonly={true} value={orderURL ? orderURL : undefined}/>
+                    <ValueEdit
+                        name={"Order URL:"}
+                        readonly={true}
+                        value={orderURL ? orderURL : undefined}
+                        copybutton={true}
+                    />
                     <Button
                         name={"Create another order"}
                         onClick={async () => {

@@ -141,6 +141,7 @@ input[type="checkbox"] {
 
 /* Style the tab content */
 .tabcontent {
+    margin: 20px;
     min-height: 100%;
     display: flex;
     flex-direction: column;
@@ -298,4 +299,23 @@ button[class='fixed']:hover {
 .token-box label {
     max-width: 40px;
     min-width: 40px;
+}
+
+div[class='error-message'] {
+    background-color: #ffa98a;
+    float: inherit;
+    position: absolute;
+    color: red;
+    border-style: solid;
+    border-radius: 20px;
+    padding: 20px;
+    cursor: pointer;
+}
+
+div[class='error-message']:hover {
+    background-color: #ffec8a;
+}
+
+div[class='error-message-inactive'] {
+    display: none;
 }

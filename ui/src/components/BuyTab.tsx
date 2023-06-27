@@ -1,13 +1,13 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import {OrderDescription} from "./OrderDescription";
-import React, { ChangeEvent, FC, InputHTMLAttributes, useEffect, useState } from "react";
+import React, { ChangeEvent, FC, useEffect, useState } from "react";
 import {ValueEdit} from "./ValueEdit";
 import {
     amountToDecimal,
     FillOrderProps,
     fillOrderTransaction,
     getOrderDescriptionChecked,
-    parseBigInt, parseUnlockKey,
+    parseUnlockKey,
     publicKeyChecker,
     unlockKeyChecker
 } from "../p2p-swap";
@@ -40,7 +40,8 @@ const BuyTab: FC = () => {
         connection,
         wallet,
         supportedTokens,
-        walletTokens
+        walletTokens,
+        showErrorMessage,
     } = useApp();
 
     const [errorDescription, setErrorDescription] = useState<string|null>("Please, select order");
@@ -127,6 +128,7 @@ const BuyTab: FC = () => {
             let signer = wallet?.adapter.publicKey;
             let unlockKeyParsed = parseUnlockKey(unlockKey);
             let buyAmountParsed = BigInt(buyAmountDec.mul(new Decimal(10).pow(buyOrderDescription?.sellToken?.decimals)).toString());
+
             if (signer && orderAddress && buyOrderDescription &&
                 buyAmountParsed && buyAmountParsed > BigInt(0)) {
                 let props: FillOrderProps = {
@@ -183,46 +185,38 @@ const BuyTab: FC = () => {
 
     const onBuyAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
         setBuyAmount(event.target.value);
-        if (!simplifiedDescription) {
-            return;
-        }
 
-        try {
-            let amountDec = new Decimal(event.target.value);
-            if (amountDec.lessThan(simplifiedDescription.minSellAmount)) {
-                amountDec = simplifiedDescription.minSellAmount;
-            }
-
-            if (amountDec.greaterThan(simplifiedDescription.remainsToFill)) {
-                amountDec = simplifiedDescription.remainsToFill;
-            }
-
-            setBuyAmount(amountDec.toString());
-            setBuyAmountDec(amountDec);
-        } catch (e) {
-            setBuyAmountDec(null);
-        }
     }
 
     useEffect(() => {
         setErrorDescription(null);
-        if (
-            !buyOrderDescription
-            || !buyOrderDescription.buyToken
+
+        if (!buyOrderDescription
             || !simplifiedDescription
-            || !buyAmountDec
-        ) {
+            || !buyOrderDescription.buyToken) {
+            setBuyAmountDec(null);
             setSellAmountDec(null);
+            setSellAmount('0');
             return;
         }
 
         try {
+            let buyAmountDec = new Decimal(buyAmount);
+            if (buyAmountDec.lessThan(simplifiedDescription.minSellAmount)) {
+                buyAmountDec = simplifiedDescription.minSellAmount;
+                setBuyAmount(buyAmountDec.toString());
+            }
+
+            if (buyAmountDec.greaterThan(simplifiedDescription.remainsToFill)) {
+                buyAmountDec = simplifiedDescription.remainsToFill;
+                setBuyAmount(buyAmountDec.toString());
+            }
+
+            setBuyAmountDec(buyAmountDec);
+
             let walletPriceToken = walletTokens.get(simplifiedDescription.priceTokenName);
             if (!walletPriceToken) {
-                setErrorDescription(`You dont have ${simplifiedDescription.priceTokenName} to fill this order`);
-                setSellAmountDec(null);
-                setSellAmount('0');
-                return;
+                throw `You dont have ${simplifiedDescription.priceTokenName} to fill this order`;
             }
 
             let sellAmountDec = buyAmountDec.mul(simplifiedDescription?.price);
@@ -232,19 +226,18 @@ const BuyTab: FC = () => {
             );
 
             if (sellAmountDec.greaterThan(walletAmountDec)) {
-                setErrorDescription(`You have not enough ${simplifiedDescription.priceTokenName}`);
-                setSellAmountDec(null);
-                setSellAmount('0');
-                return;
+                throw `You have not enough ${simplifiedDescription.priceTokenName}`;
             }
 
             setSellAmountDec(sellAmountDec);
             setSellAmount(sellAmountDec.toString());
-        } catch (e) {
+        } catch (e: any) {
+            showErrorMessage(e.toString());
+            setBuyAmountDec(null);
             setSellAmountDec(null);
             setSellAmount('0');
         }
-    }, [buyAmountDec]);
+    }, [buyAmount]);
 
     return (
         <div className="vertical">

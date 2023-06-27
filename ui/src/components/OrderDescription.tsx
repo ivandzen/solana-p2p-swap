@@ -23,6 +23,7 @@ function OrderDescription({description}: {description: OrderDescriptionData|null
                         name={"Seller:"}
                         value={description.seller.toBase58()}
                         readonly={true}
+                        copybutton={true}
                     />
                     <ValueEdit
                         name={"Sell Amount:"}
@@ -33,16 +34,19 @@ function OrderDescription({description}: {description: OrderDescriptionData|null
                         name={"Order Wallet:"}
                         value={description.orderWallet.toBase58()}
                         readonly={true}
+                        copybutton={true}
                     />
                     <ValueEdit
                         name={"Token Mint:"}
                         value={description.tokenMint.toBase58()}
                         readonly={true}
+                        copybutton={true}
                     />
                     <ValueEdit
                         name={"Price Mint:"}
                         value={description.priceMint.toBase58()}
                         readonly={true}
+                        copybutton={true}
                     />
                     <ValueEdit
                         name={"Buy Amount:"}

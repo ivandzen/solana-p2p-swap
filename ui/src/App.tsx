@@ -72,6 +72,7 @@ const Content: FC = () => {
     const [appMode, setAppMode] = useState<string|null>(null);
     const [orders, setOrders] = useState<Map<PublicKey, OrderDescriptionData>|undefined>(undefined);
     const [walletTokens, setWalletTokens] = useState<Map<string, WalletToken>>(new Map());
+    const [errorMessage, showErrorMessage] = useState<string|null>(null);
 
     useEffect(() => {
         if (connected) {
@@ -136,6 +137,8 @@ const Content: FC = () => {
             walletTokens: walletTokens,
             explorer: 'https://solscan.io',
             cluster: 'devnet',
+            errorMessage: errorMessage,
+            showErrorMessage: showErrorMessage,
         }}>
             <MainWidget/>
         </AppContext.Provider>
