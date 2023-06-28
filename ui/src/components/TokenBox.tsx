@@ -166,7 +166,6 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                     type: "number",
                     className: selectedTokenMint ? '' : 'invalid',
                     title: selectedTokenMint?.address.toBase58(),
-                    onClick: updateWalletTokens,
                 }}
                 label={''}
                 showLabel={false}

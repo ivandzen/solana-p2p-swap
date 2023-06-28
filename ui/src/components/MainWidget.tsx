@@ -39,7 +39,7 @@ function ModeTab(
 }
 
 const MainWidget: FC = () => {
-    const {appMode, setAppMode, errorMessage, showErrorMessage} = useApp();
+    const {appMode, setAppMode, errorMessage, showErrorMessage, updateWalletTokens} = useApp();
 
     return  (
         <div>
@@ -61,9 +61,18 @@ const MainWidget: FC = () => {
                     <Visibility isActive={!errorMessage && (appMode === "Buy" || appMode === "Sell" || appMode === "Airdrop")}>
                         <div className="tabcontent">
                             <div className="horizontal">
-                                <ModeButton name="Buy" onClick={() => {setAppMode("Buy")}} activeName={appMode}/>
-                                <ModeButton name="Sell" onClick={() => {setAppMode("Sell")}} activeName={appMode}/>
-                                <ModeButton name="Airdrop" onClick={() => {setAppMode("Airdrop")}} activeName={appMode}/>
+                                <ModeButton name="Buy" onClick={() => {
+                                    setAppMode("Buy");
+                                    updateWalletTokens();
+                                }} activeName={appMode}/>
+                                <ModeButton name="Sell" onClick={() => {
+                                    setAppMode("Sell");
+                                    updateWalletTokens();
+                                }} activeName={appMode}/>
+                                <ModeButton name="Airdrop" onClick={() => {
+                                    setAppMode("Airdrop");
+                                    updateWalletTokens();
+                                }} activeName={appMode}/>
                             </div>
 
                             <ModeTab name="Buy" activeName={appMode}><BuyTab/></ModeTab>
