@@ -253,16 +253,6 @@ const BuyTab: FC = () => {
                 value={orderAddress ? orderAddress.toString() : ""}
             />
             <SimplifiedOrderDescription data={simplifiedDescription}/>
-            <Button
-                name={"View details"}
-                onClick={()=>{}}
-                checkable={true}
-                checked={expandDetails}
-                setChecked={setExpandDetails}
-            />
-            <Visibility isActive={expandDetails}>
-                <OrderDescription description={buyOrderDescription}/>
-            </Visibility>
             <Visibility isActive={!!errorDescription}>
                 <h1>{errorDescription}</h1>
             </Visibility>

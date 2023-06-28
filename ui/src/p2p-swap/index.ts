@@ -362,14 +362,18 @@ interface FillOrderProps {
     orderAddress: PublicKey,
     order: OrderDescriptionData,
     unlockKey?: Uint8Array,
-    buyerBuyTokenWallet?: PublicKey,
 }
 
-async function createFillInstruction(props: FillOrderProps): Promise<TransactionInstruction> {
-    if (!props.buyerBuyTokenWallet) {
-        throw "Buyer buy token wallet is not set";
-    }
+interface FillOrderWallets {
+    buyerBuyTokenWallet: PublicKey,
+    sellerBuyTokenWallet: PublicKey,
+    buyerSellTokenWallet: PublicKey,
+}
 
+async function createFillInstruction(
+    props: FillOrderProps,
+    wallets: FillOrderWallets
+): Promise<TransactionInstruction> {
     if (!props.order.sellToken) {
         throw "Sell token is not set in order";
     }
@@ -390,20 +394,14 @@ async function createFillInstruction(props: FillOrderProps): Promise<Transaction
 
     let [orderWalletAuthority] = getOrderWalletAuthority(props.programId, props.order.seller);
 
-    let sellerBuyTokenWallet
-      = await getAssociatedTokenAddress(props.order.buyToken.address, props.order.seller, false);
-
-    let buyerSellTokenWallet =
-        await getAssociatedTokenAddress(props.order.sellToken.address, props.signer, false);
-
     keys.push(
       { pubkey: orderWalletAuthority, isSigner: false, isWritable: false },
       { pubkey: props.order.sellToken.address, isSigner: false, isWritable: false },
       { pubkey: props.order.orderWallet, isSigner: false, isWritable: true },
       { pubkey: props.order.buyToken.address, isSigner: false, isWritable: false },
-      { pubkey: props.buyerBuyTokenWallet, isSigner: false, isWritable: true },
-      { pubkey: sellerBuyTokenWallet, isSigner: false, isWritable: true },
-      { pubkey: buyerSellTokenWallet, isSigner: false, isWritable: true },
+      { pubkey: wallets.buyerBuyTokenWallet, isSigner: false, isWritable: true },
+      { pubkey: wallets.sellerBuyTokenWallet, isSigner: false, isWritable: true },
+      { pubkey: wallets.buyerSellTokenWallet, isSigner: false, isWritable: true },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     )
 
@@ -426,22 +424,54 @@ async function fillOrderTransaction(
     const { blockhash } = await connection.getLatestBlockhash();
     let transaction = new Transaction({ recentBlockhash: blockhash, feePayer: props.signer });
 
-    if (!props.order.buyToken) {
-        throw "Buy token is not set in order";
+    if (!props.order.buyToken || !props.order.sellToken) {
+        throw "Order props is not correctly filled";
     }
 
-    props.buyerBuyTokenWallet = await getAssociatedTokenAddress(
-      props.order.buyToken.address,
-      props.signer,
-      false
-    );
+    let wallets: FillOrderWallets = {
+        buyerBuyTokenWallet: await getAssociatedTokenAddress(
+            props.order.buyToken.address,
+            props.signer,
+            false
+        ),
+        buyerSellTokenWallet: await getAssociatedTokenAddress(
+            props.order.sellToken.address,
+            props.signer,
+            false
+        ),
+        sellerBuyTokenWallet: await getAssociatedTokenAddress(
+            props.order.buyToken.address,
+            props.order.seller,
+            false
+        )
+    }
+
+    if (!await connection.getAccountInfo(wallets.sellerBuyTokenWallet)) {
+        // buy token wallet of seller does not exist
+        transaction.add(createAssociatedTokenAccountInstruction(
+            props.signer,
+            wallets.sellerBuyTokenWallet,
+            props.order.seller,
+            props.order.buyToken.address
+        ));
+    }
+
+    if (!await connection.getAccountInfo(wallets.buyerSellTokenWallet)) {
+        // sell token wallet of buyer does not exist
+        transaction.add(createAssociatedTokenAccountInstruction(
+            props.signer,
+            wallets.buyerSellTokenWallet,
+            props.signer,
+            props.order.sellToken.address
+        ));
+    }
 
     let buyTokenAmount = (props.sellTokenAmount * props.order.buyAmount) / props.order.sellAmount;
 
     // Allow p2p-swap program to transfer funds from signer's token account
     transaction.add(
       createApproveInstruction(
-        props.buyerBuyTokenWallet,
+        wallets.buyerBuyTokenWallet,
         props.programId,
         props.signer,
         buyTokenAmount,
@@ -459,7 +489,7 @@ async function fillOrderTransaction(
         }));
     }
 
-    transaction.add(await createFillInstruction(props));
+    transaction.add(await createFillInstruction(props, wallets));
 
     return transaction;
 }
