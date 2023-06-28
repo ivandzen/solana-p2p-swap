@@ -41,10 +41,7 @@ input {
     font-family: monospace;
     border-color: transparent;
     border-radius: 2px;
-    margin-top: 2px;
-    margin-bottom: 2px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin: 0 2px;
     transition-duration: 0.5s;
     width: 100%;
 }
@@ -167,6 +164,7 @@ input[type="checkbox"] {
 
 .visibilitytab {
     display: block;
+    margin: 0 1px;
 }
 
 .visibilitytab .inactive{
@@ -206,7 +204,7 @@ input[type="checkbox"] {
     flex-direction: row;
     align-items: center;
     width: 100%;
-    margin: 2px;
+    margin: 3px 2px;
 }
 
 .token-list {
@@ -289,7 +287,7 @@ button[class='fixed'] {
     max-width: 80px;
     min-width: 80px;
     transition-duration: 0.5s;
-    margin: 2px;
+    margin: 0 2px;
 }
 
 button[class='fixed']:disabled {

@@ -21,8 +21,8 @@ import {
 import Decimal from "decimal.js";
 
 function getTokenName(supportedTokens: SupportedTokens, inPubkey: PublicKey): string {
-    for (let [label, pubkey] of supportedTokens) {
-        if (pubkey.equals(inPubkey)) {
+    for (let [label, token] of supportedTokens) {
+        if (token.pubkey.equals(inPubkey)) {
             return label;
         }
     }

@@ -507,7 +507,6 @@ async function getTokens(
     connection:Connection,
     owner: PublicKey
 ): Promise<Map<string, WalletToken>> {
-    console.log("Reading tokens...");
     let accounts = await connection.getParsedTokenAccountsByOwner(
         owner,
         {
@@ -531,7 +530,7 @@ async function getTokens(
                     uiAmount: parseInt(entry.tokenAmount.uiAmount)
                 });
         }
-        console.log(result);
+
         return result;
     }
 

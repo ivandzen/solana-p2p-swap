@@ -5,6 +5,7 @@ import {SellTab} from "./SellTab";
 import {useApp} from "../AppContext";
 import { Visibility } from "./Visibility";
 import {OrderList} from "./OrderList";
+import { AirdropPage } from "./AirdropPage";
 
 function ModeButton(
     { name, onClick, activeName }:
@@ -40,14 +41,6 @@ function ModeTab(
 const MainWidget: FC = () => {
     const {appMode, setAppMode, errorMessage, showErrorMessage} = useApp();
 
-    const buyClick = () => {
-        setAppMode("Buy");
-    };
-
-    const sellClick = () => {
-        setAppMode("Sell");
-    };
-
     return  (
         <div>
             <div className="mainwindow">
@@ -65,15 +58,17 @@ const MainWidget: FC = () => {
                     <Visibility isActive={!errorMessage && appMode === "Order-List"}>
                         <OrderList></OrderList>
                     </Visibility>
-                    <Visibility isActive={!errorMessage && (appMode === "Buy" || appMode === "Sell")}>
+                    <Visibility isActive={!errorMessage && (appMode === "Buy" || appMode === "Sell" || appMode === "Airdrop")}>
                         <div className="tabcontent">
                             <div className="horizontal">
-                                <ModeButton name="Buy" onClick={buyClick} activeName={appMode}/>
-                                <ModeButton name="Sell" onClick={sellClick} activeName={appMode}/>
+                                <ModeButton name="Buy" onClick={() => {setAppMode("Buy")}} activeName={appMode}/>
+                                <ModeButton name="Sell" onClick={() => {setAppMode("Sell")}} activeName={appMode}/>
+                                <ModeButton name="Airdrop" onClick={() => {setAppMode("Airdrop")}} activeName={appMode}/>
                             </div>
 
                             <ModeTab name="Buy" activeName={appMode}><BuyTab/></ModeTab>
                             <ModeTab name="Sell" activeName={appMode}><SellTab/></ModeTab>
+                            <ModeTab name="Airdrop" activeName={appMode}><AirdropPage/></ModeTab>
                         </div>
                     </Visibility>
                     <Visibility isActive={!errorMessage && appMode === "Send-Txn"}>

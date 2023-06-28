@@ -7,11 +7,11 @@ import {
 } from "@solana/wallet-adapter-react";
 import {WalletModalProvider} from '@solana/wallet-adapter-react-ui';
 import { BraveWalletAdapter, PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
-import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
+import { clusterApiUrl, Connection, Keypair, PublicKey } from "@solana/web3.js";
 import type { FC, ReactNode } from 'react';
 import React, { useEffect, useMemo, useState } from "react";
 import {MainWidget} from "./components/MainWidget";
-import {AppContext} from "./AppContext";
+import { AppContext, SupportedToken, SupportedTokens } from "./AppContext";
 import { OrderDescriptionData, getTokens, WalletToken } from "./p2p-swap";
 import supportedTokensFile from "./supportedTokens.json";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -96,12 +96,19 @@ const Content: FC = () => {
 
     let domain = process.env.SITE_DOMAIN || "http://localhost:1234";
 
-    let supportedTokens: Map<string, PublicKey> = new Map();
+    let supportedTokens: Map<string, SupportedToken> = new Map();
     for (let entry of supportedTokensFile) {
-        supportedTokens.set(entry.label, new PublicKey(entry.pubkey));
+        supportedTokens.set(entry.label,
+                            {
+                                pubkey: new PublicKey(entry.pubkey),
+                                keypair:
+                                    entry.mint_authority_kp
+                                    ? Keypair.fromSecretKey(Uint8Array.from(entry.mint_authority_kp))
+                                    : undefined,
+                            });
     }
 
-    useEffect(() => {
+    const updateWalletTokens = () => {
         const impl = async() => {
             if (!connected) {
                 return;
@@ -115,6 +122,10 @@ const Content: FC = () => {
             }
         };
         impl().then(()=>{});
+    }
+
+    useEffect(() => {
+        updateWalletTokens();
     }, [connected, connection, wallet]);
 
     return (
@@ -135,6 +146,7 @@ const Content: FC = () => {
             setOrders: setOrders,
             supportedTokens: supportedTokens,
             walletTokens: walletTokens,
+            updateWalletTokens: updateWalletTokens,
             explorer: 'https://solscan.io',
             cluster: 'devnet',
             errorMessage: errorMessage,

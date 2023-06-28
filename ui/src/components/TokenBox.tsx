@@ -11,6 +11,7 @@ interface TokenBoxProps {
     onTokenChanged: (token: Mint|undefined) => void,
     onAmountChanged: (amount: bigint|undefined) => void,
     sellSide?: boolean,
+    disableInput?: boolean,
 }
 
 interface TokenItemProps {
@@ -31,6 +32,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
     const {
         connection,
         walletTokens,
+        updateWalletTokens,
         supportedTokens,
         explorer,
         cluster,
@@ -51,14 +53,14 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 return;
             }
 
-            let address = supportedTokens.get(tokenName);
-            if (!address) {
+            let token = supportedTokens.get(tokenName);
+            if (!token) {
                 setSelectedTokenMint(undefined);
                 return;
             }
 
             try {
-                let mint = await getMint(connection, address);
+                let mint = await getMint(connection, token.pubkey);
                 setSelectedTokenMint(mint);
                 setSelectedToken(walletTokens.get(mint.address.toString()));
             } catch (e: any) {
@@ -91,9 +93,9 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
 
     useEffect(() => {
         let tokens = [];
-        for (let [label, address] of supportedTokens) {
+        for (let [label, token] of supportedTokens) {
             if (props.sellSide) {
-                let walletToken = walletTokens.get(address.toString());
+                let walletToken = walletTokens.get(token.pubkey.toString());
                 if (!walletToken)
                     continue;
             }
@@ -103,7 +105,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                             node: <TokenItem label={label} />
                         });
         }
-        console.log(`tokens sellSide ${props.sellSide}` + tokens);
+
         setTokens(tokens);
         setTokenName(undefined);
         setSelectedToken(undefined);
@@ -153,7 +155,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
         } catch (e: any) {
             setAmountStyle('invalid');
         }
-    }, [amountStr, selectedToken]);
+    }, [amountStr, selectedToken, selectedTokenMint]);
 
     return (
         <div className="token-box">
@@ -163,7 +165,8 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 inputProps={{
                     type: "number",
                     className: selectedTokenMint ? '' : 'invalid',
-                    title: selectedTokenMint?.address.toBase58()
+                    title: selectedTokenMint?.address.toBase58(),
+                    onClick: updateWalletTokens,
                 }}
                 label={''}
                 showLabel={false}
@@ -173,13 +176,15 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 onSelect={(item: Item) => {setTokenName(item.node.props.label)}}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => {setTokenName(event.target.value)}}
             />
-            <input
-                className={amountStyle}
-                type='number'
-                onChange={onAmountChange}
-                value={amountStr}
-                disabled={!selectedTokenMint}
-            />
+            <Visibility isActive={!props.disableInput}>
+                <input
+                    className={amountStyle}
+                    type='number'
+                    onChange={onAmountChange}
+                    value={amountStr}
+                    disabled={!selectedTokenMint}
+                />
+            </Visibility>
             <Visibility isActive={!!props.sellSide}>
                 <button
                     className='fixed'

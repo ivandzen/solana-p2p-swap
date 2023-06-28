@@ -26,8 +26,8 @@ function getTokenLabel(supportedTokens: SupportedTokens, inPubkey: PublicKey|und
         return 'UNKNOWN'
     }
 
-    for (let [label, pubkey] of supportedTokens) {
-        if (pubkey.equals(inPubkey)) {
+    for (let [label, token] of supportedTokens) {
+        if (token.pubkey.equals(inPubkey)) {
             return label;
         }
     }
