@@ -1,5 +1,4 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import {OrderDescription} from "./OrderDescription";
 import React, { ChangeEvent, FC, useEffect, useState } from "react";
 import {ValueEdit} from "./ValueEdit";
 import {
@@ -51,7 +50,6 @@ const BuyTab: FC = () => {
     const [sellAmountDec, setSellAmountDec] = useState<Decimal|null>(null);
     const [fillOrderProps, setFillOrderProps] = useState<FillOrderProps|null>(null);
     const [simplifiedDescription, setSimplifiedDescription] = useState<SimplifiedOrderDescriptionData|null>(null);
-    const [expandDetails, setExpandDetails] = useState<boolean>(false);
 
     useEffect(() => {
         async function updateOrderDescription(
@@ -183,7 +181,7 @@ const BuyTab: FC = () => {
                 return;
             }
 
-            let walletPriceToken = walletTokens.get(simplifiedDescription.priceTokenName);
+            let walletPriceToken = walletTokens.get(buyOrderDescription.priceMint.toString());
             if (!walletPriceToken) {
                 throw `You dont have ${simplifiedDescription.priceTokenName} to fill this order`;
             }
@@ -269,7 +267,7 @@ const BuyTab: FC = () => {
                         <label><b>{simplifiedDescription?.orderTokenName}</b></label>
                     </div>
                     <div className='horizontal'>
-                        <label><b>You will give :</b></label>
+                        <label><b>You have to pay :</b></label>
                         <input
                             className={sellAmountDec ? '' : 'invalid'}
                             type='number'

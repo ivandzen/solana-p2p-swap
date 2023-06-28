@@ -1,20 +1,20 @@
 import React, { ChangeEvent, FC, useEffect, useState } from "react";
 import { useApp } from "../AppContext";
 import { DatalistInput, Item } from "react-datalist-input";
-import { PublicKey } from "@solana/web3.js";
-import { amountToStr, parseBigInt, WalletToken } from "../p2p-swap";
+import { amountToStr, WalletToken } from "../p2p-swap";
 import { Visibility } from "./Visibility";
+import { getMint, Mint } from "@solana/spl-token";
+import Decimal from "decimal.js";
 
 interface TokenBoxProps {
     name: string,
-    onTokenChanged: (token: WalletToken|undefined) => void,
+    onTokenChanged: (token: Mint|undefined) => void,
     onAmountChanged: (amount: bigint|undefined) => void,
-    limitWalletAmount?: boolean,
+    sellSide?: boolean,
 }
 
 interface TokenItemProps {
-    value: PublicKey,
-    label?: string,
+    label: string,
 }
 
 const TokenItem: FC<TokenItemProps> = (props) => {
@@ -27,133 +27,130 @@ const TokenItem: FC<TokenItemProps> = (props) => {
     )
 }
 
-function strToAmount(value: string, token: WalletToken): bigint {
-    let [intPartStr, decPartStr] = value.split('.');
-
-    let intPart: bigint|null = 0n;
-    let decPart: bigint|null = 0n;
-    if (intPartStr) intPart = parseBigInt(intPartStr);
-
-    if (decPartStr) {
-        if (decPartStr.length > token.decimals) {
-            decPartStr = decPartStr.substring(0, token.decimals);
-        } else if (decPartStr.length < token.decimals) {
-            decPartStr = decPartStr.padEnd(token.decimals, '0');
-        }
-        decPart = parseBigInt(decPartStr);
-    }
-
-    if (intPart !== null && decPart !== null) {
-        return intPart * (10n ** BigInt(token.decimals)) + decPart;
-    }
-
-    throw `Failed to convert '${value}' to bigint`;
-}
-
-
-
 const TokenBox: FC<TokenBoxProps> = (props) => {
     const {
+        connection,
         walletTokens,
+        supportedTokens,
         explorer,
         cluster,
+        showErrorMessage,
     } = useApp();
     const [tokenName, setTokenName] = useState<string|undefined>(undefined);
     const [tokens, setTokens] = useState<Item[]>([]);
+    const [selectedTokenMint, setSelectedTokenMint] = useState<Mint|undefined>(undefined);
     const [selectedToken, setSelectedToken] = useState<WalletToken|undefined>(undefined);
     const [amountStr, setAmountStr] = useState<string|undefined>('0');
     const [amountStyle, setAmountStyle] = useState<string>('invalid');
 
-    const onTokenSelected = (item: Item) => {
-        if (!walletTokens) {
-            return;
-        }
-        setTokenName(item.node.props.label);
-        setSelectedToken(walletTokens.get(item.node.props.label));
-    };
+    useEffect(()=> {
+        const impl = async() => {
+            if (!tokenName) {
+                setSelectedTokenMint(undefined);
+                setSelectedToken(undefined);
+                return;
+            }
 
-    const onTokenChange = (event: any) => {
-        if (!walletTokens) {
-            return;
+            let address = supportedTokens.get(tokenName);
+            if (!address) {
+                setSelectedTokenMint(undefined);
+                return;
+            }
+
+            try {
+                let mint = await getMint(connection, address);
+                setSelectedTokenMint(mint);
+                setSelectedToken(walletTokens.get(mint.address.toString()));
+            } catch (e: any) {
+                showErrorMessage(e.toString());
+            }
         }
-        setTokenName(event.target.value);
-        setSelectedToken(walletTokens.get(event.target.value));
-    };
+
+        impl().then(()=>{});
+    }, [tokenName]);
 
     const onAmountChange = (event: ChangeEvent<any>) => {
         setAmountStr(event.target.value);
     }
 
     const maxButtonClick = () => {
-        if (!selectedToken) {
+        if (!selectedToken || !selectedTokenMint) {
             return;
         }
-        setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken.decimals));
+        setAmountStr(amountToStr(selectedToken.tokenAmount, selectedTokenMint.decimals));
     }
 
     const onExplorerClick = () => {
-        if (!selectedToken) {
+        if (!selectedTokenMint) {
             return;
         }
 
-        let url = `${explorer}/token/${selectedToken?.mint.toBase58()}?cluster=${cluster}`;
+        let url = `${explorer}/token/${selectedTokenMint.address.toBase58()}?cluster=${cluster}`;
         window.open(url);
     }
 
     useEffect(() => {
-        if (!walletTokens) {
-            return;
-        }
         let tokens = [];
-        console.log(walletTokens);
-        for (let [, walletToken] of walletTokens) {
-            if (walletToken.label) {
-                tokens.push({
-                                id: walletToken.label,
-                                node: <TokenItem
-                                    value={walletToken.mint}
-                                    label={walletToken.label}
-                                />
-                            });
+        for (let [label, address] of supportedTokens) {
+            if (props.sellSide) {
+                let walletToken = walletTokens.get(address.toString());
+                if (!walletToken)
+                    continue;
             }
-        }
 
+            tokens.push({
+                            id: label,
+                            node: <TokenItem label={label} />
+                        });
+        }
+        console.log(`tokens sellSide ${props.sellSide}` + tokens);
         setTokens(tokens);
-    }, [walletTokens]);
+        setTokenName(undefined);
+        setSelectedToken(undefined);
+        setSelectedTokenMint(undefined);
+        setAmountStr('');
+    }, [walletTokens, supportedTokens]);
 
     useEffect(() => {
-        props.onTokenChanged(selectedToken)
-        if (!selectedToken) {
-            return;
-        }
-
+        props.onTokenChanged(selectedTokenMint);
         if (!amountStr) {
             setAmountStyle('invalid');
             return;
         }
 
+        if (!selectedTokenMint) {
+            return;
+        }
+
         try {
-            if (parseFloat(amountStr) < 1) {
-                props.onAmountChanged(1n);
-                setAmountStr(amountToStr(1n, selectedToken.decimals));
+            let amountDec =
+                    new Decimal(amountStr)
+                        .mul(Math.pow(10, selectedTokenMint.decimals));
+
+            if (amountDec.lessThan(1)) {
+                setAmountStr('0');
+                setAmountStyle('invalid');
                 return;
             }
 
-            let amount = strToAmount(amountStr, selectedToken);
-            if (amount < 1) {
+            let amount = BigInt(amountDec.toString());
+            if (amount < 1n) {
                 setAmountStyle('invalid');
                 return;
             }
 
             setAmountStyle('');
-            if (props.limitWalletAmount && amount > selectedToken.tokenAmount) {
-                props.onAmountChanged(selectedToken.tokenAmount);
-                setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken.decimals));
-                return;
+            if (props.sellSide) {
+                if (selectedToken && amount > selectedToken.tokenAmount) {
+                    props.onAmountChanged(selectedToken.tokenAmount);
+                    setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken.decimals));
+                } else {
+                    props.onAmountChanged(amount);
+                }
+            } else {
+                props.onAmountChanged(amount);
             }
-            props.onAmountChanged(amount);
-        } catch (e) {
-            console.log(`TokenBox: ${e}`);
+        } catch (e: any) {
             setAmountStyle('invalid');
         }
     }, [amountStr, selectedToken]);
@@ -166,9 +163,9 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 type='number'
                 onChange={onAmountChange}
                 value={amountStr}
-                disabled={!selectedToken}
+                disabled={!selectedTokenMint}
             />
-            <Visibility isActive={!!props.limitWalletAmount}>
+            <Visibility isActive={!!props.sellSide}>
                 <button
                     className='fixed'
                     disabled={!selectedToken}
@@ -180,19 +177,19 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 className={"datalist"}
                 inputProps={{
                     type: "number",
-                    className: selectedToken ? '' : 'invalid',
-                    title: selectedToken?.mint.toBase58()
+                    className: selectedTokenMint ? '' : 'invalid',
+                    title: selectedTokenMint?.address.toBase58()
                 }}
                 label={''}
                 showLabel={false}
                 isExpandedClassName="token-list"
                 value={tokenName}
                 items={tokens}
-                onSelect={onTokenSelected}
-                onChange={onTokenChange}
+                onSelect={(item: Item) => {setTokenName(item.node.props.label)}}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {setTokenName(event.target.value)}}
             />
             <button
-                disabled={!selectedToken}
+                disabled={!selectedTokenMint}
                 className='fixed'
                 onClick={onExplorerClick}
                 title="Open in explorer"

@@ -1,7 +1,6 @@
 import React from "react";
 import {ValueEdit} from "./ValueEdit";
 import { OrderDescriptionData } from "../p2p-swap";
-import { Visibility } from "./Visibility";
 
 function OrderDescription({description}: {description: OrderDescriptionData|null}) {
     if (!description) {

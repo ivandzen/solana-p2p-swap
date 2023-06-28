@@ -108,7 +108,7 @@ const Content: FC = () => {
             }
 
             if (wallet?.adapter.publicKey) {
-                let tokens = await getTokens(connection, wallet.adapter.publicKey, supportedTokens);
+                let tokens = await getTokens(connection, wallet.adapter.publicKey);
                 setWalletTokens(tokens);
             } else {
                 setWalletTokens(new Map());
