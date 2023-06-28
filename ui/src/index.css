@@ -292,7 +292,12 @@ button[class='fixed'] {
     margin: 2px;
 }
 
-button[class='fixed']:hover {
+button[class='fixed']:disabled {
+    background-color: #3a1344;
+    color: #999999;
+}
+
+button[class='fixed']:enabled:hover {
     background-color: #e5a2e2;
 }
 

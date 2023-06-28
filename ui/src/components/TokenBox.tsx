@@ -158,21 +158,6 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
     return (
         <div className="token-box">
             <label><b>{props.name}</b></label>
-            <input
-                className={amountStyle}
-                type='number'
-                onChange={onAmountChange}
-                value={amountStr}
-                disabled={!selectedTokenMint}
-            />
-            <Visibility isActive={!!props.sellSide}>
-                <button
-                    className='fixed'
-                    disabled={!selectedToken}
-                    title="Place all your tokens"
-                    onClick={maxButtonClick}
-                >MAX</button>
-            </Visibility>
             <DatalistInput
                 className={"datalist"}
                 inputProps={{
@@ -188,6 +173,21 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 onSelect={(item: Item) => {setTokenName(item.node.props.label)}}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => {setTokenName(event.target.value)}}
             />
+            <input
+                className={amountStyle}
+                type='number'
+                onChange={onAmountChange}
+                value={amountStr}
+                disabled={!selectedTokenMint}
+            />
+            <Visibility isActive={!!props.sellSide}>
+                <button
+                    className='fixed'
+                    disabled={!selectedToken}
+                    title="Place all your tokens"
+                    onClick={maxButtonClick}
+                >MAX</button>
+            </Visibility>
             <button
                 disabled={!selectedTokenMint}
                 className='fixed'
