@@ -327,7 +327,7 @@ fn revoke_order<'a>(
     let order_wallet_authority = next_account_info(account_info_iter)?; // 3 - order wallet authority
     let order_wallet_account = next_account_info(account_info_iter)?; // 4 - order wallet
 
-    let (order_wallet, bump_seed) = check_and_get_order_wallet(
+    let (order_wallet, order_wallet_seed) = check_and_get_order_wallet(
         program_id,
         &order,
         order_wallet_authority,
@@ -404,7 +404,7 @@ fn revoke_order<'a>(
             seller_wallet.clone(),
             order_wallet_authority.clone(),
         ],
-        &[&[b"OrderWalletAuthority", &caller.key.to_bytes(), &[bump_seed]]],
+        &[&[b"OrderWalletAuthority", &seller.key.to_bytes(), &[order_wallet_seed]]],
     )?;
 
     if remains_to_fill_after == 0 {
