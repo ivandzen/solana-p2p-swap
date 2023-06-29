@@ -203,10 +203,10 @@ function SellTab() {
             let buy = new Decimal(buyAmount.toString()).div(Math.pow(10, buyToken.decimals));
             if (!flippedPrice) {
                 setPriceString(`Your price: 1 ${getTokenLabel(supportedTokens, buyToken?.address)}
-                = ${sell.div(buy).toFixed(6)} ${getTokenLabel(supportedTokens, sellToken?.address)}`);
+                = ${sell.div(buy).toSignificantDigits(sellToken.decimals)} ${getTokenLabel(supportedTokens, sellToken?.address)}`);
             } else {
                 setPriceString(`Your price: 1 ${getTokenLabel(supportedTokens, sellToken?.address)}
-                = ${buy.div(sell).toFixed(6)} ${getTokenLabel(supportedTokens, buyToken?.address)}`);
+                = ${buy.div(sell).toSignificantDigits(buyToken.decimals)} ${getTokenLabel(supportedTokens, buyToken?.address)}`);
             }
         } else {
             setPriceString(null);

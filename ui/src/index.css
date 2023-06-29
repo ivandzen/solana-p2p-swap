@@ -62,7 +62,7 @@ input:read-write {
 
 input:read-only {
     background: transparent;
-    color: #b967de;
+    color: #ffffff;
 }
 
 input[class~="invalid"] {

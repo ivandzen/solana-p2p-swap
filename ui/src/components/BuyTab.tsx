@@ -242,7 +242,9 @@ const BuyTab: FC = () => {
                 name={"Order Address:"}
                 onChange={onOrderAddressChange}
                 valueChecker={publicKeyChecker}
+                readonly={true}
                 value={orderAddress ? orderAddress.toString() : ""}
+                copybutton={true}
             />
             <SimplifiedOrderDescription data={simplifiedDescription}/>
             <Visibility isActive={!!errorDescription}>

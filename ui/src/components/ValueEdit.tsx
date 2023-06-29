@@ -59,6 +59,7 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
             <Visibility isActive={!!attribs.copybutton}>
                 <button
                     className="copy-button"
+                    title='Copy value'
                     onClick={() => {navigator.clipboard.writeText(value).then(()=>{})}}
                 >
                     {'📋'}

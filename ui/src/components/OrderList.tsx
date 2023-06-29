@@ -3,15 +3,15 @@ import { getTokenName, SupportedTokens, useApp } from "../AppContext";
 import { Button } from "./Button";
 import {
     amountToDecimal,
-    getTokens,
     ORDER_ACCOUNT_SIZE,
     OrderDescriptionData,
     P2P_SWAP_DEVNET,
     parseOrderDescription
 } from "../p2p-swap";
 import { PublicKey } from "@solana/web3.js";
-import { getMint, getMultipleAccounts, Mint, unpackMint } from "@solana/spl-token";
+import { Mint, unpackMint } from "@solana/spl-token";
 import Decimal from "decimal.js";
+import { Visibility } from "./Visibility";
 
 interface OrderItemProps {
     pubkey: PublicKey,
@@ -21,6 +21,7 @@ interface OrderItemProps {
     availableSellTokens: Decimal,
     sellTokenDecimals: number,
     buyTokenDecimals: number,
+    isPrivate: boolean,
 }
 
 export const OrderItem: FC<OrderItemProps> = (props) => {
@@ -43,6 +44,9 @@ export const OrderItem: FC<OrderItemProps> = (props) => {
                 {`${props.availableSellTokens.toSignificantDigits(props.sellTokenDecimals).toString()} 
                 ${props.sellToken}`}
             </td>
+            <td className='order-list-item-element' onClick={onClick}>
+                {props.isPrivate ? 'Yes' : 'No'}
+            </td>
         </tr>
     )
 }
@@ -60,6 +64,7 @@ export const OrderList: FC<OrderListProps> = (props) => {
     } = useApp();
 
     let [items, setItems] = useState<ReactNode[]>([]);
+    let [pageMessage, setPageMessage] = useState<string|null>(null);
 
     const updateOrders = async () => {
         let accounts = await connection.getProgramAccounts(
@@ -125,6 +130,7 @@ export const OrderList: FC<OrderListProps> = (props) => {
                     availableSellTokens={amountToDecimal(order.remainsToFill, sellToken.decimals)}
                     sellTokenDecimals={sellToken.decimals}
                     buyTokenDecimals={buyToken.decimals}
+                    isPrivate={order.isPrivate}
                 />);
         }
 
@@ -134,36 +140,50 @@ export const OrderList: FC<OrderListProps> = (props) => {
     useEffect(() => {
         const impl = async() => {
             if (appMode == 'Orders') {
-                await updateOrders();
+                try {
+                    await updateOrders();
+                } catch (e: any) {
+                    showErrorMessage(e.toString());
+                }
             }
         }
 
+        setPageMessage('Updating...');
         impl().then(()=>{});
+        setPageMessage(null);
     }, [appMode]);
 
     const onUpdateClick = async () => {
+        setPageMessage('Updating...');
         try {
             await updateOrders();
         } catch (e: any) {
             showErrorMessage(e.toString());
         }
+        setPageMessage(null);
     }
 
     return (
         <div className="table-like">
             <div className="vertical">
                 <Button name={"update"} onClick={onUpdateClick}/>
-                <div className='order-list'>
-                    <table>
-                        <tr className='order-list-header'>
-                            <th className='order-list-item-element'>You will get</th>
-                            <th className='order-list-item-element'>You will pay</th>
-                            <th className='order-list-item-element'>Price</th>
-                            <th className='order-list-item-element'>Available</th>
-                        </tr>
-                        {items}
-                    </table>
-                </div>
+                <Visibility isActive={pageMessage === null}>
+                    <div className='order-list'>
+                        <table>
+                            <tr className='order-list-header'>
+                                <th className='order-list-item-element'>You will get</th>
+                                <th className='order-list-item-element'>You will pay</th>
+                                <th className='order-list-item-element'>Price</th>
+                                <th className='order-list-item-element'>Available</th>
+                                <th className='order-list-item-element'>Private</th>
+                            </tr>
+                            {items}
+                        </table>
+                    </div>
+                </Visibility>
+                <Visibility isActive={pageMessage !== null}>
+                    <h1>{pageMessage}</h1>
+                </Visibility>
             </div>
         </div>
     )
