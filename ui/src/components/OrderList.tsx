@@ -156,8 +156,8 @@ export const OrderList: FC<OrderListProps> = (props) => {
                 <div className='order-list'>
                     <table>
                         <tr className='order-list-header'>
-                            <th className='order-list-item-element'>Selling</th>
-                            <th className='order-list-item-element'>Buying</th>
+                            <th className='order-list-item-element'>You will get</th>
+                            <th className='order-list-item-element'>You will pay</th>
                             <th className='order-list-item-element'>Price</th>
                             <th className='order-list-item-element'>Available</th>
                         </tr>
