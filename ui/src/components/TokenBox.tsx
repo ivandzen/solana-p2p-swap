@@ -107,7 +107,6 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                         });
         }
 
-        console.log("OPPA");
         setTokens(tokens);
         setTokenName(tokens.length ? tokens[0].id : '');
         setAmountStr('0');
@@ -142,7 +141,9 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
 
             setAmountStyle('');
             if (props.sellSide) {
-                if (walletToken && amount > walletToken.tokenAmount) {
+                if (!walletToken || walletToken.tokenAmount == 0n) {
+                    setAmountStr('0')
+                } else if (walletToken && amount > walletToken.tokenAmount) {
                     props.onAmountChanged(walletToken.tokenAmount);
                     setAmountStr(amountToStr(walletToken.tokenAmount, walletToken.decimals));
                 } else {
@@ -174,6 +175,16 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 onSelect={(item: Item) => {setTokenName(item.node.props.label)}}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => {setTokenName(event.target.value)}}
             />
+            <Visibility isActive={!!props.sellSide}>
+                <button
+                    className='fixed'
+                    disabled={!walletToken || walletToken.tokenAmount == 0n}
+                    title={!walletToken || walletToken.tokenAmount == 0n
+                        ? `You have no ${tokenName}`
+                        : "Place all your tokens" }
+                    onClick={maxButtonClick}
+                >{!walletToken || walletToken.tokenAmount == 0n ? `You have no ${tokenName}` : 'MAX'}</button>
+            </Visibility>
             <Visibility isActive={!props.disableInput}>
                 <input
                     className={amountStyle}
@@ -182,14 +193,6 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                     value={amountStr}
                     disabled={!tokenMint}
                 />
-            </Visibility>
-            <Visibility isActive={!!props.sellSide}>
-                <button
-                    className='fixed'
-                    disabled={!walletToken}
-                    title="Place all your tokens"
-                    onClick={maxButtonClick}
-                >MAX</button>
             </Visibility>
             <button
                 disabled={!tokenMint}

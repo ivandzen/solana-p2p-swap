@@ -11,6 +11,16 @@ export interface SupportedToken {
 
 export type SupportedTokens = Map<string, SupportedToken>;
 
+export function getTokenName(supportedTokens: SupportedTokens, inPubkey: PublicKey): string|null {
+    for (let [label, token] of supportedTokens) {
+        if (token.pubkey.equals(inPubkey)) {
+            return label;
+        }
+    }
+
+    return null;
+}
+
 export interface AppContext {
     appMode: string|null,
     orderAddress: PublicKey|null,

@@ -245,12 +245,6 @@ function SellTab() {
                             <label>
                                 <b>Sell minimum</b>
                             </label>
-                            <input
-                                type='number'
-                                className={sellMinimBigint ? '' : 'invalid'}
-                                value={sellMinimum}
-                                onChange={(event) => { setSellMinimum(event.target.value) }}
-                            />
                             <button
                                 className='fixed'
                                 disabled={!(sellAmount && sellToken)}
@@ -266,6 +260,12 @@ function SellTab() {
                             >
                                 MAX
                             </button>
+                            <input
+                                type='number'
+                                className={sellMinimBigint ? '' : 'invalid'}
+                                value={sellMinimum}
+                                onChange={(event) => { setSellMinimum(event.target.value) }}
+                            />
                         </div>
                     </div>
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>

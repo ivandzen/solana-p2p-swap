@@ -55,12 +55,20 @@ const MainWidget: FC = () => {
                             </div>
                         </div>
                     </Visibility>
-                    <Visibility isActive={!errorMessage && appMode === "Order-List"}>
-                        <OrderList></OrderList>
-                    </Visibility>
-                    <Visibility isActive={!errorMessage && (appMode === "Buy" || appMode === "Sell" || appMode === "Airdrop")}>
+                    <Visibility isActive={
+                        !errorMessage &&
+                        (
+                            appMode === "Buy"
+                            || appMode === "Orders"
+                            || appMode === "Sell"
+                            || appMode === "Airdrop"
+                        )}>
                         <div className="tabcontent">
                             <div className="horizontal">
+                                <ModeButton name="Orders" onClick={() => {
+                                    setAppMode("Orders");
+                                    updateWalletTokens();
+                                }} activeName={appMode}/>
                                 <ModeButton name="Buy" onClick={() => {
                                     setAppMode("Buy");
                                     updateWalletTokens();
@@ -75,6 +83,7 @@ const MainWidget: FC = () => {
                                 }} activeName={appMode}/>
                             </div>
 
+                            <ModeTab name="Orders" activeName={appMode}><OrderList/></ModeTab>
                             <ModeTab name="Buy" activeName={appMode}><BuyTab/></ModeTab>
                             <ModeTab name="Sell" activeName={appMode}><SellTab/></ModeTab>
                             <ModeTab name="Airdrop" activeName={appMode}><AirdropPage/></ModeTab>

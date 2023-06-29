@@ -322,3 +322,20 @@ div[class='error-message']:hover {
 div[class='error-message-inactive'] {
     display: none;
 }
+
+.order-list {
+    overflow-y: auto;
+}
+
+.order-list-header {
+    background: #777777;
+}
+
+.order-list-item:hover {
+    background: #512da8;
+    cursor: pointer;
+}
+
+.order-list-item-element {
+    padding: 0 20px;
+}

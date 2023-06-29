@@ -88,7 +88,7 @@ const Content: FC = () => {
             const initUnlockKey = urlParams.get("unlock_key");
             setOrderAddress(initOrder);
             setUnlockKey(initUnlockKey);
-            setAppMode(initAppMode ? initAppMode : "Buy");
+            setAppMode(initAppMode ? initAppMode : "Orders");
         } else {
             setAppMode("Connect-Wallet");
         }

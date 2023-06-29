@@ -11,7 +11,7 @@ import {
     unlockKeyChecker
 } from "../p2p-swap";
 import {P2P_SWAP_DEVNET} from "../p2p-swap";
-import { SupportedTokens, useApp } from "../AppContext";
+import { getTokenName, useApp } from "../AppContext";
 import {Button} from "./Button";
 import {Visibility} from "./Visibility";
 import {
@@ -19,16 +19,6 @@ import {
     SimplifiedOrderDescriptionData
 } from "./SimplifiedOrderDescription";
 import Decimal from "decimal.js";
-
-function getTokenName(supportedTokens: SupportedTokens, inPubkey: PublicKey): string {
-    for (let [label, token] of supportedTokens) {
-        if (token.pubkey.equals(inPubkey)) {
-            return label;
-        }
-    }
-
-    return inPubkey.toBase58();
-}
 
 const BuyTab: FC = () => {
     const {
@@ -78,23 +68,27 @@ const BuyTab: FC = () => {
                             )
                         );
 
-                    setSimplifiedDescription(
-                        {
-                            price: price,
-                            orderTokenName: getTokenName(supportedTokens, orderDescription.tokenMint),
-                            priceTokenName: getTokenName(supportedTokens, orderDescription.priceMint),
-                            minSellAmount:
-                                amountToDecimal(
-                                    orderDescription.minSellAmount,
-                                    orderDescription.sellToken.decimals
-                                ),
-                            remainsToFill:
-                                amountToDecimal(
-                                    orderDescription.remainsToFill,
-                                    orderDescription.sellToken.decimals
-                                ),
-                            isPrivate: orderDescription.isPrivate
-                        });
+                    let orderTokenName = getTokenName(supportedTokens, orderDescription.tokenMint);
+                    let priceTokenName = getTokenName(supportedTokens, orderDescription.priceMint);
+                    if (orderTokenName && priceTokenName) {
+                        setSimplifiedDescription(
+                            {
+                                price: price,
+                                orderTokenName: orderTokenName,
+                                priceTokenName: priceTokenName,
+                                minSellAmount:
+                                    amountToDecimal(
+                                        orderDescription.minSellAmount,
+                                        orderDescription.sellToken.decimals
+                                    ),
+                                remainsToFill:
+                                    amountToDecimal(
+                                        orderDescription.remainsToFill,
+                                        orderDescription.sellToken.decimals
+                                    ),
+                                isPrivate: orderDescription.isPrivate
+                            });
+                    }
                 }
 
 
