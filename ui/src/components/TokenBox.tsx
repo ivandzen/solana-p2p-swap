@@ -1,7 +1,7 @@
 import React, { ChangeEvent, FC, useEffect, useState } from "react";
 import { useApp } from "../AppContext";
 import { DatalistInput, Item } from "react-datalist-input";
-import { amountToStr, WalletToken } from "../p2p-swap";
+import { amountToStr, getTokens, WalletToken } from "../p2p-swap";
 import { Visibility } from "./Visibility";
 import { getMint, Mint } from "@solana/spl-token";
 import Decimal from "decimal.js";
@@ -40,29 +40,27 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
     } = useApp();
     const [tokenName, setTokenName] = useState<string|undefined>(undefined);
     const [tokens, setTokens] = useState<Item[]>([]);
-    const [selectedTokenMint, setSelectedTokenMint] = useState<Mint|undefined>(undefined);
-    const [selectedToken, setSelectedToken] = useState<WalletToken|undefined>(undefined);
+    const [tokenMint, setTokenMint] = useState<Mint|undefined>(undefined);
+    const [walletToken, setWalletToken] = useState<WalletToken|undefined>(undefined);
     const [amountStr, setAmountStr] = useState<string|undefined>('0');
     const [amountStyle, setAmountStyle] = useState<string>('invalid');
 
     useEffect(()=> {
         const impl = async() => {
             if (!tokenName) {
-                setSelectedTokenMint(undefined);
-                setSelectedToken(undefined);
+                setTokenMint(undefined);
                 return;
             }
 
             let token = supportedTokens.get(tokenName);
             if (!token) {
-                setSelectedTokenMint(undefined);
+                setTokenMint(undefined);
                 return;
             }
 
             try {
                 let mint = await getMint(connection, token.pubkey);
-                setSelectedTokenMint(mint);
-                setSelectedToken(walletTokens.get(mint.address.toString()));
+                setTokenMint(mint);
             } catch (e: any) {
                 showErrorMessage(e.toString());
             }
@@ -71,63 +69,64 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
         impl().then(()=>{});
     }, [tokenName]);
 
+    useEffect(() => {
+        if (!tokenMint) {
+            return;
+        }
+
+        setWalletToken(walletTokens.get(tokenMint.address.toBase58()));
+        props.onTokenChanged(tokenMint);
+    }, [tokenMint, walletTokens]);
+
     const onAmountChange = (event: ChangeEvent<any>) => {
         setAmountStr(event.target.value);
     }
 
     const maxButtonClick = () => {
-        if (!selectedToken || !selectedTokenMint) {
+        if (!walletToken || !tokenMint) {
             return;
         }
-        setAmountStr(amountToStr(selectedToken.tokenAmount, selectedTokenMint.decimals));
+        setAmountStr(amountToStr(walletToken.tokenAmount, tokenMint.decimals));
     }
 
     const onExplorerClick = () => {
-        if (!selectedTokenMint) {
+        if (!tokenMint) {
             return;
         }
 
-        let url = `${explorer}/token/${selectedTokenMint.address.toBase58()}?cluster=${cluster}`;
+        let url = `${explorer}/token/${tokenMint.address.toBase58()}?cluster=${cluster}`;
         window.open(url);
     }
 
     useEffect(() => {
         let tokens = [];
-        for (let [label, token] of supportedTokens) {
-            if (props.sellSide) {
-                let walletToken = walletTokens.get(token.pubkey.toString());
-                if (!walletToken)
-                    continue;
-            }
-
+        for (let [label, ] of supportedTokens) {
             tokens.push({
                             id: label,
                             node: <TokenItem label={label} />
                         });
         }
 
+        console.log("OPPA");
         setTokens(tokens);
-        setTokenName(undefined);
-        setSelectedToken(undefined);
-        setSelectedTokenMint(undefined);
-        setAmountStr('');
-    }, [walletTokens, supportedTokens]);
+        setTokenName(tokens.length ? tokens[0].id : '');
+        setAmountStr('0');
+    }, [supportedTokens]);
 
     useEffect(() => {
-        props.onTokenChanged(selectedTokenMint);
         if (!amountStr) {
             setAmountStyle('invalid');
             return;
         }
 
-        if (!selectedTokenMint) {
+        if (!tokenMint) {
             return;
         }
 
         try {
             let amountDec =
                     new Decimal(amountStr)
-                        .mul(Math.pow(10, selectedTokenMint.decimals));
+                        .mul(Math.pow(10, tokenMint.decimals));
 
             if (amountDec.lessThan(1)) {
                 setAmountStr('0');
@@ -143,9 +142,9 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
 
             setAmountStyle('');
             if (props.sellSide) {
-                if (selectedToken && amount > selectedToken.tokenAmount) {
-                    props.onAmountChanged(selectedToken.tokenAmount);
-                    setAmountStr(amountToStr(selectedToken.tokenAmount, selectedToken.decimals));
+                if (walletToken && amount > walletToken.tokenAmount) {
+                    props.onAmountChanged(walletToken.tokenAmount);
+                    setAmountStr(amountToStr(walletToken.tokenAmount, walletToken.decimals));
                 } else {
                     props.onAmountChanged(amount);
                 }
@@ -155,7 +154,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
         } catch (e: any) {
             setAmountStyle('invalid');
         }
-    }, [amountStr, selectedToken, selectedTokenMint]);
+    }, [amountStr, walletToken]);
 
     return (
         <div className="token-box">
@@ -164,8 +163,8 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 className={"datalist"}
                 inputProps={{
                     type: "number",
-                    className: selectedTokenMint ? '' : 'invalid',
-                    title: selectedTokenMint?.address.toBase58(),
+                    className: tokenMint ? '' : 'invalid',
+                    title: tokenMint?.address.toBase58(),
                 }}
                 label={''}
                 showLabel={false}
@@ -181,19 +180,19 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                     type='number'
                     onChange={onAmountChange}
                     value={amountStr}
-                    disabled={!selectedTokenMint}
+                    disabled={!tokenMint}
                 />
             </Visibility>
             <Visibility isActive={!!props.sellSide}>
                 <button
                     className='fixed'
-                    disabled={!selectedToken}
+                    disabled={!walletToken}
                     title="Place all your tokens"
                     onClick={maxButtonClick}
                 >MAX</button>
             </Visibility>
             <button
-                disabled={!selectedTokenMint}
+                disabled={!tokenMint}
                 className='fixed'
                 onClick={onExplorerClick}
                 title="Open in explorer"

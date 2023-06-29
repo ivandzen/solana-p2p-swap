@@ -54,7 +54,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 
     return (
         <ConnectionProvider endpoint={endpoint}>
-            <WalletProvider wallets={wallets}>
+            <WalletProvider wallets={wallets} autoConnect={true}>
                 <WalletModalProvider>{children}</WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
@@ -66,7 +66,7 @@ const Context: FC<{ children: ReactNode }> = ({ children }) => {
 const Content: FC = () => {
     const [buyOrderDescription, setBuyOrderDescription] = useState<OrderDescriptionData|null>(null);
     const {connection} = useConnection();
-    const {wallet, signMessage, connected} = useWallet();
+    const {wallet, signMessage, connected, connecting} = useWallet();
     const [orderAddress, setOrderAddress] = useState<PublicKey|null>(null);
     const [unlockKey, setUnlockKey] = useState<string|null>(null);
     const [appMode, setAppMode] = useState<string|null>(null);
@@ -96,17 +96,22 @@ const Content: FC = () => {
 
     let domain = process.env.SITE_DOMAIN || "http://localhost:1234";
 
-    let supportedTokens: Map<string, SupportedToken> = new Map();
-    for (let entry of supportedTokensFile) {
-        supportedTokens.set(entry.label,
-                            {
-                                pubkey: new PublicKey(entry.pubkey),
-                                keypair:
-                                    entry.mint_authority_kp
-                                    ? Keypair.fromSecretKey(Uint8Array.from(entry.mint_authority_kp))
-                                    : undefined,
-                            });
-    }
+    let supportedTokens: Map<string, SupportedToken> = useMemo(() => {
+        let result = new Map();
+        for (let entry of supportedTokensFile) {
+            result.set(entry.label,
+                                {
+                                    pubkey: new PublicKey(entry.pubkey),
+                                    keypair:
+                                        entry.mint_authority_kp
+                                            ? Keypair.fromSecretKey(Uint8Array.from(entry.mint_authority_kp))
+                                            : undefined,
+                                });
+        }
+
+        return result;
+    }, []);
+
 
     const updateWalletTokens = () => {
         const impl = async() => {
@@ -126,7 +131,7 @@ const Content: FC = () => {
 
     useEffect(() => {
         updateWalletTokens();
-    }, [connected, connection, wallet]);
+    }, [connecting, connected, connection, wallet]);
 
     return (
         <AppContext.Provider value = {{
