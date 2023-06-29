@@ -17,11 +17,11 @@ export interface SimplifiedOrderDescriptionProps {
 
 export const SimplifiedOrderDescription: FC<SimplifiedOrderDescriptionProps> = (props) => {
     return (
-        <Visibility isActive={!!props.data}>
-            <div className='vertical'>
+
+            <div className='simplified-description'>
+                <label><h3>{`Selling ${props.data?.remainsToFill} ${props.data?.orderTokenName}`}</h3></label>
                 <label><h3>{`1 ${props.data?.orderTokenName} = ${props.data?.price} ${props.data?.priceTokenName}`}</h3></label>
-                <label><h3>{`Available ${props.data?.remainsToFill} ${props.data?.orderTokenName}`}</h3></label>
-                <label><h3>{`buy minimum ${props.data?.minSellAmount} ${props.data?.orderTokenName}`}</h3></label>
+                <label><h3>{`Buy minimum ${props.data?.minSellAmount} ${props.data?.orderTokenName}`}</h3></label>
                 <Visibility isActive={!!props.data?.isPrivate}>
                     <label className="label-attention">
                         <p>NOTE: This order is private</p>
@@ -29,7 +29,7 @@ export const SimplifiedOrderDescription: FC<SimplifiedOrderDescriptionProps> = (
                     </label>
                 </Visibility>
             </div>
-        </Visibility>
+
 
     )
 }

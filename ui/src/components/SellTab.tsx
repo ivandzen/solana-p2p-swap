@@ -202,10 +202,10 @@ function SellTab() {
             let sell = new Decimal(sellAmount.toString()).div(Math.pow(10, sellToken.decimals));
             let buy = new Decimal(buyAmount.toString()).div(Math.pow(10, buyToken.decimals));
             if (!flippedPrice) {
-                setPriceString(`Your price: 1 ${getTokenLabel(supportedTokens, buyToken?.address)}
+                setPriceString(`1 ${getTokenLabel(supportedTokens, buyToken?.address)}
                 = ${sell.div(buy).toSignificantDigits(sellToken.decimals)} ${getTokenLabel(supportedTokens, sellToken?.address)}`);
             } else {
-                setPriceString(`Your price: 1 ${getTokenLabel(supportedTokens, sellToken?.address)}
+                setPriceString(`1 ${getTokenLabel(supportedTokens, sellToken?.address)}
                 = ${buy.div(sell).toSignificantDigits(buyToken.decimals)} ${getTokenLabel(supportedTokens, buyToken?.address)}`);
             }
         } else {
@@ -218,33 +218,20 @@ function SellTab() {
             <Visibility isActive={sellTabMode === SELL_TAB_MODE_CREATE_ORDER}>
                 <div className="vertical">
                     <div className='table-like'>
+                        <label><h3>Sell</h3></label>
                         <TokenBox
-                            name={'Sell'}
                             onTokenChanged={onSellTokenChange}
                             onAmountChanged={onSellAmountChange}
                             sellSide={true}
                         />
-                        <TokenBox
-                            name={'Buy'}
-                            onTokenChanged={onBuyTokenChange}
-                            onAmountChanged={onBuyAmountChange}
-                            sellSide={false}
-                        />
-                        <Visibility isActive={!!priceString} >
-                            <div className='horizontal'>
-                                <label><b>{priceString}</b></label>
-                                <button
-                                    className='fixed'
-                                    onClick={()=>{setFlippedPrice(!flippedPrice)}}
-                                >
-                                    Flip Price
-                                </button>
-                            </div>
-                        </Visibility>
+                        <label><h3>At least</h3></label>
                         <div className='horizontal'>
-                            <label>
-                                <b>Sell minimum</b>
-                            </label>
+                            <input
+                                type='number'
+                                className={sellMinimBigint ? '' : 'invalid'}
+                                value={sellMinimum}
+                                onChange={(event) => { setSellMinimum(event.target.value) }}
+                            />
                             <button
                                 className='fixed'
                                 disabled={!(sellAmount && sellToken)}
@@ -260,13 +247,20 @@ function SellTab() {
                             >
                                 MAX
                             </button>
-                            <input
-                                type='number'
-                                className={sellMinimBigint ? '' : 'invalid'}
-                                value={sellMinimum}
-                                onChange={(event) => { setSellMinimum(event.target.value) }}
-                            />
                         </div>
+                        <label
+                            className='price-label'
+                            onClick={()=>{setFlippedPrice(!flippedPrice)}}
+                        >
+                                <b>{priceString}</b>
+                        </label>
+                        <label><h3>Price</h3></label>
+                        <TokenBox
+                            onTokenChanged={onBuyTokenChange}
+                            onAmountChanged={onBuyAmountChange}
+                            sellSide={false}
+                        />
+
                     </div>
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>
                     <Visibility isActive={isPrivate}>

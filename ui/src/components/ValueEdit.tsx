@@ -48,7 +48,7 @@ const ValueEdit: FC<ValueEditProps> = (attribs: ValueEditProps) => {
 
     return (
         <div className="horizontal">
-            <label className="label"><b>{attribs.name}</b></label>
+            <label><h3>{attribs.name}</h3></label>
             <input
                 type={attribs.type ? attribs.type : "text"}
                 className={inputStyle}

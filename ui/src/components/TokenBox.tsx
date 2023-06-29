@@ -1,116 +1,58 @@
 import React, { ChangeEvent, FC, useEffect, useState } from "react";
 import { useApp } from "../AppContext";
-import { DatalistInput, Item } from "react-datalist-input";
-import { amountToStr, getTokens, WalletToken } from "../p2p-swap";
+import { amountToStr, WalletToken } from "../p2p-swap";
 import { Visibility } from "./Visibility";
-import { getMint, Mint } from "@solana/spl-token";
+import { Mint } from "@solana/spl-token";
 import Decimal from "decimal.js";
+import { SelectedToken, TokenSelect } from "./TokenSelect";
 
 interface TokenBoxProps {
-    name: string,
     onTokenChanged: (token: Mint|undefined) => void,
     onAmountChanged: (amount: bigint|undefined) => void,
     sellSide?: boolean,
-    disableInput?: boolean,
-}
-
-interface TokenItemProps {
-    label: string,
-}
-
-const TokenItem: FC<TokenItemProps> = (props) => {
-    return (
-        <div className="token-item">
-            <div className="horizontal">
-                <label><b>{props.label}</b></label>
-            </div>
-        </div>
-    )
 }
 
 const TokenBox: FC<TokenBoxProps> = (props) => {
     const {
-        connection,
         walletTokens,
-        updateWalletTokens,
-        supportedTokens,
         explorer,
         cluster,
-        showErrorMessage,
     } = useApp();
-    const [tokenName, setTokenName] = useState<string|undefined>(undefined);
-    const [tokens, setTokens] = useState<Item[]>([]);
-    const [tokenMint, setTokenMint] = useState<Mint|undefined>(undefined);
+
+    const [selectedToken, setSelectedToken] = useState<SelectedToken|null>(null);
     const [walletToken, setWalletToken] = useState<WalletToken|undefined>(undefined);
     const [amountStr, setAmountStr] = useState<string|undefined>('0');
     const [amountStyle, setAmountStyle] = useState<string>('invalid');
 
-    useEffect(()=> {
-        const impl = async() => {
-            if (!tokenName) {
-                setTokenMint(undefined);
-                return;
-            }
-
-            let token = supportedTokens.get(tokenName);
-            if (!token) {
-                setTokenMint(undefined);
-                return;
-            }
-
-            try {
-                let mint = await getMint(connection, token.pubkey);
-                setTokenMint(mint);
-            } catch (e: any) {
-                showErrorMessage(e.toString());
-            }
-        }
-
-        impl().then(()=>{});
-    }, [tokenName]);
 
     useEffect(() => {
-        if (!tokenMint) {
+        if (!selectedToken) {
             return;
         }
 
-        setWalletToken(walletTokens.get(tokenMint.address.toBase58()));
-        props.onTokenChanged(tokenMint);
-    }, [tokenMint, walletTokens]);
+        setWalletToken(walletTokens.get(selectedToken.mint.address.toBase58()));
+        props.onTokenChanged(selectedToken.mint);
+    }, [selectedToken, walletTokens]);
 
     const onAmountChange = (event: ChangeEvent<any>) => {
         setAmountStr(event.target.value);
     }
 
     const maxButtonClick = () => {
-        if (!walletToken || !tokenMint) {
+        if (!walletToken || !selectedToken) {
             return;
         }
-        setAmountStr(amountToStr(walletToken.tokenAmount, tokenMint.decimals));
+        setAmountStr(amountToStr(walletToken.tokenAmount, selectedToken.mint.decimals));
     }
 
     const onExplorerClick = () => {
-        if (!tokenMint) {
+        if (!selectedToken) {
             return;
         }
 
-        let url = `${explorer}/token/${tokenMint.address.toBase58()}?cluster=${cluster}`;
+        let url = `${explorer}/token/${selectedToken.mint.address.toBase58()}?cluster=${cluster}`;
         window.open(url);
     }
-
-    useEffect(() => {
-        let tokens = [];
-        for (let [label, ] of supportedTokens) {
-            tokens.push({
-                            id: label,
-                            node: <TokenItem label={label} />
-                        });
-        }
-
-        setTokens(tokens);
-        setTokenName(tokens.length ? tokens[0].id : '');
-        setAmountStr('0');
-    }, [supportedTokens]);
 
     useEffect(() => {
         if (!amountStr) {
@@ -118,14 +60,14 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
             return;
         }
 
-        if (!tokenMint) {
+        if (!selectedToken) {
             return;
         }
 
         try {
             let amountDec =
                     new Decimal(amountStr)
-                        .mul(Math.pow(10, tokenMint.decimals));
+                        .mul(Math.pow(10, selectedToken.mint.decimals));
 
             if (amountDec.lessThan(1)) {
                 setAmountStr('0');
@@ -158,48 +100,27 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
     }, [amountStr, walletToken]);
 
     return (
-        <div className="token-box">
-            <label><b>{props.name}</b></label>
-            <DatalistInput
-                className={"datalist"}
-                inputProps={{
-                    type: "number",
-                    className: tokenMint ? '' : 'invalid',
-                    title: tokenMint?.address.toBase58(),
-                }}
-                label={''}
-                showLabel={false}
-                isExpandedClassName="token-list"
-                value={tokenName}
-                items={tokens}
-                onSelect={(item: Item) => {setTokenName(item.node.props.label)}}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => {setTokenName(event.target.value)}}
+        <div className="horizontal">
+            <TokenSelect onTokenSelected={setSelectedToken}/>
+            <input
+                className={amountStyle}
+                type='number'
+                onChange={onAmountChange}
+                value={amountStr}
+                disabled={!selectedToken?.mint}
             />
             <Visibility isActive={!!props.sellSide}>
                 <button
                     className='fixed'
                     disabled={!walletToken || walletToken.tokenAmount == 0n}
                     title={!walletToken || walletToken.tokenAmount == 0n
-                        ? `You have no ${tokenName}`
+                        ? `You have no ${selectedToken?.name}`
                         : "Place all your tokens" }
                     onClick={maxButtonClick}
-                >{!walletToken || walletToken.tokenAmount == 0n ? `You have no ${tokenName}` : 'MAX'}</button>
+                >
+                    {!walletToken || walletToken.tokenAmount == 0n ? `empty` : 'MAX'}
+                </button>
             </Visibility>
-            <Visibility isActive={!props.disableInput}>
-                <input
-                    className={amountStyle}
-                    type='number'
-                    onChange={onAmountChange}
-                    value={amountStr}
-                    disabled={!tokenMint}
-                />
-            </Visibility>
-            <button
-                disabled={!tokenMint}
-                className='fixed'
-                onClick={onExplorerClick}
-                title="Open in explorer"
-            >explorer</button>
         </div>
     )
 }

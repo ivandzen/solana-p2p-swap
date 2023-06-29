@@ -4,14 +4,13 @@ import {
     createAssociatedTokenAccountInstruction,
     createMintToInstruction,
     getAssociatedTokenAddress,
-    Mint,
 } from "@solana/spl-token";
-import { TokenBox } from "./TokenBox";
 import { PublicKey, Transaction } from "@solana/web3.js";
+import { SelectedToken, TokenSelect } from "./TokenSelect";
 
 export const AirdropPage: FC = () => {
     let {connection, wallet, showErrorMessage, supportedTokens} = useApp();
-    const [selectedTokenMint, setSelectedTokenMint] = useState<Mint|undefined>(undefined);
+    const [selectedToken, setSelectedToken] = useState<SelectedToken|null>(null);
 
     const getToken = (mint: PublicKey): SupportedToken|undefined => {
         for (let [, token] of supportedTokens) {
@@ -26,13 +25,13 @@ export const AirdropPage: FC = () => {
     const onMintClick = () => {
         const impl = async () => {
             if (!wallet
-                || !selectedTokenMint
+                || !selectedToken
                 || !wallet.adapter.publicKey
             ) {
                 return;
             }
 
-            let token = getToken(selectedTokenMint.address);
+            let token = getToken(selectedToken.mint.address);
             if (!token) {
                 showErrorMessage("Token unsupported");
                 return;
@@ -45,7 +44,7 @@ export const AirdropPage: FC = () => {
 
             try {
                 let clientWallet = await getAssociatedTokenAddress(
-                    selectedTokenMint.address,
+                    selectedToken.mint.address,
                     wallet.adapter.publicKey,
                     false
                 );
@@ -63,15 +62,15 @@ export const AirdropPage: FC = () => {
                         wallet.adapter.publicKey,
                         clientWallet,
                         wallet.adapter.publicKey,
-                        selectedTokenMint.address
+                        selectedToken.mint.address
                     ));
                 }
 
                 transaction.add(createMintToInstruction(
-                    selectedTokenMint.address,
+                    selectedToken.mint.address,
                     clientWallet,
                     token.keypair?.publicKey,
-                    100n * BigInt(Math.pow(10, selectedTokenMint.decimals)),
+                    100n * BigInt(Math.pow(10, selectedToken.mint.decimals)),
                     [wallet.adapter.publicKey, token.keypair]
                 ));
 
@@ -90,22 +89,18 @@ export const AirdropPage: FC = () => {
     return (
         <div className='vertical'>
             <label>
-                <p>Select token and then press <b>Drop It!</b></p>
+                <p>Select token and then press <b>Drop</b></p>
                 <p>to get 100 test tokens</p>
             </label>
             <div className='horizontal'>
-                <TokenBox
-                    name={''}
-                    onTokenChanged={setSelectedTokenMint}
-                    onAmountChanged={(_:any)=>{}}
-                    sellSide={false}
-                    disableInput={true}
-                />
+                <TokenSelect onTokenSelected={setSelectedToken} />
                 <button
                     className='fixed'
                     onClick={onMintClick}
-                    disabled={!selectedTokenMint || supportedTokens.size == 0}
-                >Drop It!</button>
+                    disabled={!selectedToken || supportedTokens.size == 0}
+                >
+                    Drop
+                </button>
             </div>
         </div>
     )

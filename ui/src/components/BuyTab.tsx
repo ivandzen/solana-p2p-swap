@@ -239,42 +239,28 @@ const BuyTab: FC = () => {
     return (
         <div className="vertical">
             <ValueEdit
-                name={"Order Address:"}
+                name={"Order"}
                 onChange={onOrderAddressChange}
                 valueChecker={publicKeyChecker}
-                readonly={true}
                 value={orderAddress ? orderAddress.toString() : ""}
                 copybutton={true}
             />
-            <SimplifiedOrderDescription data={simplifiedDescription}/>
             <Visibility isActive={!!errorDescription}>
                 <h1>{errorDescription}</h1>
             </Visibility>
             <Visibility isActive={!!buyOrderDescription}>
                 <div className="table-like">
-                    <div className='horizontal'>
-                        <label><b>You want to get :</b></label>
-                        <input
-                            className={buyAmountDec ? '' : 'invalid'}
-                            type='number'
-                            value={buyAmount}
-                            onChange={onBuyAmountChange}
-                        />
-                        <label><b>{simplifiedDescription?.orderTokenName}</b></label>
-                    </div>
-                    <div className='horizontal'>
-                        <label><b>You have to pay :</b></label>
-                        <input
-                            className={sellAmountDec ? '' : 'invalid'}
-                            type='number'
-                            value={sellAmount}
-                            readOnly={true}
-                        />
-                        <label><b>{simplifiedDescription?.priceTokenName}</b></label>
-                    </div>
+                    <SimplifiedOrderDescription data={simplifiedDescription}/>
+                    <input
+                        className={buyAmountDec ? '' : 'invalid'}
+                        type='number'
+                        value={buyAmount}
+                        onChange={onBuyAmountChange}
+                    />
+                    <label className='price-label'><h3>You have to pay {sellAmount} {simplifiedDescription?.priceTokenName}</h3></label>
                     <Visibility isActive={!!buyOrderDescription && buyOrderDescription.isPrivate}>
                         <ValueEdit
-                            name="Unlock signature:"
+                            name="Unlock key"
                             onChange={setUnlockKey}
                             valueChecker={unlockKeyChecker}
                             value={unlockKey ? unlockKey : ""}

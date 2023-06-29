@@ -183,8 +183,6 @@ input[type="checkbox"] {
     flex-direction: column;
     display: flex;
     align-items: center;
-    justify-items: stretch;
-    margin: 2px;
 }
 
 .table-like {
@@ -194,7 +192,7 @@ input[type="checkbox"] {
     border-color: #2a1344;
     flex-direction: column;
     display: flex;
-    align-items: end;
+    align-items: start;
     padding: 5px;
     color: #e5a2e2
 }
@@ -248,7 +246,7 @@ input[type="checkbox"] {
     background: #da498f;
     flex-direction: column;
     font-family: monospace;
-    margin: 2px;
+    margin: 8px;
     color: #4f2068;
     width: 100%;
     box-shadow: 0px 0px 3px 3px #e5a2e2;
@@ -284,8 +282,8 @@ button[class='fixed'] {
     border: none;
     outline: none;
     cursor: pointer;
-    max-width: 80px;
-    min-width: 80px;
+    max-width: 50px;
+    min-width: 50px;
     transition-duration: 0.5s;
     margin: 0 2px;
 }
@@ -338,4 +336,24 @@ div[class='error-message-inactive'] {
 
 .order-list-item-element {
     padding: 0 20px;
+}
+
+.price-label {
+    align-self: center;
+    margin: 3px 20px;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.price-label:hover {
+    background: #512da8;
+    color: #da49d2;
+    border-radius: 8px;
+}
+
+.simplified-description {
+    flex-direction: column;
+    display: flex;
+    align-items: center;
+    align-self: center;
 }
