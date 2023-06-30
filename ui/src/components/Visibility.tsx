@@ -1,5 +1,6 @@
 import React from 'react';
 import {FC} from 'react';
+import AnimateHeight from "react-animate-height";
 
 interface TabProps {
     isActive: boolean,
@@ -7,11 +8,9 @@ interface TabProps {
 }
 const Visibility: FC<TabProps> = (props) => {
     return (
-        <div className="visibilitytab">
-            <div className={props.isActive ? "" : "inactive"}>
+        <AnimateHeight height={props.isActive ? 'auto' : 0} duration={500}>
                 {props.children}
-            </div>
-        </div>
+        </AnimateHeight>
     )
 }
 

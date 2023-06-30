@@ -7,6 +7,7 @@ import { Visibility } from "./Visibility";
 import {OrderList} from "./OrderList";
 import { AirdropPage } from "./AirdropPage";
 import { MessageTab } from "./MessageTab";
+import AnimateHeight from "react-animate-height";
 
 function ModeButton(
     { name, onClick, activeName }:
@@ -33,9 +34,9 @@ function ModeTab(
             children: any
         }) {
     return (
-        <div id={name} className={activeName === name ? "" : "inactive"}>
+        <AnimateHeight height={activeName === name ? "auto" : 0} duration={500} animateOpacity={true}>
             {children}
-        </div>
+        </AnimateHeight>
     )
 }
 

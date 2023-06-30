@@ -7,6 +7,7 @@ import {
     getOrderDescriptionChecked, OrderDescriptionData,
     P2P_SWAP_DEVNET,
 } from "../p2p-swap";
+import AnimateHeight from "react-animate-height";
 import {Button} from "./Button";
 import {Connection, PublicKey} from "@solana/web3.js";
 import {Visibility} from "./Visibility";

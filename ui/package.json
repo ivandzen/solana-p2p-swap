@@ -39,6 +39,7 @@
         "decimal.js": "^10.4.3",
         "react": "^18.2.0",
         "react-datalist-input": "^3.2.1",
+        "react-animate-height": "^3.1.1",
         "react-dom": "^18.2.0"
     },
     "devDependencies": {

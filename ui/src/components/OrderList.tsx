@@ -33,16 +33,14 @@ export const OrderItem: FC<OrderItemProps> = (props) => {
 
     return (
         <tr className='order-list-item' title={props.pubkey.toBase58()}>
-            <td className='order-list-item-element' onClick={onClick}>{props.sellToken}</td>
-            <td className='order-list-item-element' onClick={onClick}>{props.buyToken}</td>
+            <td className='order-list-item-element' onClick={onClick}>
+                {`${props.availableSellTokens.toSignificantDigits(props.sellTokenDecimals).toString()} 
+                ${props.sellToken}`}
+            </td>
             <td className='order-list-item-element' onClick={onClick}>
                 {`1 ${props.sellToken} = 
                 ${props.price.toSignificantDigits(props.buyTokenDecimals).toString()} 
                 ${props.buyToken}`}
-            </td>
-            <td className='order-list-item-element' onClick={onClick}>
-                {`${props.availableSellTokens.toSignificantDigits(props.sellTokenDecimals).toString()} 
-                ${props.sellToken}`}
             </td>
             <td className='order-list-item-element' onClick={onClick}>
                 {props.isPrivate ? 'Yes' : 'No'}
@@ -171,10 +169,8 @@ export const OrderList: FC<OrderListProps> = (props) => {
                     <div className='order-list'>
                         <table>
                             <tr className='order-list-header'>
-                                <th className='order-list-item-element'>You will get</th>
-                                <th className='order-list-item-element'>You will pay</th>
-                                <th className='order-list-item-element'>Price</th>
                                 <th className='order-list-item-element'>Available</th>
+                                <th className='order-list-item-element'>Price</th>
                                 <th className='order-list-item-element'>Private</th>
                             </tr>
                             {items}
