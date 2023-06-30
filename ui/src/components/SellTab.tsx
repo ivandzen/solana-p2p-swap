@@ -248,19 +248,18 @@ function SellTab() {
                                 MAX
                             </button>
                         </div>
-                        <label
-                            className='price-label'
-                            onClick={()=>{setFlippedPrice(!flippedPrice)}}
-                        >
-                                <b>{priceString}</b>
-                        </label>
                         <label><h3>Price</h3></label>
                         <TokenBox
                             onTokenChanged={onBuyTokenChange}
                             onAmountChanged={onBuyAmountChange}
                             sellSide={false}
                         />
-
+                        <label
+                            className='price-label'
+                            onClick={()=>{setFlippedPrice(!flippedPrice)}}
+                        >
+                                <b>{priceString}</b>
+                        </label>
                     </div>
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>
                     <Visibility isActive={isPrivate}>

@@ -87,19 +87,18 @@ export const AirdropPage: FC = () => {
 
 
     return (
-        <div className='vertical'>
-            <label>
-                <p>Select token and then press <b>Drop</b></p>
-                <p>to get 100 test tokens</p>
-            </label>
+        <div className='table-like'>
             <div className='horizontal'>
+                <label>
+                    Drop me 100
+                </label>
                 <TokenSelect onTokenSelected={setSelectedToken} />
                 <button
                     className='fixed'
                     onClick={onMintClick}
                     disabled={!selectedToken || supportedTokens.size == 0}
                 >
-                    Drop
+                    Please
                 </button>
             </div>
         </div>
