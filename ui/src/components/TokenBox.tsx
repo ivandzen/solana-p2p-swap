@@ -101,7 +101,6 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
 
     return (
         <div className="horizontal">
-            <TokenSelect onTokenSelected={setSelectedToken}/>
             <input
                 className={amountStyle}
                 type='number'
@@ -121,6 +120,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                     {!walletToken || walletToken.tokenAmount == 0n ? `empty` : 'MAX'}
                 </button>
             </Visibility>
+            <TokenSelect onTokenSelected={setSelectedToken}/>
         </div>
     )
 }

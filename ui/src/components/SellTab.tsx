@@ -71,6 +71,11 @@ function SellTab() {
                 return;
             }
 
+            if (buyToken.address.equals(sellToken.address)) {
+                setCreateOrderProps(undefined);
+                return;
+            }
+
             let sellAmountParsed = sellAmount? sellAmount : 0n;
             let buyAmountParsed = buyAmount ? buyAmount : 0n;
 
@@ -258,7 +263,11 @@ function SellTab() {
                             className='price-label'
                             onClick={()=>{setFlippedPrice(!flippedPrice)}}
                         >
-                                <b>{priceString}</b>
+                                <b>{
+                                    buyToken && sellToken?.address.equals(buyToken?.address)
+                                    ? "Sell and Price tokens are the same"
+                                    : priceString
+                                }</b>
                         </label>
                     </div>
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>

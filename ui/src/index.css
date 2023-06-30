@@ -120,7 +120,7 @@ input[type="checkbox"] {
     cursor: pointer;
     width: 100%;
     transition-duration: 0.5s;
-    margin: 2px;
+    margin: 0 2px;
 }
 
 .tabbutton-active:hover {
@@ -164,7 +164,6 @@ input[type="checkbox"] {
 
 .visibilitytab {
     display: block;
-    margin: 0 1px;
 }
 
 .visibilitytab .inactive{
@@ -231,11 +230,12 @@ input[type="checkbox"] {
     background-color: #b967de;
 }
 
-.label {
+label {
     color: #f1f1f1;
     margin: 2px;
     font-family: monospace;
     display: flex;
+    text-wrap: nowrap;
 }
 
 .label-attention {
@@ -282,8 +282,6 @@ button[class='fixed'] {
     border: none;
     outline: none;
     cursor: pointer;
-    max-width: 60px;
-    min-width: 60px;
     transition-duration: 0.5s;
     margin: 0 2px;
 }

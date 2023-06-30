@@ -90,17 +90,18 @@ export const AirdropPage: FC = () => {
         <div className='table-like'>
             <div className='horizontal'>
                 <label>
-                    Drop me 100
+                    <h3>Drop me 100</h3>
                 </label>
                 <TokenSelect onTokenSelected={setSelectedToken} />
                 <button
-                    className='fixed'
+                    className='tabbutton-active'
                     onClick={onMintClick}
                     disabled={!selectedToken || supportedTokens.size == 0}
                 >
-                    Please
+                    please
                 </button>
             </div>
+            <label>NOTE: This is test tokens</label>
         </div>
     )
 }
