@@ -19,18 +19,21 @@ import {
     SimplifiedOrderDescriptionData
 } from "./SimplifiedOrderDescription";
 import Decimal from "decimal.js";
+import { Simulate } from "react-dom/test-utils";
+import error = Simulate.error;
 
 const BuyTab: FC = () => {
     const {
         orderAddress, setOrderAddress,
         unlockKey, setUnlockKey,
         buyOrderDescription, setBuyOrderDescription,
-        setAppMode,
         connection,
         wallet,
         supportedTokens,
         walletTokens,
+        showInfoMessage,
         showErrorMessage,
+        domain
     } = useApp();
 
     const [errorDescription, setErrorDescription] = useState<string|null>("Please, select order");
@@ -163,7 +166,7 @@ const BuyTab: FC = () => {
         }
 
         let props = fillOrderProps;
-        setAppMode("Send-Txn");
+        showInfoMessage("Sending transaction...", false);
 
         try {
             if (
@@ -192,10 +195,11 @@ const BuyTab: FC = () => {
             let txn = await fillOrderTransaction(connection, props);
             await wallet?.adapter.sendTransaction(txn, connection);
         } catch (e: any) {
-            showErrorMessage(e.toString());
+            showErrorMessage(e.toString(), true);
+            return;
         }
 
-        setAppMode("Buy");
+        showInfoMessage('Transaction sent', true);
     }
 
     const onBuyAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -236,6 +240,15 @@ const BuyTab: FC = () => {
         }
     }, [buyAmount]);
 
+    const copyOrderURL = () => {
+        if (!buyOrderDescription) {
+            return;
+        }
+
+        navigator.clipboard.writeText(`${domain}/?mode=Buy&order_address=${orderAddress?.toBase58()}`)
+            .then(()=>{});
+    };
+
     return (
         <div className="vertical">
             <ValueEdit
@@ -248,8 +261,15 @@ const BuyTab: FC = () => {
             <Visibility isActive={!!errorDescription}>
                 <h1>{errorDescription}</h1>
             </Visibility>
-            <Visibility isActive={!!buyOrderDescription}>
+            <Visibility isActive={!errorDescription && !!buyOrderDescription}>
                 <div className="table-like">
+                    <button
+                        className='tabbutton-active'
+                        onClick={copyOrderURL}
+                        disabled={!buyOrderDescription}
+                    >
+                        Copy order URL
+                    </button>
                     <SimplifiedOrderDescription data={simplifiedDescription}/>
                     <input
                         className={buyAmountDec ? '' : 'invalid'}
@@ -257,7 +277,7 @@ const BuyTab: FC = () => {
                         value={buyAmount}
                         onChange={onBuyAmountChange}
                     />
-                    <label className='price-label'><h3>You have to pay {sellAmount} {simplifiedDescription?.priceTokenName}</h3></label>
+                    <label className='active-label'><h3>You have to pay {sellAmount} {simplifiedDescription?.priceTokenName}</h3></label>
                     <Visibility isActive={!!buyOrderDescription && buyOrderDescription.isPrivate}>
                         <ValueEdit
                             name="Unlock key"

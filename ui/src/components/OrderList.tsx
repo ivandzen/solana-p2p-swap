@@ -143,7 +143,7 @@ export const OrderList: FC<OrderListProps> = (props) => {
                 try {
                     await updateOrders();
                 } catch (e: any) {
-                    showErrorMessage(e.toString());
+                    showErrorMessage(e.toString(), true);
                 }
             }
         }
@@ -158,7 +158,7 @@ export const OrderList: FC<OrderListProps> = (props) => {
         try {
             await updateOrders();
         } catch (e: any) {
-            showErrorMessage(e.toString());
+            showErrorMessage(e.toString(), true);
         }
         setPageMessage(null);
     }

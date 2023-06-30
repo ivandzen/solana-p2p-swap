@@ -41,8 +41,11 @@ export interface AppContext {
     updateWalletTokens: () => void,
     explorer: string,
     cluster: string,
-    errorMessage: string|null;
-    showErrorMessage: (msg: string|null) => void,
+    message: string|null,
+    messageType: string,
+    closeMessageByClick: boolean,
+    showInfoMessage: (msg: string|null, closeByClick: boolean) => void,
+    showErrorMessage: (msg: string|null, closeByClick: boolean) => void,
 }
 
 export const AppContext = createContext<AppContext>({} as AppContext);

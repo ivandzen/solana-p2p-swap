@@ -96,14 +96,13 @@ input[type="checkbox"] {
 
   /* Style the buttons that are used to open the tab content */
 .tabbutton {
-    border-radius: 2px;
-    background-color: rgba(84, 42, 175, 0.53);
-    border-style: inset;
+    border-radius: 4px;
+    background-color: rgba(84, 42, 175, 0.53);;
     border-color: transparent;
     cursor: pointer;
     width: 100%;
     transition-duration: 0.5s;
-    margin: 2px;
+    margin: 0 2px;
 }
   
   /* Change background color of buttons on hover */
@@ -113,10 +112,9 @@ input[type="checkbox"] {
 
 /* Create an active/current tablink class */
 .tabbutton-active {
-    border-radius: 2px;
+    border-radius: 4px;
     background-color: #da49d2;
-    border: none;
-    outline: none;
+    border-color: transparent;
     cursor: pointer;
     width: 100%;
     transition-duration: 0.5s;
@@ -336,14 +334,14 @@ div[class='error-message-inactive'] {
     padding: 0 20px;
 }
 
-.price-label {
+.active-label {
     align-self: center;
     margin: 3px 20px;
     padding: 8px;
     cursor: pointer;
 }
 
-.price-label:hover {
+.active-label:hover {
     background: #512da8;
     color: #da49d2;
     border-radius: 8px;

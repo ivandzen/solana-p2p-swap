@@ -5,6 +5,8 @@ import { Visibility } from "./Visibility";
 import { Mint } from "@solana/spl-token";
 import Decimal from "decimal.js";
 import { SelectedToken, TokenSelect } from "./TokenSelect";
+import { Simulate } from "react-dom/test-utils";
+import seeking = Simulate.seeking;
 
 interface TokenBoxProps {
     onTokenChanged: (token: Mint|undefined) => void,
@@ -15,8 +17,6 @@ interface TokenBoxProps {
 const TokenBox: FC<TokenBoxProps> = (props) => {
     const {
         walletTokens,
-        explorer,
-        cluster,
     } = useApp();
 
     const [selectedToken, setSelectedToken] = useState<SelectedToken|null>(null);
@@ -31,7 +31,6 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
         }
 
         setWalletToken(walletTokens.get(selectedToken.mint.address.toBase58()));
-        props.onTokenChanged(selectedToken.mint);
     }, [selectedToken, walletTokens]);
 
     const onAmountChange = (event: ChangeEvent<any>) => {
@@ -43,15 +42,6 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
             return;
         }
         setAmountStr(amountToStr(walletToken.tokenAmount, selectedToken.mint.decimals));
-    }
-
-    const onExplorerClick = () => {
-        if (!selectedToken) {
-            return;
-        }
-
-        let url = `${explorer}/token/${selectedToken.mint.address.toBase58()}?cluster=${cluster}`;
-        window.open(url);
     }
 
     useEffect(() => {
@@ -83,9 +73,17 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
 
             setAmountStyle('');
             if (props.sellSide) {
-                if (!walletToken || walletToken.tokenAmount == 0n) {
+                if (!walletToken) {
+                    props.onAmountChanged(0n);
+                    props.onTokenChanged(undefined);
+                    setAmountStr('0');
+                    return;
+                }
+
+                if (walletToken.tokenAmount == 0n) {
+                    props.onAmountChanged(0n);
                     setAmountStr('0')
-                } else if (walletToken && amount > walletToken.tokenAmount) {
+                } else if (amount > walletToken.tokenAmount) {
                     props.onAmountChanged(walletToken.tokenAmount);
                     setAmountStr(amountToStr(walletToken.tokenAmount, walletToken.decimals));
                 } else {
@@ -94,6 +92,8 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
             } else {
                 props.onAmountChanged(amount);
             }
+
+            props.onTokenChanged(selectedToken.mint);
         } catch (e: any) {
             setAmountStyle('invalid');
         }

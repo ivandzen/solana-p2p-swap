@@ -38,9 +38,9 @@ function getTokenLabel(supportedTokens: SupportedTokens, inPubkey: PublicKey|und
 function SellTab() {
     let {
         domain,
-        setAppMode,
         connection,
         wallet, signMessage,
+        showInfoMessage,
         showErrorMessage,
         supportedTokens,
     } = useApp();
@@ -115,14 +115,14 @@ function SellTab() {
         let [transaction, orderAccount] =
             await createOrderTransaction(connection, createOrderProps);
 
-        setAppMode("Send-Txn");
+        showInfoMessage("Sending transaction...", false);
 
         try {
             await wallet?.adapter.sendTransaction(transaction, connection);
             setNewOrderAddress(orderAccount);
 
             if (isPrivate) {
-                setAppMode("Sign-Pubkey");
+                showInfoMessage("Signing order public key...", false);
                 let unlockKey = await signMessage?.(orderAccount.toBytes());
                 if (unlockKey) {
                     setNewUnlockKey(base58.binary_to_base58(unlockKey));
@@ -131,10 +131,11 @@ function SellTab() {
 
             setSellTabMode(SELL_TAB_MODE_SHOW_ORDER);
         } catch (e: any) {
-            showErrorMessage(e.toString());
+            showErrorMessage(e.toString(), true);
+            return;
         }
 
-        setAppMode("Sell");
+        showInfoMessage("New order created. Click to see it.", true);
     }
 
     let onViewDetailsClick = async () => {
@@ -260,7 +261,7 @@ function SellTab() {
                             sellSide={false}
                         />
                         <label
-                            className='price-label'
+                            className='active-label'
                             onClick={()=>{setFlippedPrice(!flippedPrice)}}
                         >
                                 <b>{

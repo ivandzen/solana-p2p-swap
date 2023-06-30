@@ -6,6 +6,7 @@ import {useApp} from "../AppContext";
 import { Visibility } from "./Visibility";
 import {OrderList} from "./OrderList";
 import { AirdropPage } from "./AirdropPage";
+import { MessageTab } from "./MessageTab";
 
 function ModeButton(
     { name, onClick, activeName }:
@@ -39,7 +40,7 @@ function ModeTab(
 }
 
 const MainWidget: FC = () => {
-    const {appMode, setAppMode, errorMessage, showErrorMessage, updateWalletTokens} = useApp();
+    const {appMode, message, setAppMode, showErrorMessage, updateWalletTokens} = useApp();
 
     return  (
         <div>
@@ -48,21 +49,8 @@ const MainWidget: FC = () => {
                     <WalletMultiButton/>
                 </div>
                 <div className ="tab">
-                    <Visibility isActive={!errorMessage && (appMode === "Connect-Wallet")}>
-                        <div className="tabcontent">
-                            <div className="vertical">
-                                <h1>{"Please, connect your Solana wallet ⇧"}</h1>
-                            </div>
-                        </div>
-                    </Visibility>
-                    <Visibility isActive={
-                        !errorMessage &&
-                        (
-                            appMode === "Buy"
-                            || appMode === "Orders"
-                            || appMode === "Sell"
-                            || appMode === "Airdrop"
-                        )}>
+                    <MessageTab/>
+                    <Visibility isActive={!message}>
                         <div className="tabcontent">
                             <div className="horizontal">
                                 <ModeButton name="Orders" onClick={() => {
@@ -89,32 +77,6 @@ const MainWidget: FC = () => {
                             <ModeTab name="Airdrop" activeName={appMode}><AirdropPage/></ModeTab>
                         </div>
                     </Visibility>
-                    <Visibility isActive={!errorMessage && appMode === "Send-Txn"}>
-                        <div className="tabcontent">
-                            <h1>Sending transaction...</h1>
-                        </div>
-                    </Visibility>
-                    <Visibility isActive={!errorMessage && appMode === "Sign-Pubkey"}>
-                        <div className="tabcontent">
-                            <div className="vertical">
-                                <h1>Signing order public key...</h1>
-                                <div className="label-attention">
-                                    <b>
-                                        <p>Message contains order address</p>
-                                        <p>encoded in binary form. This signature</p>
-                                        <p>later will be used by buyers to unlock</p>
-                                        <p>Your order.</p>
-                                    </b>
-                                </div>
-                            </div>
-                        </div>
-                    </Visibility>
-                    <div
-                        className={errorMessage ? 'error-message' : 'error-message-inactive'}
-                        onClick={() => { showErrorMessage(null) }}
-                    >
-                        {errorMessage}
-                    </div>
                 </div>
             </div>
         </div>

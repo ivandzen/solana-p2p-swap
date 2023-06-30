@@ -68,7 +68,7 @@ export const TokenSelect: FC<TokenSelectProps> = (props) => {
                     mint: mint
                 });
             } catch (e: any) {
-                showErrorMessage(e.toString());
+                showErrorMessage(e.toString(), true);
                 setTokenMint(undefined);
                 props.onTokenSelected(null);
             }

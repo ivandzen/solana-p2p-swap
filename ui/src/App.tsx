@@ -15,6 +15,7 @@ import { AppContext, SupportedToken, SupportedTokens } from "./AppContext";
 import { OrderDescriptionData, getTokens, WalletToken } from "./p2p-swap";
 import supportedTokensFile from "./supportedTokens.json";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { MESSAGE_ERR, MESSAGE_INFO } from "./components/MessageTab";
 
 export const App: FC = () => {
     return (
@@ -72,7 +73,9 @@ const Content: FC = () => {
     const [appMode, setAppMode] = useState<string|null>(null);
     const [orders, setOrders] = useState<Map<PublicKey, OrderDescriptionData>|undefined>(undefined);
     const [walletTokens, setWalletTokens] = useState<Map<string, WalletToken>>(new Map());
-    const [errorMessage, showErrorMessage] = useState<string|null>(null);
+    const [message, setMessage] = useState<string|null>(null);
+    const [messageType, setMessageType] = useState<string>('');
+    const [closeMessageByClick, setCloseMessageByClick] = useState(false);
 
     useEffect(() => {
         if (connected) {
@@ -89,8 +92,9 @@ const Content: FC = () => {
             setOrderAddress(initOrder);
             setUnlockKey(initUnlockKey);
             setAppMode(initAppMode ? initAppMode : "Orders");
+            showInfoMessage(null, false);
         } else {
-            setAppMode("Connect-Wallet");
+            showInfoMessage("Please, connect your Solana wallet", false);
         }
     }, [connected]);
 
@@ -133,6 +137,18 @@ const Content: FC = () => {
         updateWalletTokens();
     }, [connecting, connected, connection, wallet]);
 
+    const showInfoMessage = (message: string|null, closeByClick: boolean) => {
+        setMessageType(MESSAGE_INFO);
+        setCloseMessageByClick(closeByClick);
+        setMessage(message);
+    }
+
+    const showErrorMessage = (message: string|null, closeByClick: boolean) => {
+        setMessageType(MESSAGE_ERR);
+        setCloseMessageByClick(closeByClick);
+        setMessage(message);
+    }
+
     return (
         <AppContext.Provider value = {{
             appMode: appMode,
@@ -154,7 +170,10 @@ const Content: FC = () => {
             updateWalletTokens: updateWalletTokens,
             explorer: 'https://solscan.io',
             cluster: 'devnet',
-            errorMessage: errorMessage,
+            message: message,
+            messageType: messageType,
+            closeMessageByClick: closeMessageByClick,
+            showInfoMessage: showInfoMessage,
             showErrorMessage: showErrorMessage,
         }}>
             <MainWidget/>

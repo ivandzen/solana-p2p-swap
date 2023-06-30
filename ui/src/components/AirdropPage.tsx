@@ -9,7 +9,10 @@ import { PublicKey, Transaction } from "@solana/web3.js";
 import { SelectedToken, TokenSelect } from "./TokenSelect";
 
 export const AirdropPage: FC = () => {
-    let {connection, wallet, showErrorMessage, supportedTokens} = useApp();
+    let {
+        connection, wallet,
+        showInfoMessage, showErrorMessage, supportedTokens
+    } = useApp();
     const [selectedToken, setSelectedToken] = useState<SelectedToken|null>(null);
 
     const getToken = (mint: PublicKey): SupportedToken|undefined => {
@@ -33,14 +36,16 @@ export const AirdropPage: FC = () => {
 
             let token = getToken(selectedToken.mint.address);
             if (!token) {
-                showErrorMessage("Token unsupported");
+                showErrorMessage("Token unsupported", true);
                 return;
             }
 
             if (!token.keypair?.publicKey) {
-                showErrorMessage("You can not mint this token");
+                showErrorMessage("You can not mint this token", true);
                 return;
             }
+
+            showInfoMessage("Sending transaction...", false);
 
             try {
                 let clientWallet = await getAssociatedTokenAddress(
@@ -78,8 +83,11 @@ export const AirdropPage: FC = () => {
 
                 await wallet?.adapter.sendTransaction(transaction, connection, {signers:[token.keypair]});
             } catch (e: any) {
-                showErrorMessage(e.toString());
+                showErrorMessage(e.toString(), true);
+                return;
             }
+
+            showInfoMessage("Airdrop finished", true);
         }
 
         impl().then(()=>{});
