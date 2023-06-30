@@ -5,8 +5,6 @@ import { Visibility } from "./Visibility";
 import { Mint } from "@solana/spl-token";
 import Decimal from "decimal.js";
 import { SelectedToken, TokenSelect } from "./TokenSelect";
-import { Simulate } from "react-dom/test-utils";
-import seeking = Simulate.seeking;
 
 interface TokenBoxProps {
     onTokenChanged: (token: Mint|undefined) => void,

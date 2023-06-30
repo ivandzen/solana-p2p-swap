@@ -19,8 +19,7 @@ import {
     SimplifiedOrderDescriptionData
 } from "./SimplifiedOrderDescription";
 import Decimal from "decimal.js";
-import { Simulate } from "react-dom/test-utils";
-import error = Simulate.error;
+
 
 const BuyTab: FC = () => {
     const {

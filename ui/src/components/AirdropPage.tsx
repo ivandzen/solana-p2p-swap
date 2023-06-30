@@ -106,7 +106,7 @@ export const AirdropPage: FC = () => {
                     onClick={onMintClick}
                     disabled={!selectedToken || supportedTokens.size == 0}
                 >
-                    please
+                    pleeeeeease...
                 </button>
             </div>
             <label>NOTE: This is test tokens</label>
