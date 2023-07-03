@@ -71,20 +71,20 @@ export const OrderList: FC<OrderListProps> = (props) => {
                 filters: [{dataSize: ORDER_ACCOUNT_SIZE}]
             })
 
-        let tokens: Set<PublicKey> = new Set();
-        let orders: Map<PublicKey, OrderDescriptionData> = new Map();
+        let tokens: Set<string> = new Set();
+        let orders: Map<string, OrderDescriptionData> = new Map();
         for (let {account, pubkey} of accounts) {
             try {
                 let order = parseOrderDescription(account.data);
-                tokens.add(order.tokenMint);
-                tokens.add(order.priceMint);
-                orders.set(pubkey, order);
+                tokens.add(order.tokenMint.toBase58());
+                tokens.add(order.priceMint.toBase58());
+                orders.set(pubkey.toBase58(), order);
             } catch (e) {
                 console.log(`Failed to parse order ${pubkey}: ${e}`);
             }
         }
 
-        let mintAddresses = Array.from(tokens);
+        let mintAddresses = Array.from(tokens).map(entry => new PublicKey(entry));
         let mintAccounts
             = await connection.getMultipleAccountsInfo(mintAddresses);
         if (mintAddresses.length != mintAccounts.length) {
@@ -121,8 +121,8 @@ export const OrderList: FC<OrderListProps> = (props) => {
 
             items.push(
                 <OrderItem
-                    key={pubkey.toBase58()}
-                    pubkey={pubkey}
+                    key={pubkey}
+                    pubkey={new PublicKey(pubkey)}
                     sellToken={sellTokenName}
                     buyToken={buyTokenName}
                     price={price}
