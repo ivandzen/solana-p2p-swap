@@ -250,7 +250,6 @@ function SellTab() {
             return;
         }
 
-        console.log(`2. Sell percent: ${percent}`);
         setSellMinimumPercent(percent);
         updateSellMinimumStr(percent);
     }
@@ -274,20 +273,19 @@ function SellTab() {
         } catch (e: any) {
             setBuyAmount(undefined);
         }
-    }, [buyAmountStr]);
+    }, [buyAmountStr, buyToken]);
 
     return (
         <div>
             <Visibility isActive={sellTabMode === SELL_TAB_MODE_CREATE_ORDER}>
                 <div className="vertical">
+                    <label><h3>Sell</h3></label>
                     <div className='table-like'>
-                        <div>
-                            <TokenBox
-                                name="Sell"
-                                onTokenChanged={setSellToken}
-                                onAmountChanged={setSellAmount}
-                            />
-                        </div>
+                        <TokenBox
+                            name=""
+                            onTokenChanged={setSellToken}
+                            onAmountChanged={setSellAmount}
+                        />
                         <div className='horizontal'>
                             <label><h3>Minimum</h3></label>
                             <AmountInput
@@ -309,8 +307,10 @@ function SellTab() {
                             />
                             <label><h3>{sellMinimumPercent}%</h3></label>
                         </div>
+                    </div>
+                    <label><h3>Buy</h3></label>
+                    <div className='table-like'>
                         <div className='horizontal'>
-                            <label><h3>Buy</h3></label>
                             <TokenSelect
                                 onTokenSelected={(token) => {onBuyTokenChange(token?.mint)}}
                             />
@@ -323,17 +323,17 @@ function SellTab() {
                                 }}
                             />
                         </div>
-                        <label
-                            className='active-label'
-                            onClick={()=>{setFlippedPrice(!flippedPrice)}}
-                        >
-                            <b>{
-                                buyToken && sellToken?.address.equals(buyToken?.address)
-                                    ? "Sell and Price tokens are the same"
-                                    : priceString
-                            }</b>
-                        </label>
                     </div>
+                    <label
+                        className='active-label'
+                        onClick={()=>{setFlippedPrice(!flippedPrice)}}
+                    >
+                        <h3>{
+                            buyToken && sellToken?.address.equals(buyToken?.address)
+                                ? "Sell and Price tokens are the same"
+                                : priceString
+                        }</h3>
+                    </label>
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>
                     <Visibility isActive={isPrivate}>
                         <div className="vertical">

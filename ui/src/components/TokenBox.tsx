@@ -25,6 +25,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
     const [amountPercent, setAmountPercent] = useState<number|undefined>(0);
 
     useEffect(() => {
+        props.onTokenChanged(selectedToken?.mint);
         if (!selectedToken) {
             return;
         }
@@ -34,7 +35,6 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
 
     useEffect(() => {
         if (!selectedToken || !walletToken) {
-            props.onTokenChanged(undefined);
             return;
         }
 
@@ -44,7 +44,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 .toSignificantDigits(selectedToken.mint.decimals);
 
             setAmountPercent(Math.round(percent.toNumber()));
-            props.onTokenChanged(selectedToken.mint);
+
         } catch (e: any) {
         }
     }, [amount, walletToken]);
