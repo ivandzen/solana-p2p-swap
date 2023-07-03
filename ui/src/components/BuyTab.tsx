@@ -289,46 +289,44 @@ const BuyTab: FC = () => {
             <Visibility isActive={!!errorDescription}>
                 <h1>{errorDescription}</h1>
             </Visibility>
-            <div className={
-                !errorDescription && !!buyOrderDescription
-                    ? "table-like"
-                    : "table-like inactive"
-            }>
-                <button
-                    className='tabbutton-active'
-                    onClick={copyOrderURL}
-                    disabled={!buyOrderDescription}
-                >
-                    Copy order URL
-                </button>
-                <SimplifiedOrderDescription data={simplifiedDescription}/>
-                <Input
-                    className={buyAmountDec ? '' : 'invalid'}
-                    type='number'
-                    value={buyAmount}
-                    onChange={onBuyAmountInputChange}
-                />
-                <Slider
-                    value={buyAmountPercent}
-                    onChange={onBuyAmountSliderChange}
-                    max={100}
-                />
-                <label className='active-label'><h3>You have to pay {sellAmount} {simplifiedDescription?.priceTokenName}</h3></label>
-                <Visibility isActive={!!buyOrderDescription && buyOrderDescription.isPrivate}>
-                    <label><h3>Unlock key</h3></label>
-                    <ValueEdit
-                        name=""
-                        onChange={setUnlockKey}
-                        valueChecker={unlockKeyChecker}
-                        value={unlockKey ? unlockKey : ""}
+            <Visibility isActive={!errorDescription && !!buyOrderDescription}>
+                <div className="table-like">
+                    <button
+                        className='tabbutton-active'
+                        onClick={copyOrderURL}
+                        disabled={!buyOrderDescription}
+                    >
+                        Copy order URL
+                    </button>
+                    <SimplifiedOrderDescription data={simplifiedDescription}/>
+                    <Input
+                        className={buyAmountDec ? '' : 'invalid'}
+                        type='number'
+                        value={buyAmount}
+                        onChange={onBuyAmountInputChange}
                     />
-                </Visibility>
-                <Button
-                    name="Buy"
-                    onClick={onBuyClicked}
-                    disabled={fillOrderProps === null}
-                />
-            </div>
+                    <Slider
+                        value={buyAmountPercent}
+                        onChange={onBuyAmountSliderChange}
+                        max={100}
+                    />
+                    <label className='active-label'><h3>You have to pay {sellAmount} {simplifiedDescription?.priceTokenName}</h3></label>
+                    <Visibility isActive={!!buyOrderDescription && buyOrderDescription.isPrivate}>
+                        <label><h3>Unlock key</h3></label>
+                        <ValueEdit
+                            name=""
+                            onChange={setUnlockKey}
+                            valueChecker={unlockKeyChecker}
+                            value={unlockKey ? unlockKey : ""}
+                        />
+                    </Visibility>
+                    <Button
+                        name="Buy"
+                        onClick={onBuyClicked}
+                        disabled={fillOrderProps === null}
+                    />
+                </div>
+            </Visibility>
         </div>
     )
 }
