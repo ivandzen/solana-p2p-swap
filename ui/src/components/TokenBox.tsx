@@ -25,6 +25,10 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
     const [amountPercent, setAmountPercent] = useState<number|undefined>(0);
 
     useEffect(() => {
+        setAmountStr('0');
+        setAmount(0n);
+        setAmountPercent(0);
+        props.onAmountChanged(0n);
         props.onTokenChanged(selectedToken?.mint);
         if (!selectedToken) {
             return;
@@ -34,7 +38,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
     }, [selectedToken, walletTokens]);
 
     useEffect(() => {
-        if (!selectedToken || !walletToken) {
+        if (!selectedToken || !walletToken || walletToken.tokenAmount === 0n) {
             return;
         }
 

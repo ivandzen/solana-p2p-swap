@@ -215,7 +215,8 @@ function SellTab() {
     }
 
     const updateSellMinimumStr = (percent: number) => {
-        if (!sellToken) {
+        if (!sellToken || sellAmount === 0n) {
+            setSellMinimumStr('0');
             return;
         }
 
@@ -235,6 +236,11 @@ function SellTab() {
             console.log(`updateSellMinimumStr: ${e.toString()}`)
         }
     };
+
+    useEffect(() => {
+        setSellMinimumStr('0');
+        setSellMinimumPercent(0);
+    }, [sellToken]);
 
     useEffect(() => {
         if (sellAmount === 0n) {
