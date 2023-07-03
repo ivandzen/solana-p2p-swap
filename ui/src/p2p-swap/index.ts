@@ -71,7 +71,17 @@ function parseOrderDescription(
 }
 
 export function amountToDecimal(value: bigint, decimals: number): Decimal {
-    return new Decimal(value.toString()).div(new Decimal(10).pow(new Decimal(decimals)));
+    return new Decimal(value.toString())
+        .div(new Decimal(10).pow(new Decimal(decimals)));
+}
+
+export function decimalToAmount(value: Decimal, decimals: number): bigint {
+    return BigInt(
+        value
+            .mul(Math.pow(10, decimals))
+            .toFixed(0)
+            .toString()
+    );
 }
 
 export function amountToStr(value: bigint, decimals: number): string {

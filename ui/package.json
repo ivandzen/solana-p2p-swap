@@ -38,8 +38,10 @@
         "base58-js": "^2.0.0",
         "decimal.js": "^10.4.3",
         "react": "^18.2.0",
-        "react-datalist-input": "^3.2.1",
         "react-animate-height": "^3.1.1",
+        "@mui/material": "^5.13.6",
+        "@emotion/react": "^11.11.1",
+        "@emotion/styled": "^11.11.0",
         "react-dom": "^18.2.0"
     },
     "devDependencies": {

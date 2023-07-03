@@ -19,6 +19,8 @@ import {
     SimplifiedOrderDescriptionData
 } from "./SimplifiedOrderDescription";
 import Decimal from "decimal.js";
+import Slider from "@mui/material/Slider";
+import {Input} from "@mui/material";
 
 
 const BuyTab: FC = () => {
@@ -42,6 +44,7 @@ const BuyTab: FC = () => {
     const [sellAmountDec, setSellAmountDec] = useState<Decimal|null>(null);
     const [fillOrderProps, setFillOrderProps] = useState<FillOrderProps|null>(null);
     const [simplifiedDescription, setSimplifiedDescription] = useState<SimplifiedOrderDescriptionData|null>(null);
+    const [buyAmountPercent, setBuyAmountPercent] = useState<number>(0);
 
     useEffect(() => {
         async function updateOrderDescription(
@@ -119,28 +122,37 @@ const BuyTab: FC = () => {
                 return;
             }
 
-            let signer = wallet?.adapter.publicKey;
-            let unlockKeyParsed = parseUnlockKey(unlockKey);
-            let buyAmountParsed = BigInt(buyAmountDec.mul(new Decimal(10).pow(buyOrderDescription?.sellToken?.decimals)).toString());
+            try {
+                let signer = wallet?.adapter.publicKey;
+                let unlockKeyParsed = parseUnlockKey(unlockKey);
+                let buyAmountParsed = BigInt(
+                    buyAmountDec
+                        .mul(new Decimal(10).pow(buyOrderDescription.sellToken.decimals))
+                        .toFixed(0));
 
-            if (signer && orderAddress && buyOrderDescription &&
-                buyAmountParsed && buyAmountParsed > BigInt(0)) {
-                let props: FillOrderProps = {
-                    order: buyOrderDescription,
-                    orderAddress: orderAddress,
-                    programId: P2P_SWAP_DEVNET,
-                    sellTokenAmount: buyAmountParsed,
-                    signer: signer,
-                };
+                if (signer && orderAddress && buyOrderDescription &&
+                    buyAmountParsed && buyAmountParsed > BigInt(0)) {
+                    let props: FillOrderProps = {
+                        order: buyOrderDescription,
+                        orderAddress: orderAddress,
+                        programId: P2P_SWAP_DEVNET,
+                        sellTokenAmount: buyAmountParsed,
+                        signer: signer,
+                    };
 
-                if (buyOrderDescription.isPrivate && unlockKeyParsed) {
-                    props.unlockKey = unlockKeyParsed;
+                    if (buyOrderDescription.isPrivate && unlockKeyParsed) {
+                        props.unlockKey = unlockKeyParsed;
+                    }
+
+                    setFillOrderProps(props);
+                } else {
+                    setFillOrderProps(null);
                 }
-
-                setFillOrderProps(props);
-            } else {
+            } catch (e: any) {
                 setFillOrderProps(null);
             }
+
+
         };
 
         sendTransaction().then(()=>{});
@@ -201,11 +213,6 @@ const BuyTab: FC = () => {
         showInfoMessage('Transaction sent', true);
     }
 
-    const onBuyAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
-        setBuyAmount(event.target.value);
-
-    }
-
     useEffect(() => {
         setErrorDescription(null);
 
@@ -228,11 +235,17 @@ const BuyTab: FC = () => {
                 setBuyAmount(buyAmountDec.toString());
             }
 
+            let buyAmountPercent = buyAmountDec
+                .div(simplifiedDescription.remainsToFill).mul(100)
+                .toFixed(0);
+
+            setBuyAmountPercent(Number(buyAmountPercent.toString()));
             setBuyAmountDec(buyAmountDec);
             let sellAmountDec = buyAmountDec.mul(simplifiedDescription?.price);
             setSellAmountDec(sellAmountDec);
-            setSellAmount(sellAmountDec.toString());
+            setSellAmount(sellAmountDec.toSignificantDigits(buyOrderDescription?.sellToken?.decimals).toString());
         } catch (e: any) {
+            console.log(`Failed to calculate buy amount: ${e}`);
             setBuyAmountDec(null);
             setSellAmountDec(null);
             setSellAmount('0');
@@ -247,6 +260,22 @@ const BuyTab: FC = () => {
         navigator.clipboard.writeText(`${domain}/?mode=Buy&order_address=${orderAddress?.toBase58()}`)
             .then(()=>{});
     };
+
+    const onBuyAmountInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+        setBuyAmount(event.target.value);
+    }
+
+    const onBuyAmountSliderChange = (event: any, value: number|number[]) => {
+        if (!simplifiedDescription || !buyOrderDescription || !buyOrderDescription.sellToken) {
+            return;
+        }
+
+        if (typeof (value) === 'number') {
+            let newBuyAmount = simplifiedDescription.remainsToFill.mul(value).div(100);
+            setBuyAmount(newBuyAmount.toSignificantDigits(buyOrderDescription.sellToken.decimals).toString());
+            setBuyAmountPercent(value);
+        }
+    }
 
     return (
         <div className="vertical">
@@ -270,16 +299,22 @@ const BuyTab: FC = () => {
                         Copy order URL
                     </button>
                     <SimplifiedOrderDescription data={simplifiedDescription}/>
-                    <input
+                    <Input
                         className={buyAmountDec ? '' : 'invalid'}
                         type='number'
                         value={buyAmount}
-                        onChange={onBuyAmountChange}
+                        onChange={onBuyAmountInputChange}
+                    />
+                    <Slider
+                        value={buyAmountPercent}
+                        onChange={onBuyAmountSliderChange}
+                        max={100}
                     />
                     <label className='active-label'><h3>You have to pay {sellAmount} {simplifiedDescription?.priceTokenName}</h3></label>
                     <Visibility isActive={!!buyOrderDescription && buyOrderDescription.isPrivate}>
+                        <label><h3>Unlock key</h3></label>
                         <ValueEdit
-                            name="Unlock key"
+                            name=""
                             onChange={setUnlockKey}
                             valueChecker={unlockKeyChecker}
                             value={unlockKey ? unlockKey : ""}

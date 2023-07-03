@@ -79,8 +79,6 @@ export const AirdropPage: FC = () => {
                     [wallet.adapter.publicKey, token.keypair]
                 ));
 
-                console.log("Mint: " + transaction.toString());
-
                 await wallet?.adapter.sendTransaction(transaction, connection, {signers:[token.keypair]});
             } catch (e: any) {
                 showErrorMessage(e.toString(), true);

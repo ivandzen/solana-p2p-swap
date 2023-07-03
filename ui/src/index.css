@@ -72,10 +72,27 @@ label {
 input {
     font-family: monospace;
     border-color: transparent;
-    border-radius: 2px;
+    border-radius: 5px;
     margin: 0 2px;
     transition-duration: 0.5s;
     width: 100%;
+    align-self: stretch;
+}
+
+.slider {
+    margin: 0 10px;
+}
+
+.select {
+    background: #a681ff;
+    font-family: monospace;
+    border-color: transparent;
+    padding: 2px 0 0 6px;
+    border-radius: 5px;
+    margin: 0 2px;
+    transition-duration: 0.5s;
+    width: 100%;
+    max-width: 80px;
 }
 
 div[class~='datalist'] {
@@ -99,7 +116,10 @@ input:read-only {
 
 input[class~="invalid"] {
     background: #3a1344;
-    box-shadow: 0px 0px 4px 4px #f10000;
+    border-color: #f10000;
+    border-style: solid;
+    border-width: 3px;
+    /*box-shadow: 0px 0px 4px 4px #f10000;*/
     color: #f10000;
 }
 
@@ -107,8 +127,8 @@ input[type="checkbox"] {
     width: 20px;
     height: 20px;
     margin: 2px;
-    box-shadow: 0px 0px 2px 2px #da49d2;
 }
+
 
 .tab {
     background-color: transparent;
@@ -166,12 +186,6 @@ input[type="checkbox"] {
     background-color: #3a1344;
 }
 
-
-
-.tabcontent .inactive {
-    display: none;
-}
-
 .button-edit-box {
     display: flex;
     flex-direction: column;
@@ -185,6 +199,10 @@ input[type="checkbox"] {
 }
 
 .visibilitytab .inactive{
+    display: none;
+}
+
+.inactive {
     display: none;
 }
 
@@ -207,10 +225,11 @@ input[type="checkbox"] {
     border-radius: 10px;
     border-style: solid;
     border-color: #2a1344;
+    align-self: stretch;
     flex-direction: column;
     display: flex;
-    align-items: center;
-    padding: 5px;
+    align-items: stretch;
+    padding: 5px 16px;
     color: #e5a2e2
 }
 
@@ -338,7 +357,8 @@ div[class='error-message-inactive'] {
 
 .order-list {
     overflow-y: auto;
-    display: flex;
+    display: table;
+    align-items: stretch;
 }
 
 .order-list-header {

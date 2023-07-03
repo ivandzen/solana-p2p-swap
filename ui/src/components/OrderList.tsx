@@ -88,7 +88,7 @@ export const OrderList: FC<OrderListProps> = (props) => {
         let mintAccounts
             = await connection.getMultipleAccountsInfo(mintAddresses);
         if (mintAddresses.length != mintAccounts.length) {
-            console.log("Something wne wrong. Try one more time");
+            console.log("Something went wrong. Try one more time");
             return;
         }
 

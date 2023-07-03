@@ -1,25 +1,11 @@
-import React, { ChangeEvent, FC, useEffect, useState } from "react";
-import { DatalistInput, Item } from "react-datalist-input";
+import React, { ReactNode, ChangeEvent, FC, useEffect, useState } from "react";
 import { getMint, Mint } from "@solana/spl-token";
 import { useApp } from "../AppContext";
-
-interface TokenItemProps {
-    label: string,
-}
+import { NativeSelect } from "@mui/material";
 
 export interface SelectedToken {
     name: string,
     mint: Mint,
-}
-
-const TokenItem: FC<TokenItemProps> = (props) => {
-    return (
-        <div className="token-item">
-            <div className="horizontal">
-                <label><b>{props.label}</b></label>
-            </div>
-        </div>
-    )
 }
 
 interface TokenSelectProps {
@@ -28,48 +14,40 @@ interface TokenSelectProps {
 
 export const TokenSelect: FC<TokenSelectProps> = (props) => {
     const {connection, supportedTokens, showErrorMessage} = useApp();
-    const [tokens, setTokens] = useState<Item[]>([]);
+    const [tokens, setTokens] = useState<ReactNode[]>([]);
     const [tokenName, setTokenName] = useState<string|undefined>(undefined);
-    const [tokenMint, setTokenMint] = useState<Mint|undefined>(undefined);
 
     useEffect(() => {
         let tokens = [];
         for (let [label, ] of supportedTokens) {
-            tokens.push({
-                            id: label,
-                            node: <TokenItem label={label} />
-                        });
+            tokens.push(<option key={label}>{label}</option>);
         }
 
         setTokens(tokens);
-        setTokenName(tokens.length ? tokens[0].id : '');
+        setTokenName(tokens.length && tokens[0].key ? tokens[0].key.toString() : '');
     }, [supportedTokens]);
 
     useEffect(()=> {
         const impl = async() => {
             if (!tokenName) {
-                setTokenMint(undefined);
                 props.onTokenSelected(null);
                 return;
             }
 
             let token = supportedTokens.get(tokenName);
             if (!token) {
-                setTokenMint(undefined);
                 props.onTokenSelected(null);
                 return;
             }
 
             try {
                 let mint = await getMint(connection, token.pubkey);
-                setTokenMint(mint);
                 props.onTokenSelected({
                     name:tokenName,
                     mint: mint
                 });
             } catch (e: any) {
                 showErrorMessage(e.toString(), true);
-                setTokenMint(undefined);
                 props.onTokenSelected(null);
             }
         }
@@ -77,21 +55,17 @@ export const TokenSelect: FC<TokenSelectProps> = (props) => {
         impl().then(()=>{});
     }, [tokenName]);
 
+    const onTokenChange = (event: ChangeEvent<HTMLSelectElement>) => {
+        setTokenName(event.target.value);
+    }
+
     return (
-        <DatalistInput
-            className={"datalist"}
-            inputProps={{
-                type: "number",
-                className: tokenMint ? '' : 'invalid',
-                title: tokenMint?.address.toBase58(),
-            }}
-            label={''}
-            showLabel={false}
-            isExpandedClassName="token-list"
-            value={tokenName}
-            items={tokens}
-            onSelect={(item: Item) => {setTokenName(item.node.props.label)}}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => {setTokenName(event.target.value)}}
-        />
+            <NativeSelect
+                value={tokenName}
+                className={'select'}
+                onChange={onTokenChange}
+            >
+                {tokens}
+            </NativeSelect>
     )
 }
