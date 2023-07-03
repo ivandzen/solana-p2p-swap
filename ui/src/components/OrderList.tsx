@@ -32,17 +32,17 @@ export const OrderItem: FC<OrderItemProps> = (props) => {
     }
 
     return (
-        <tr className='order-list-item' title={props.pubkey.toBase58()}>
-            <td className='order-list-item-element' onClick={onClick}>
+        <tr className='order-list-item' title={props.pubkey.toBase58()} key={props.pubkey.toBase58()}>
+            <td className='order-list-item-element' onClick={onClick} key={'Available'}>
                 {`${props.availableSellTokens.toSignificantDigits(props.sellTokenDecimals).toString()} 
                 ${props.sellToken}`}
             </td>
-            <td className='order-list-item-element' onClick={onClick}>
+            <td className='order-list-item-element' onClick={onClick} key='Price'>
                 {`1 ${props.sellToken} = 
                 ${props.price.toSignificantDigits(props.buyTokenDecimals).toString()} 
                 ${props.buyToken}`}
             </td>
-            <td className='order-list-item-element' onClick={onClick}>
+            <td className='order-list-item-element' onClick={onClick} key='Private'>
                 {props.isPrivate ? 'Yes' : 'No'}
             </td>
         </tr>
@@ -168,12 +168,14 @@ export const OrderList: FC<OrderListProps> = (props) => {
                 <Visibility isActive={pageMessage === null}>
                     <div className='order-list'>
                         <table>
-                            <tr className='order-list-header'>
-                                <th className='order-list-item-element'>Available</th>
-                                <th className='order-list-item-element'>Price</th>
-                                <th className='order-list-item-element'>Private</th>
+                            <tbody>
+                            <tr className='order-list-header' key='header'>
+                                <th className='order-list-item-element' key='Available'>Available</th>
+                                <th className='order-list-item-element' key='Price'>Price</th>
+                                <th className='order-list-item-element' key='Private'>Private</th>
                             </tr>
                             {items}
+                            </tbody>
                         </table>
                     </div>
                 </Visibility>
