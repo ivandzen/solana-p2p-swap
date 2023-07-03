@@ -121,6 +121,7 @@ export const OrderList: FC<OrderListProps> = (props) => {
 
             items.push(
                 <OrderItem
+                    key={pubkey.toBase58()}
                     pubkey={pubkey}
                     sellToken={sellTokenName}
                     buyToken={buyTokenName}
