@@ -34,6 +34,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
 
     useEffect(() => {
         if (!selectedToken || !walletToken) {
+            props.onTokenChanged(undefined);
             return;
         }
 
@@ -46,7 +47,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
             props.onTokenChanged(selectedToken.mint);
         } catch (e: any) {
         }
-    }, [amountPercent, amount, walletToken]);
+    }, [amount, walletToken]);
 
     const onAmountChange = (amount: bigint) => {
         props.onAmountChanged(amount);
@@ -58,25 +59,12 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
             setAmountPercent(value);
             setAmountStr(
                 amountToStr(
-                    (walletToken.tokenAmount * BigInt(value))
-                    / 100n, walletToken.decimals)
+                    (walletToken.tokenAmount * BigInt(value)) / 100n,
+                    walletToken.decimals
+                )
             );
         }
     };
-
-    /*
-    <input
-        className={amountStyle}
-        type='number'
-        onChange={onAmountChange}
-        value={amountStr}
-        min='0'
-        max={walletToken
-            ? amountToDecimal(walletToken.tokenAmount, walletToken.decimals).toString()
-            : '0'}
-        disabled={!selectedToken?.mint}
-    />
-    */
 
     return (
         <div className='vertical'>
@@ -92,7 +80,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                             valueStr={amountStr}
                             setValueStr={setAmountStr}
                             onValueChanged={onAmountChange}
-                            maximum={walletToken?.tokenAmount}
+                            maximum={walletToken ? walletToken.tokenAmount : 0n}
                         />
                 }
             </div>

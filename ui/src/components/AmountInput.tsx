@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import Decimal from "decimal.js";
 import { amountToDecimal } from "../p2p-swap";
 
@@ -34,7 +34,7 @@ export const AmountInput: FC<AmountInputProps> = (props) => {
             if (valueBigint < 0n) {
                 valueBigint = 0n;
                 props.setValueStr('0');
-            } else if (props.maximum && valueBigint > props.maximum) {
+            } else if (props.maximum !== undefined && valueBigint > props.maximum) {
                 valueBigint = props.maximum;
                 props.setValueStr(amountToDecimal(valueBigint, props.decimals).toString());
             }
@@ -43,10 +43,7 @@ export const AmountInput: FC<AmountInputProps> = (props) => {
         } catch (e: any) {
             setValue(0n);
         }
-    }, [props.maximum, props.valueStr])
-    const onValueChanged = (event: ChangeEvent<HTMLInputElement>) => {
-        props.setValueStr(event.target.value);
-    }
+    }, [props.maximum, props.valueStr]);
 
     return (
         <input
@@ -54,7 +51,7 @@ export const AmountInput: FC<AmountInputProps> = (props) => {
             disabled={props.disabled}
             className={value > 0n ? '' : 'invalid'}
             value={props.valueStr}
-            onChange={onValueChanged}
+            onChange={(event) => { props.setValueStr(event.target.value) }}
         />
     );
 }

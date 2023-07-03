@@ -1,11 +1,11 @@
 import React, { ChangeEvent, useEffect, useState } from "react";
 import {ValueEdit} from "./ValueEdit";
 import {
-    amountToDecimal,
+    amountToDecimal, amountToStr,
     CreateOrderProps,
     createOrderTransaction,
     getOrderDescriptionChecked, OrderDescriptionData,
-    P2P_SWAP_DEVNET,
+    P2P_SWAP_DEVNET
 } from "../p2p-swap";
 import {Button} from "./Button";
 import {Connection, PublicKey} from "@solana/web3.js";
@@ -18,6 +18,7 @@ import Decimal from "decimal.js";
 import { Mint } from "@solana/spl-token";
 import Slider from "@mui/material/Slider";
 import { TokenSelect } from "./TokenSelect";
+import { AmountInput } from "./AmountInput";
 const base58 = require("base58-js");
 
 const SELL_TAB_MODE_CREATE_ORDER: string = "create-order";
@@ -48,9 +49,9 @@ function SellTab() {
     } = useApp();
 
     const [sellOrderDescription, setSellOrderDescription] = useState<OrderDescriptionData|null>(null);
-    const [sellToken, onSellTokenChange] = useState<Mint|undefined>(undefined);
-    const [sellAmount, onSellAmountChange] = useState<bigint>(0n);
-    const [sellMinimum, setSellMinimum] = useState<string>("0");
+    const [sellToken, setSellToken] = useState<Mint|undefined>(undefined);
+    const [sellAmount, setSellAmount] = useState<bigint>(0n);
+    const [sellMinimumStr, setSellMinimumStr] = useState<string>("0");
     const [sellMinimumPercent, setSellMinimumPercent] = useState<number>(0);
     const [sellMinimBigint, setSellMinimumBigint] = useState<bigint>(0n);
     const [buyToken, onBuyTokenChange] = useState<Mint|undefined>(undefined);
@@ -177,23 +178,6 @@ function SellTab() {
         }
     }, [newOrderAddress, newUnlockKey]);
 
-    useEffect(() => {
-        if (!sellToken || !sellAmount || !sellMinimum) {
-            setSellMinimumBigint(0n);
-            return;
-        }
-
-        try {
-            let value = amountToDecimal(sellAmount, sellToken.decimals)
-                .mul(new Decimal(sellMinimumPercent).div(100));
-            let valueBigint = BigInt(value.mul(Math.pow(10, sellToken.decimals)).toFixed(0));
-            setSellMinimum(amountToDecimal(valueBigint, sellToken.decimals).toString());
-            setSellMinimumBigint(valueBigint);
-        } catch (e) {
-            setSellMinimumBigint(0n);
-        }
-    }, [sellToken, sellAmount, sellMinimumPercent]);
-
     useEffect(()=> {
         if (!!sellToken && !!buyToken && !!sellAmount && !!buyAmount) {
             let sell = new Decimal(sellAmount.toString())
@@ -212,37 +196,63 @@ function SellTab() {
         }
     }, [supportedTokens, sellToken, buyToken, sellAmount, buyAmount, flippedPrice]);
 
-    const onMinimumSliderChange = (event: any, value: number|number[]) => {
-        if (typeof(value) === 'number') {
-            setSellMinimumPercent(Math.round(value));
-        }
-    }
+    const onMinimumInputChange = (minStr: string) => {
+        setSellMinimumStr(minStr);
 
-    const onMinimumInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-        if (!sellToken || !sellAmount) {
+        if (!sellToken || sellAmount === 0n) {
             return;
         }
 
         try {
-            let valueBigint = BigInt(new Decimal(event.target.value)
-                                         .mul(Math.pow(10, sellToken.decimals))
-                                         .toFixed(0).toString());
+            let percent = new Decimal(minStr)
+                .div(amountToStr(sellAmount, sellToken.decimals)).mul(100)
+                .round();
 
-            if (valueBigint < 0) {
-                valueBigint = 0n;
-            } else if (valueBigint > sellAmount) {
-                valueBigint = sellAmount;
-            }
-
-            let percent = (new Decimal(valueBigint.toString())
-                .div(new Decimal(sellAmount.toString()))).mul(100)
-                .toSignificantDigits(sellToken.decimals);
-            setSellMinimumPercent(Math.round(percent.toNumber()));
-            setSellMinimum(amountToDecimal(valueBigint, sellToken.decimals).toString());
+            setSellMinimumPercent(percent.toNumber());
         } catch (e: any) {
-            setSellMinimumPercent(0);
-            setSellMinimum('0');
+            console.log(`onMinimumInputChange: ${e.toString()}`)
         }
+    }
+
+    const updateSellMinimumStr = (percent: number) => {
+        if (!sellToken) {
+            return;
+        }
+
+        try {
+            let sellMinimumDec = new Decimal(sellAmount.toString())
+                .mul(percent)
+                .div(100)
+                .round();
+
+            setSellMinimumStr(
+                amountToStr(
+                    BigInt(sellMinimumDec.toString()),
+                    sellToken.decimals
+                )
+            );
+        } catch (e: any) {
+            console.log(`updateSellMinimumStr: ${e.toString()}`)
+        }
+    };
+
+    useEffect(() => {
+        if (sellAmount === 0n) {
+            setSellMinimumBigint(0n);
+            return;
+        }
+
+        updateSellMinimumStr(sellMinimumPercent);
+    }, [sellAmount, sellToken]);
+
+    const onMinimumSliderChange = (event: any, percent: number|number[]) => {
+        if (typeof (percent) !== 'number') {
+            return;
+        }
+
+        console.log(`2. Sell percent: ${percent}`);
+        setSellMinimumPercent(percent);
+        updateSellMinimumStr(percent);
     }
 
     useEffect(() => {
@@ -274,17 +284,19 @@ function SellTab() {
                         <div>
                             <TokenBox
                                 name="Sell"
-                                onTokenChanged={onSellTokenChange}
-                                onAmountChanged={onSellAmountChange}
+                                onTokenChanged={setSellToken}
+                                onAmountChanged={setSellAmount}
                             />
                         </div>
                         <div className='horizontal'>
                             <label><h3>Minimum</h3></label>
-                            <input
-                                type='number'
-                                className={sellMinimBigint ? '' : 'invalid'}
-                                value={sellMinimum}
-                                onChange={onMinimumInputChange}
+                            <AmountInput
+                                disabled={!sellToken || sellAmount === 0n}
+                                decimals={sellToken ? sellToken.decimals : 0}
+                                valueStr={sellMinimumStr}
+                                setValueStr={onMinimumInputChange}
+                                onValueChanged={setSellMinimumBigint}
+                                maximum={sellAmount}
                             />
                         </div>
                         <div className='horizontal'>
@@ -292,7 +304,7 @@ function SellTab() {
                                 className='slider'
                                 value={sellMinimumPercent}
                                 onChange={onMinimumSliderChange}
-                                disabled={!(sellAmount && sellToken)}
+                                disabled={!sellToken || sellAmount === 0n}
                                 max={100}
                             />
                             <label><h3>{sellMinimumPercent}%</h3></label>
