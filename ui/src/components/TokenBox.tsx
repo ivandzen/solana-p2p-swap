@@ -77,7 +77,7 @@ const TokenBox: FC<TokenBoxProps> = (props) => {
                 <TokenSelect onTokenSelected={setSelectedToken}/>
                 {
                     (!walletToken || walletToken.tokenAmount == 0n)
-                        ? <label><h3>wallet empty</h3></label>
+                        ? <label className='label-attention'><h3>wallet empty</h3></label>
                         : <AmountInput
                             disabled={!walletToken}
                             decimals={walletToken ? walletToken.decimals : 0}

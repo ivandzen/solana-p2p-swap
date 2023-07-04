@@ -6,7 +6,11 @@ html, body {
 }
 
 @media screen and (orientation: portrait) {
-    /* Style the tab content */
+    :root {
+        --background: #636983;
+        --active: #e5a2e2;
+    }
+
     .tabcontent {
         min-height: 100%;
         min-width: 100vw;
@@ -21,7 +25,11 @@ html, body {
 }
 
 @media screen and (orientation: landscape) {
-    /* Style the tab content */
+    :root {
+        --background: #ffffff;
+        --active: #e5a2e2;
+    }
+
     .tabcontent {
         margin: 20px;
         min-height: 100%;
@@ -34,12 +42,8 @@ html, body {
         padding: 12px;
         transition-duration: 0.5s;
         color: #e5a2e2;
+        box-shadow: 10px 10px 4px 4px #464646;
     }
-}
-
-:root {
-    --background: #636983;
-    --active: #e5a2e2;
 }
 
 #app {
@@ -148,13 +152,13 @@ input[type="checkbox"] {
 
   /* Style the buttons that are used to open the tab content */
 .tabbutton {
-    border-radius: 4px;
     background-color: rgba(84, 42, 175, 0.53);;
-    border-color: transparent;
+    border-radius: 8px;
+    border-style: solid;
+    border-color: #2a113a;
     cursor: pointer;
     width: 100%;
     transition-duration: 0.5s;
-    margin: 0 2px;
 }
   
   /* Change background color of buttons on hover */
@@ -164,13 +168,13 @@ input[type="checkbox"] {
 
 /* Create an active/current tablink class */
 .tabbutton-active {
-    border-radius: 4px;
     background-color: #da49d2;
+    border-radius: 8px;
     border-color: transparent;
     cursor: pointer;
+    margin: 6px 0;
     width: 100%;
     transition-duration: 0.5s;
-    margin: 0 2px;
 }
 
 .tabbutton-active:hover {
@@ -180,10 +184,6 @@ input[type="checkbox"] {
 .tabbutton-active:disabled {
     background-color: #3a1344;
     color: #999999;
-}
-
-.tabbutton-active:disabled:hover {
-    background-color: #3a1344;
 }
 
 .button-edit-box {
@@ -279,11 +279,10 @@ label {
     display: flex;
     align-items: stretch;
     border-radius: 6px;
-    padding: 6px;
     background: #da498f;
+    padding: 4px;
     flex-direction: column;
     font-family: monospace;
-    margin: 8px;
     color: #4f2068;
     width: 100%;
 }

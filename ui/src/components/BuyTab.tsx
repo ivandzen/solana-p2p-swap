@@ -252,15 +252,6 @@ const BuyTab: FC = () => {
         }
     }, [buyAmount]);
 
-    const copyOrderURL = () => {
-        if (!buyOrderDescription) {
-            return;
-        }
-
-        navigator.clipboard.writeText(`${domain}/?mode=Buy&order_address=${orderAddress?.toBase58()}`)
-            .then(()=>{});
-    };
-
     const onBuyAmountInputChange = (event: ChangeEvent<HTMLInputElement>) => {
         setBuyAmount(event.target.value);
     }
@@ -291,13 +282,6 @@ const BuyTab: FC = () => {
             </Visibility>
             <Visibility isActive={!errorDescription && !!buyOrderDescription}>
                 <div className="table-like">
-                    <button
-                        className='tabbutton-active'
-                        onClick={copyOrderURL}
-                        disabled={!buyOrderDescription}
-                    >
-                        Copy order URL
-                    </button>
                     <SimplifiedOrderDescription data={simplifiedDescription}/>
                     <Input
                         className={buyAmountDec ? '' : 'invalid'}

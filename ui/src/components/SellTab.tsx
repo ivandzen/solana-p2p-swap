@@ -342,18 +342,16 @@ function SellTab() {
                     </label>
                     <CheckBox name={"Is Private "} setChecked={setIsPrivate}/>
                     <Visibility isActive={isPrivate}>
-                        <div className="vertical">
-                            <div className="label-attention">
-                                <b>
-                                    <p>Besides regular transaction approval,</p>
-                                    <p>You will be prompted to sign message</p>
-                                    <p>containing order account address</p>
-                                    <p>encoded in binary form to generate </p>
-                                    <p>order unlock key.</p>
-                                    <p>NOTE: Order filling will be available</p>
-                                    <p>only with this signature!</p>
-                                </b>
-                            </div>
+                        <div className="label-attention">
+                            <b>
+                                <p>Besides regular transaction approval,</p>
+                                <p>You will be prompted to sign message</p>
+                                <p>containing order account address</p>
+                                <p>encoded in binary form to generate </p>
+                                <p>order unlock key.</p>
+                                <p>NOTE: Order filling will be available</p>
+                                <p>only with this signature!</p>
+                            </b>
                         </div>
                     </Visibility>
                     <Button
