@@ -8,6 +8,7 @@ use {
         P2PSwapError,
     },
     arrayref::{array_ref, array_refs},
+    num_traits::cast::ToPrimitive,
     solana_program::{
         account_info::{next_account_info, AccountInfo},
         clock::Slot,
@@ -445,7 +446,7 @@ fn fill_order<'a>(
     let seller = next_account_info(account_info_iter)?; // 1 - seller pubkey
     let buyer = next_account_info(account_info_iter)?; // 2 - buyer pubkey
     let order_account = next_account_info(account_info_iter)?; // 3 - order pubkey
-    let (mut order, order_seed) = check_and_get_order(program_id, seller, order_account)?;
+    let (mut order, _order_seed) = check_and_get_order(program_id, seller, order_account)?;
 
     if order.is_private {
         let sysvar_instructions = next_account_info(account_info_iter)?; // 4 -sysvar instruction
@@ -553,7 +554,13 @@ fn fill_order<'a>(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let buy_token_amount = (sell_token_amount * order.buy_amount) / order.sell_amount;
+    let buy_token_amount = (
+        (sell_token_amount as u128)
+            .checked_mul(order.buy_amount as u128)
+            .ok_or(ProgramError::Custom(P2PSwapError::IntOverflowError as u32)))?
+        .checked_div(order.sell_amount as u128)
+        .ok_or(ProgramError::Custom(P2PSwapError::IntOverflowError as u32))?
+        .to_u64().ok_or(ProgramError::Custom(P2PSwapError::IntOverflowError as u32))?;
 
     msg!("Transfering from order to buyer");
     let tfer_inst = spl_token::instruction::transfer(

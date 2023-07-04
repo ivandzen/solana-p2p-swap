@@ -1854,6 +1854,7 @@ name = "p2p-swap"
 version = "0.1.0-dev"
 dependencies = [
  "arrayref",
+ "num-traits",
  "solana-program",
  "solana-sdk",
  "spl-associated-token-account",

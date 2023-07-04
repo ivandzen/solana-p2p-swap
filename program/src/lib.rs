@@ -184,4 +184,5 @@ enum P2PSwapError {
     UnlockInstructionInvalid = 4,
     BuyAmountBelowMinimum = 5,
     NotEnoughTokensInOrder = 6,
+    IntOverflowError = 7,
 }
